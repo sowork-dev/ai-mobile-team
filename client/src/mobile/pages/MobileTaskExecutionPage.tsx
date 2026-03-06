@@ -6,6 +6,8 @@ import { useState, useEffect } from "react";
 import { useLocation, useParams } from "wouter";
 import { useI18n } from "@/i18n";
 import { taskTemplates, TaskTemplate, TaskStage } from "../components/TaskTemplates";
+import AIOnboardingModal from "../components/AIOnboardingModal";
+import { trpc } from "@/lib/trpc";
 
 interface StageProgress {
   stageId: number;
@@ -46,6 +48,37 @@ export default function MobileTaskExecutionPage() {
   const [isScanning, setIsScanning] = useState(false);
   const [scanResults, setScanResults] = useState<ScanResult[]>([]);
   const [scanComplete, setScanComplete] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [taskStatus, setTaskStatus] = useState<"preparing" | "ai_processing" | "human_required" | "completed">("preparing");
+  
+  // 獲取 AI 員工配對
+  const { data: agentMapping } = trpc.task.getAgentMapping.useQuery({ taskType: templateId });
+  
+  // 獲取 AI 入職說明
+  const { data: aiOnboarding } = trpc.ai.getOnboarding.useQuery(
+    { agentId: agentMapping?.primary?.id || 0 },
+    { enabled: !!agentMapping?.primary?.id }
+  );
+  
+  // 檢查是否首次使用該 AI
+  useEffect(() => {
+    if (aiOnboarding && agentMapping?.primary) {
+      const seenAIs = JSON.parse(localStorage.getItem("seenAIs") || "[]");
+      if (!seenAIs.includes(agentMapping.primary.id)) {
+        setShowOnboarding(true);
+      }
+    }
+  }, [aiOnboarding, agentMapping]);
+  
+  const handleOnboardingClose = () => {
+    if (agentMapping?.primary) {
+      const seenAIs = JSON.parse(localStorage.getItem("seenAIs") || "[]");
+      seenAIs.push(agentMapping.primary.id);
+      localStorage.setItem("seenAIs", JSON.stringify(seenAIs));
+    }
+    setShowOnboarding(false);
+    setTaskStatus("ai_processing");
+  };
 
   // 模擬 AI 掃描知識庫
   const simulateKnowledgeScan = async () => {
@@ -175,7 +208,22 @@ export default function MobileTaskExecutionPage() {
                 : `Stage ${currentStage}/${template.stages.length}`}
             </p>
           </div>
-          <span className="text-2xl">{template.icon}</span>
+          {/* AI 員工頭像 + 狀態 */}
+          {agentMapping?.primary && (
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <div className="w-9 h-9 rounded-full bg-gray-900 flex items-center justify-center text-white text-sm font-bold">
+                  {agentMapping.primary.name?.charAt(0) || "AI"}
+                </div>
+                <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
+                  taskStatus === "ai_processing" ? "bg-green-500 animate-pulse" 
+                  : taskStatus === "human_required" ? "bg-amber-500"
+                  : taskStatus === "completed" ? "bg-blue-500"
+                  : "bg-gray-400"
+                }`} />
+              </div>
+            </div>
+          )}
         </div>
         
         {/* Overall Progress - 單色 */}
@@ -495,6 +543,15 @@ export default function MobileTaskExecutionPage() {
             </button>
           </div>
         </div>
+      )}
+      
+      {/* AI Onboarding Modal */}
+      {showOnboarding && aiOnboarding && (
+        <AIOnboardingModal
+          onboarding={aiOnboarding}
+          onClose={handleOnboardingClose}
+          onStart={handleOnboardingClose}
+        />
       )}
     </div>
   );

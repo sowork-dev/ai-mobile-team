@@ -6,7 +6,16 @@ import { initTRPC } from "@trpc/server";
 import { z } from "zod";
 import superjson from "superjson";
 import { query } from "./db.js";
-import { taskAgentMapping, createTask, TaskType } from "./taskRouting.js";
+import { 
+  taskAgentMapping, 
+  createTask, 
+  TaskType, 
+  aiOnboardingData,
+  getUserNotifications,
+  markNotificationRead,
+  createNotification,
+  Notification
+} from "./taskRouting.js";
 
 const t = initTRPC.create({
   transformer: superjson,
@@ -203,6 +212,118 @@ const talentRouter = router({
   }),
 });
 
+// AI Onboarding Router - AI 員工入職說明
+const aiRouter = router({
+  // 獲取 AI 員工入職說明
+  getOnboarding: publicProcedure
+    .input(z.object({ agentId: z.number() }))
+    .query(async ({ input }) => {
+      const onboarding = aiOnboardingData[input.agentId];
+      
+      if (!onboarding) {
+        // 如果沒有預設資料，從 agents 表生成基本資料
+        const [agent] = await query(
+          `SELECT id, name, title, bio, methodology, specialty, skills, caseStudies
+           FROM agents WHERE id = ?`,
+          [input.agentId]
+        );
+        
+        if (!agent) return null;
+        
+        const parseArray = (data: any) => {
+          if (!data) return [];
+          if (Array.isArray(data)) return data;
+          if (typeof data === 'string') {
+            try { return JSON.parse(data); } catch { return data.split(',').map((s: string) => s.trim()); }
+          }
+          return [];
+        };
+        
+        return {
+          id: agent.id,
+          name: agent.name,
+          role: agent.title,
+          specialties: parseArray(agent.skills).slice(0, 4),
+          methodology: agent.methodology || "專業、高效、以結果為導向",
+          successCases: parseArray(agent.caseStudies).slice(0, 3),
+          canHelp: [
+            "自動處理例行任務",
+            "生成專業報告",
+            "提供決策建議",
+            "追蹤任務進度"
+          ],
+          workingStyle: "我會主動完成能做的事，只在需要您決策時通知您。"
+        };
+      }
+      
+      return onboarding;
+    }),
+    
+  // 標記用戶已看過某個 AI 的入職說明
+  markOnboardingSeen: publicProcedure
+    .input(z.object({ agentId: z.number() }))
+    .mutation(async ({ input }) => {
+      // TODO: 存入用戶設定
+      return { success: true, agentId: input.agentId };
+    }),
+});
+
+// Notification Router - 通知系統
+const notificationRouter = router({
+  // 獲取用戶的通知列表
+  list: publicProcedure
+    .input(z.object({
+      unreadOnly: z.boolean().optional(),
+      limit: z.number().min(1).max(50).default(20),
+    }).optional())
+    .query(async ({ input }) => {
+      const { unreadOnly = false, limit = 20 } = input || {};
+      
+      // 使用 dev-user-001 作為測試用戶
+      let notifications = getUserNotifications("dev-user-001");
+      
+      if (unreadOnly) {
+        notifications = notifications.filter(n => !n.readAt);
+      }
+      
+      return {
+        notifications: notifications.slice(0, limit),
+        unreadCount: notifications.filter(n => !n.readAt).length,
+      };
+    }),
+    
+  // 標記通知已讀
+  markRead: publicProcedure
+    .input(z.object({ 
+      notificationId: z.string().optional(),
+      markAllRead: z.boolean().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      if (input.markAllRead) {
+        const notifications = getUserNotifications("dev-user-001");
+        notifications.forEach(n => {
+          if (!n.readAt) markNotificationRead(n.id);
+        });
+        return { success: true, markedCount: notifications.length };
+      }
+      
+      if (input.notificationId) {
+        markNotificationRead(input.notificationId);
+        return { success: true };
+      }
+      
+      return { success: false };
+    }),
+    
+  // 獲取未讀數量
+  unreadCount: publicProcedure.query(async () => {
+    const notifications = getUserNotifications("dev-user-001");
+    return {
+      count: notifications.filter(n => !n.readAt).length,
+    };
+  }),
+});
+
 // Task Router - 任務自動路由系統
 const taskRouter = router({
   // 獲取任務類型的 AI 員工配對
@@ -321,6 +442,8 @@ export const appRouter = router({
   auth: authRouter,
   talent: talentRouter,
   task: taskRouter,
+  ai: aiRouter,
+  notification: notificationRouter,
   
   // Health check
   health: publicProcedure.query(() => ({
