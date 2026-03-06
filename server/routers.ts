@@ -16,6 +16,12 @@ import {
   createNotification,
   Notification
 } from "./taskRouting.js";
+import {
+  generateContent,
+  getAvailableModels,
+  getRecommendedModel,
+  AIModel,
+} from "./aiContentGenerator.js";
 
 const t = initTRPC.create({
   transformer: superjson,
@@ -437,6 +443,48 @@ const taskRouter = router({
     }),
 });
 
+// Content Generation Router (AI 生成文件內容)
+const contentRouter = router({
+  // 生成文件內容
+  generate: publicProcedure
+    .input(z.object({
+      taskType: z.string(),
+      role: z.string().optional(),
+      title: z.string(),
+      context: z.string(),
+      format: z.enum(["pdf", "doc", "ppt", "xls", "markdown", "code"]),
+      language: z.enum(["zh", "en"]).optional(),
+      model: z.enum(["openai", "qianwen", "zhipu", "perplexity", "google", "cohere"]).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const result = await generateContent({
+        taskType: input.taskType,
+        role: input.role,
+        title: input.title,
+        context: input.context,
+        format: input.format,
+        language: input.language,
+        model: input.model as AIModel,
+      });
+      return result;
+    }),
+
+  // 獲取可用的 AI Models
+  models: publicProcedure.query(() => {
+    return getAvailableModels();
+  }),
+
+  // 獲取推薦的 AI Model
+  recommendedModel: publicProcedure
+    .input(z.object({
+      taskType: z.string().optional(),
+      role: z.string().optional(),
+    }))
+    .query(({ input }) => {
+      return getRecommendedModel(input.taskType, input.role);
+    }),
+});
+
 // Main App Router
 export const appRouter = router({
   auth: authRouter,
@@ -444,6 +492,7 @@ export const appRouter = router({
   task: taskRouter,
   ai: aiRouter,
   notification: notificationRouter,
+  content: contentRouter,
   
   // Health check
   health: publicProcedure.query(() => ({
