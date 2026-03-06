@@ -70,7 +70,7 @@ const MOCK_TASKS: Task[] = [
 const STATUS_CONFIG: Record<TaskStatus, { label: string; labelEn: string; color: string; dot: string }> = {
   pending: { label: "待處理", labelEn: "Pending", color: "text-gray-500", dot: "bg-gray-400" },
   in_progress: { label: "進行中", labelEn: "In Progress", color: "text-blue-600", dot: "bg-blue-500" },
-  review: { label: "待審核", labelEn: "Review", color: "text-orange-600", dot: "bg-orange-500" },
+  review: { label: "待審核", labelEn: "Review", color: "text-amber-600", dot: "bg-amber-500" },
   completed: { label: "已完成", labelEn: "Completed", color: "text-green-600", dot: "bg-green-500" },
 };
 
@@ -108,11 +108,11 @@ export default function MobileTasksPage() {
     <div className="flex flex-col h-full bg-gray-50">
       <MobileHeader title={t("tasks.title")} />
 
-      {/* 新增任務按鈕 */}
+      {/* 新增任務按鈕 - 單色設計 */}
       <div className="flex-shrink-0 bg-white border-b border-gray-100 px-4 py-3">
         <button
           onClick={() => setShowTemplates(true)}
-          className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-orange-500 to-orange-400 text-white rounded-xl font-semibold shadow-md shadow-orange-100 active:scale-[0.98] transition-transform"
+          className="w-full flex items-center justify-center gap-2 py-3 bg-gray-900 text-white rounded-xl font-semibold shadow-md active:scale-[0.98] transition-transform"
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <path d="M10 4v12M4 10h12"/>
@@ -175,7 +175,7 @@ export default function MobileTasksPage() {
                   </div>
                   <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-to-r from-orange-400 to-orange-500 rounded-full transition-all"
+                      className="h-full bg-gray-900 rounded-full transition-all"
                       style={{ width: `${progress}%` }}
                     />
                   </div>
@@ -283,7 +283,7 @@ export default function MobileTasksPage() {
                   {selectedTemplate.stages.map((stage, index) => (
                     <div key={stage.id} className="bg-gray-50 rounded-xl p-3">
                       <div className="flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                        <div className="w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
                           {index + 1}
                         </div>
                         <div className="flex-1">
@@ -310,7 +310,7 @@ export default function MobileTasksPage() {
                 <div className="mt-6 space-y-2">
                   <button
                     onClick={handleStartTask}
-                    className="w-full py-3.5 bg-gradient-to-r from-orange-500 to-orange-400 text-white rounded-xl font-semibold shadow-md active:scale-[0.98] transition-transform"
+                    className="w-full py-3.5 bg-gray-900 text-white rounded-xl font-semibold shadow-md active:scale-[0.98] transition-transform"
                   >
                     {locale === "zh" ? "開始任務" : "Start Task"}
                   </button>

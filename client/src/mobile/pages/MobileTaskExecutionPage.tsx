@@ -121,18 +121,18 @@ export default function MobileTaskExecutionPage() {
           <span className="text-2xl">{template.icon}</span>
         </div>
         
-        {/* Overall Progress */}
+        {/* Overall Progress - 單色 */}
         <div className="mt-3">
-          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
             <div 
-              className="h-full bg-gradient-to-r from-orange-400 to-orange-500 rounded-full transition-all duration-500"
+              className="h-full bg-gray-900 rounded-full transition-all duration-500"
               style={{ width: `${overallProgress}%` }}
             />
           </div>
         </div>
       </div>
 
-      {/* Stage Tabs */}
+      {/* Stage Tabs - 單色設計 */}
       <div className="flex-shrink-0 bg-white border-b border-gray-100 px-4 py-2">
         <div className="flex gap-1 overflow-x-auto scrollbar-none">
           {template.stages.map((stage, index) => {
@@ -146,9 +146,9 @@ export default function MobileTaskExecutionPage() {
                 disabled={!isPast && !isActive}
                 className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                   isActive
-                    ? "bg-orange-500 text-white"
+                    ? "bg-gray-900 text-white"
                     : isPast
-                    ? "bg-green-100 text-green-700"
+                    ? "bg-gray-200 text-gray-700"
                     : "bg-gray-100 text-gray-400"
                 }`}
               >
@@ -189,7 +189,7 @@ export default function MobileTaskExecutionPage() {
             {/* Stage Header */}
             <div className="bg-white rounded-2xl p-4 border border-gray-100">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-orange-100 text-orange-500 flex items-center justify-center text-lg font-bold">
+                <div className="w-10 h-10 rounded-xl bg-gray-900 text-white flex items-center justify-center text-lg font-bold">
                   {currentStage}
                 </div>
                 <div className="flex-1">
@@ -241,30 +241,52 @@ export default function MobileTaskExecutionPage() {
               </div>
             </div>
 
-            {/* AI Assistant Card */}
-            <div className="bg-gradient-to-r from-purple-500 to-indigo-500 rounded-2xl p-4 text-white">
+            {/* AI 智能缺件提示 - 單色設計 */}
+            <div className="bg-gray-900 rounded-2xl p-4 text-white">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                  <span className="text-xl">🤖</span>
+                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 16v-4M12 8h.01"/>
+                  </svg>
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-sm">
-                    {locale === "zh" ? "AI 助手提示" : "AI Assistant Tip"}
+                    {locale === "zh" ? "AI 助手提示" : "AI Assistant"}
                   </p>
-                  <p className="text-xs text-white/80 mt-1">
-                    {currentStage === 1 
+                  <p className="text-xs text-white/70 mt-1">
+                    {totalChecked === 0 
                       ? (locale === "zh" 
-                          ? "請先確認任務的基本資訊和目標，這將幫助我更好地為您服務。" 
-                          : "Please confirm basic info and goals first. This helps me serve you better.")
-                      : currentStage === template.stages.length
+                          ? `目前缺少：${(locale === "zh" ? currentStageData.checklist : currentStageData.checklistEn).slice(0, 2).join("、")}...` 
+                          : `Missing: ${(locale === "en" ? currentStageData.checklistEn : currentStageData.checklist).slice(0, 2).join(", ")}...`)
+                      : totalChecked < totalItems
                       ? (locale === "zh"
-                          ? "最後一步了！完成檢查清單後，您可以選擇導出格式下載成品。"
-                          : "Final step! After completing the checklist, you can choose export format.")
+                          ? `還需要：${(locale === "zh" ? currentStageData.checklist : currentStageData.checklistEn).filter((_, i) => !Object.values(currentProgress.checklist)[i]).slice(0, 2).join("、")}`
+                          : `Still need: ${(locale === "en" ? currentStageData.checklistEn : currentStageData.checklist).filter((_, i) => !Object.values(currentProgress.checklist)[i]).slice(0, 2).join(", ")}`)
                       : (locale === "zh"
-                          ? "勾選完成的項目，我會根據您的輸入持續優化產出。"
-                          : "Check completed items. I'll keep optimizing based on your input.")
+                          ? "所有項目已完成，可以進入下一階段。"
+                          : "All items completed. Ready for next stage.")
                     }
                   </p>
+                  
+                  {/* 從知識庫選取或上傳 */}
+                  {totalChecked < totalItems && (
+                    <div className="flex gap-2 mt-3">
+                      <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 rounded-lg text-xs hover:bg-white/20 transition-colors">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                        </svg>
+                        {locale === "zh" ? "上傳檔案" : "Upload"}
+                      </button>
+                      <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 rounded-lg text-xs hover:bg-white/20 transition-colors">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                        </svg>
+                        {locale === "zh" ? "從知識庫選取" : "From Library"}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
