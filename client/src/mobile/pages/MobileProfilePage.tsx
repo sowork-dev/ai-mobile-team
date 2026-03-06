@@ -1,16 +1,18 @@
 /**
- * 我的頁面 — 品牌定位設定（對話式）、帳號管理
+ * 我的頁面 — 品牌定位設定（對話式）、帳號管理、語言切換
  */
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import MobileHeader from "../components/MobileHeader";
+import { useI18n } from "@/i18n";
 
 export default function MobileProfilePage() {
   const [, navigate] = useLocation();
   const { data: user } = trpc.auth.me.useQuery();
   const logoutMutation = trpc.auth.logout.useMutation();
+  const { locale, toggleLocale, t } = useI18n();
 
   const handleLogout = async () => {
     try {
@@ -53,8 +55,24 @@ export default function MobileProfilePage() {
       ],
     },
     {
-      section: "設定",
+      section: t("profile.settings"),
       items: [
+        {
+          icon: (
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="9" cy="9" r="7" />
+              <path d="M1 9h16M9 1a12 12 0 0 1 0 16M9 1a12 12 0 0 0 0 16" />
+            </svg>
+          ),
+          label: t("profile.language"),
+          desc: locale === "zh" ? "繁體中文 → English" : "English → 繁體中文",
+          action: () => {
+            toggleLocale();
+            toast.success(locale === "zh" ? "Language changed to English" : "已切換至繁體中文");
+          },
+          color: "text-green-500",
+          bg: "bg-green-50",
+        },
         {
           icon: (
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -86,7 +104,7 @@ export default function MobileProfilePage() {
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
-      <MobileHeader title="我的" />
+      <MobileHeader title={t("profile.title")} />
 
       <div className="flex-1 overflow-y-auto">
         {/* 用戶資訊卡 */}

@@ -4,11 +4,12 @@
  * 注意：此元件在 Router base="/app" 下，路徑使用相對路徑
  */
 import { useLocation } from "wouter";
+import { useI18n } from "@/i18n";
 
 interface TabItem {
   id: string;
   path: string;
-  label: string;
+  labelKey: string;
   isCenter?: boolean;
   icon: (active: boolean) => JSX.Element;
 }
@@ -17,7 +18,7 @@ const tabs: TabItem[] = [
   {
     id: "contacts",
     path: "/contacts",
-    label: "聯絡人",
+    labelKey: "tabs.contacts",
     icon: (active) => (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={active ? "#F97316" : "#6B7280"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -30,7 +31,7 @@ const tabs: TabItem[] = [
   {
     id: "chat",
     path: "/chat",
-    label: "聊天",
+    labelKey: "tabs.chat",
     icon: (active) => (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={active ? "#F97316" : "#6B7280"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -40,7 +41,7 @@ const tabs: TabItem[] = [
   {
     id: "assistant",
     path: "/assistant",
-    label: "特助",
+    labelKey: "tabs.assistant",
     isCenter: true,
     icon: (active) => (
       <svg width="28" height="28" viewBox="0 0 24 24" fill={active ? "#F97316" : "none"} stroke={active ? "#F97316" : "#FFFFFF"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -54,7 +55,7 @@ const tabs: TabItem[] = [
   {
     id: "tasks",
     path: "/tasks",
-    label: "任務",
+    labelKey: "tabs.tasks",
     icon: (active) => (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={active ? "#F97316" : "#6B7280"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M9 11l3 3L22 4" />
@@ -65,7 +66,7 @@ const tabs: TabItem[] = [
   {
     id: "profile",
     path: "/profile",
-    label: "我的",
+    labelKey: "tabs.profile",
     icon: (active) => (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={active ? "#F97316" : "#6B7280"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -77,8 +78,9 @@ const tabs: TabItem[] = [
 
 export default function MobileTabBar() {
   const [location, navigate] = useLocation();
+  const { t } = useI18n();
 
-  const activeTab = tabs.find((t) => location === t.path || location.startsWith(t.path + "/"))?.id ?? "chat";
+  const activeTab = tabs.find((tab) => location === tab.path || location.startsWith(tab.path + "/"))?.id ?? "chat";
 
   return (
     <nav
@@ -112,7 +114,7 @@ export default function MobileTabBar() {
                   className="text-[10px] font-medium leading-none mt-7"
                   style={{ color: isActive ? "#F97316" : "#6B7280" }}
                 >
-                  {tab.label}
+                  {t(tab.labelKey)}
                 </span>
               </button>
             );
@@ -129,7 +131,7 @@ export default function MobileTabBar() {
                 className="text-[10px] font-medium leading-none"
                 style={{ color: isActive ? "#F97316" : "#6B7280" }}
               >
-                {tab.label}
+                {t(tab.labelKey)}
               </span>
             </button>
           );
