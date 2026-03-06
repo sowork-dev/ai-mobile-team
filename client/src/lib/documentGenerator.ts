@@ -77,7 +77,7 @@ export async function generateXLS(options: GenerateOptions): Promise<void> {
   }
   
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = options.author || "AI Mobile Team";
+  workbook.creator = options.author || "AI旗艦隊";
   workbook.created = options.date || new Date();
   
   const worksheet = workbook.addWorksheet(title);
@@ -117,7 +117,7 @@ export async function generatePPT(options: GenerateOptions): Promise<void> {
   const { title, content, slides, author } = options;
   
   const pptx = new PptxGenJS();
-  pptx.author = author || "AI Mobile Team";
+  pptx.author = author || "AI旗艦隊";
   pptx.title = title;
   
   // 封面頁
@@ -197,7 +197,7 @@ export async function generateDOC(options: GenerateOptions): Promise<void> {
   const { title, content, author, date } = options;
   
   const doc = new Document({
-    creator: author || "AI Mobile Team",
+    creator: author || "AI旗艦隊",
     title: title,
     sections: [
       {
@@ -353,7 +353,7 @@ export async function generateAllFormats(
   // 生成 XLS
   if (formats.includes("xls") && tableData) {
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = author || "AI Mobile Team";
+    workbook.creator = author || "AI旗艦隊";
     const worksheet = workbook.addWorksheet(title);
     worksheet.addRow(tableData.headers);
     const headerRow = worksheet.getRow(1);
@@ -368,7 +368,7 @@ export async function generateAllFormats(
   // 生成 PPT
   if (formats.includes("ppt")) {
     const pptx = new PptxGenJS();
-    pptx.author = author || "AI Mobile Team";
+    pptx.author = author || "AI旗艦隊";
     pptx.title = title;
     const coverSlide = pptx.addSlide();
     coverSlide.addText(title, { x: 0.5, y: 2, w: "90%", h: 1.5, fontSize: 36, bold: true, color: "1E1E1E", align: "center" });
@@ -393,7 +393,7 @@ export async function generateAllFormats(
   // 生成 DOC
   if (formats.includes("doc")) {
     const docObj = new Document({
-      creator: author || "AI Mobile Team",
+      creator: author || "AI旗艦隊",
       title: title,
       sections: [{
         properties: {},
