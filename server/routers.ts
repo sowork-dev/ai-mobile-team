@@ -6,6 +6,7 @@ import { initTRPC } from "@trpc/server";
 import { z } from "zod";
 import superjson from "superjson";
 import { query } from "./db.js";
+import { taskAgentMapping, createTask, TaskType } from "./taskRouting.js";
 
 const t = initTRPC.create({
   transformer: superjson,
@@ -202,10 +203,124 @@ const talentRouter = router({
   }),
 });
 
+// Task Router - 任務自動路由系統
+const taskRouter = router({
+  // 獲取任務類型的 AI 員工配對
+  getAgentMapping: publicProcedure
+    .input(z.object({ taskType: z.string() }))
+    .query(async ({ input }) => {
+      const mapping = taskAgentMapping[input.taskType as TaskType];
+      if (!mapping) return null;
+      
+      // 從 agents 表獲取完整的 AI 員工資訊
+      const [primaryAgent] = await query(
+        `SELECT id, name, englishName, title, avatarUrl, bio, methodology 
+         FROM agents WHERE id = ?`,
+        [mapping.primary.id]
+      );
+      
+      let secondaryAgent = null;
+      if (mapping.secondary) {
+        const [agent] = await query(
+          `SELECT id, name, englishName, title, avatarUrl, bio, methodology 
+           FROM agents WHERE id = ?`,
+          [mapping.secondary.id]
+        );
+        secondaryAgent = agent;
+      }
+      
+      return {
+        taskType: input.taskType,
+        primary: primaryAgent ? {
+          id: primaryAgent.id,
+          name: primaryAgent.name,
+          englishName: primaryAgent.englishName,
+          title: primaryAgent.title,
+          avatar: primaryAgent.avatarUrl,
+          bio: primaryAgent.bio,
+          methodology: primaryAgent.methodology,
+        } : mapping.primary,
+        secondary: secondaryAgent ? {
+          id: secondaryAgent.id,
+          name: secondaryAgent.name,
+          englishName: secondaryAgent.englishName,
+          title: secondaryAgent.title,
+          avatar: secondaryAgent.avatarUrl,
+          bio: secondaryAgent.bio,
+        } : mapping.secondary,
+        humanApprover: mapping.humanApprover,
+      };
+    }),
+    
+  // 獲取所有任務類型及其 AI 配對
+  getAllMappings: publicProcedure.query(async () => {
+    const result: any[] = [];
+    
+    for (const [taskType, mapping] of Object.entries(taskAgentMapping)) {
+      // 獲取主要 AI 員工資訊
+      const [primaryAgent] = await query(
+        `SELECT id, name, title, avatarUrl FROM agents WHERE id = ?`,
+        [mapping.primary.id]
+      );
+      
+      result.push({
+        taskType,
+        primary: primaryAgent ? {
+          id: primaryAgent.id,
+          name: primaryAgent.name,
+          title: primaryAgent.title,
+          avatar: primaryAgent.avatarUrl,
+        } : mapping.primary,
+        humanApprover: mapping.humanApprover,
+      });
+    }
+    
+    return result;
+  }),
+  
+  // 創建任務
+  create: publicProcedure
+    .input(z.object({
+      type: z.string(),
+      title: z.string(),
+      stages: z.array(z.object({
+        id: z.number(),
+        name: z.string(),
+        assignTo: z.enum(["ai", "human", "both"]),
+      })),
+    }))
+    .mutation(async ({ input }) => {
+      // 目前返回 mock 數據，實際會存入資料庫
+      const task = createTask(
+        input.type as TaskType,
+        input.title,
+        "dev-user-001", // 從 session 獲取
+        input.stages
+      );
+      
+      return task;
+    }),
+    
+  // 獲取用戶的待辦任務
+  myTasks: publicProcedure
+    .input(z.object({
+      status: z.enum(["all", "active", "completed"]).optional(),
+    }).optional())
+    .query(async ({ input }) => {
+      // 返回 mock 數據，實際會從資料庫查詢
+      return {
+        myTasks: [], // 我發起的任務
+        pendingApproval: [], // 等我審批的任務
+        aiHandling: [], // AI 正在處理的任務
+      };
+    }),
+});
+
 // Main App Router
 export const appRouter = router({
   auth: authRouter,
   talent: talentRouter,
+  task: taskRouter,
   
   // Health check
   health: publicProcedure.query(() => ({

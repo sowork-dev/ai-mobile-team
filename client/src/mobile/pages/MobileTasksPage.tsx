@@ -6,7 +6,8 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import MobileHeader from "../components/MobileHeader";
 import { useI18n } from "@/i18n";
-import { taskTemplates, TaskTemplate, TaskStage } from "../components/TaskTemplates";
+import { taskTemplates, TaskTemplate, TaskStage, categoryLabels } from "../components/TaskTemplates";
+import { trpc } from "@/lib/trpc";
 
 type TaskStatus = "pending" | "in_progress" | "completed" | "review";
 
@@ -27,42 +28,42 @@ interface Task {
 const MOCK_TASKS: Task[] = [
   {
     id: "1",
-    title: "Q4 市場分析報告",
-    templateId: "market-report",
+    title: "新人入職 - 王小明",
+    templateId: "employee-onboarding",
     status: "in_progress",
     currentStage: 3,
     totalStages: 5,
-    agentName: "Jessica Hall",
-    agentAvatar: "J",
-    agentBg: "from-purple-400 to-purple-600",
+    agentName: "Rita Chu",
+    agentAvatar: "R",
+    agentBg: "from-green-400 to-green-600",
     createdAt: "今天 10:32",
-    preview: "市場規模分析已完成，正在生成競品洞察...",
+    preview: "帳號已建立，正在準備系統培訓教材...",
   },
   {
     id: "2",
-    title: "Series A 投資簡報",
-    templateId: "pitch-deck",
+    title: "Q4 預算編制",
+    templateId: "budget-planning",
     status: "review",
     currentStage: 4,
     totalStages: 5,
-    agentName: "Timothy Garcia",
-    agentAvatar: "T",
-    agentBg: "from-orange-400 to-orange-600",
+    agentName: "Jason Allen",
+    agentAvatar: "J",
+    agentBg: "from-blue-400 to-blue-600",
     createdAt: "昨天 15:20",
-    preview: "簡報設計已完成，待您審核確認...",
+    preview: "預算草案已完成，等待財務長審核...",
   },
   {
     id: "3",
-    title: "11月社群內容行事曆",
-    templateId: "content-calendar",
+    title: "系統異常 - 登入服務",
+    templateId: "system-incident",
     status: "completed",
     currentStage: 5,
     totalStages: 5,
-    agentName: "Joshua White",
-    agentAvatar: "JW",
-    agentBg: "from-blue-400 to-blue-600",
+    agentName: "IT Support AI",
+    agentAvatar: "IT",
+    agentBg: "from-orange-400 to-orange-600",
     createdAt: "週一 09:15",
-    preview: "已生成 30 篇貼文排程，可下載 Excel...",
+    preview: "問題已修復，根因分析報告已歸檔...",
   },
 ];
 
@@ -78,6 +79,12 @@ export default function MobileTasksPage() {
   const { locale, t } = useI18n();
   const [showTemplates, setShowTemplates] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<TaskTemplate | null>(null);
+  
+  // 獲取選中模板的 AI 員工配對
+  const { data: agentMapping } = trpc.task.getAgentMapping.useQuery(
+    { taskType: selectedTemplate?.id || "" },
+    { enabled: !!selectedTemplate }
+  );
 
   const getTemplateIcon = (templateId: string) => {
     const template = taskTemplates.find(t => t.id === templateId);
@@ -235,6 +242,38 @@ export default function MobileTasksPage() {
                     </span>
                   </div>
                 </div>
+
+                {/* AI 員工配對 */}
+                {agentMapping && (
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 mb-6 border border-blue-100">
+                    <h4 className="font-semibold text-gray-900 text-sm mb-3">
+                      {locale === "zh" ? "🤖 AI 員工已就緒" : "🤖 AI Agent Ready"}
+                    </h4>
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold overflow-hidden">
+                        {agentMapping.primary?.avatar ? (
+                          <img src={agentMapping.primary.avatar} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          agentMapping.primary?.name?.charAt(0) || "AI"
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-900 text-sm">
+                          {agentMapping.primary?.name || agentMapping.primary?.englishName}
+                        </p>
+                        <p className="text-xs text-gray-500">{agentMapping.primary?.title}</p>
+                      </div>
+                    </div>
+                    {agentMapping.humanApprover && (
+                      <div className="mt-3 pt-3 border-t border-blue-100">
+                        <p className="text-xs text-gray-600">
+                          <span className="text-blue-600 font-medium">👤 {locale === "zh" ? "需要審批" : "Approval required"}: </span>
+                          {agentMapping.humanApprover}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Stages */}
                 <div className="space-y-3">
