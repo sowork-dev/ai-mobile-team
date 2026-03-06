@@ -6,6 +6,8 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
+import * as trpcExpress from "@trpc/server/adapters/express";
+import { appRouter } from "./routers.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,17 +16,30 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || true,
+  credentials: true,
+}));
 app.use(express.json());
 
 // Health check
 app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok", service: "ai-mobile-team", timestamp: new Date().toISOString() });
+  res.json({ 
+    status: "ok", 
+    service: "ai-mobile-team", 
+    timestamp: new Date().toISOString(),
+    version: "1.0.0",
+  });
 });
 
-// TODO: Add tRPC router
-// TODO: Add auth routes
-// TODO: Add mobile-specific API routes
+// tRPC handler
+app.use(
+  "/trpc",
+  trpcExpress.createExpressMiddleware({
+    router: appRouter,
+    createContext: () => ({}),
+  })
+);
 
 // Serve static files in production
 if (process.env.NODE_ENV === "production") {
@@ -40,4 +55,5 @@ if (process.env.NODE_ENV === "production") {
 app.listen(PORT, () => {
   console.log(`🚀 AI Mobile Team server running on port ${PORT}`);
   console.log(`📱 Environment: ${process.env.NODE_ENV || "development"}`);
+  console.log(`🔗 URL: http://localhost:${PORT}`);
 });
