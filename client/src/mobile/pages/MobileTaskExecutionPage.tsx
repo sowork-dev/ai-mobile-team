@@ -5,6 +5,7 @@
 import { useState, useEffect } from "react";
 import { useLocation, useParams } from "wouter";
 import { useI18n } from "@/i18n";
+import { toast } from "sonner";
 import { taskTemplates, TaskTemplate, TaskStage } from "../components/TaskTemplates";
 import AIOnboardingModal from "../components/AIOnboardingModal";
 import { trpc } from "@/lib/trpc";
@@ -156,10 +157,30 @@ export default function MobileTaskExecutionPage() {
         return updated;
       });
       
-      // 模擬 AI 處理
+      // 模擬 AI 處理 + 指派下一階段
       setIsProcessing(true);
+      setTaskStatus("ai_processing");
       await new Promise(resolve => setTimeout(resolve, 1500));
       setIsProcessing(false);
+      
+      const nextStage = template.stages[currentStage];
+      const nextAssignee = nextStage?.assignTo === "human" 
+        ? agentMapping?.humanApprover 
+        : agentMapping?.primary?.name;
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + (nextStage?.assignTo === "human" ? 3 : 1));
+      
+      // 顯示指派通知
+      toast.success(
+        locale === "zh"
+          ? `已指派給 ${nextAssignee}，截止 ${dueDate.toLocaleDateString()}`
+          : `Assigned to ${nextAssignee}, due ${dueDate.toLocaleDateString()}`
+      );
+      
+      // 更新狀態
+      if (nextStage?.assignTo === "human") {
+        setTaskStatus("human_required");
+      }
       
       setCurrentStage(currentStage + 1);
     } else {
@@ -169,6 +190,7 @@ export default function MobileTaskExecutionPage() {
         updated[currentStage - 1] = { ...updated[currentStage - 1], completed: true };
         return updated;
       });
+      setTaskStatus("completed");
       setShowExportModal(true);
     }
   };
@@ -236,6 +258,39 @@ export default function MobileTaskExecutionPage() {
           </div>
         </div>
       </div>
+
+      {/* 當前階段指派資訊 */}
+      {scanComplete && (
+        <div className="flex-shrink-0 bg-gray-50 border-b border-gray-100 px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center text-white text-xs font-bold">
+                {agentMapping?.primary?.name?.charAt(0) || "AI"}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">
+                  {agentMapping?.primary?.name || "AI 員工"}
+                  <span className="text-gray-400 font-normal ml-1">
+                    {locale === "zh" ? "處理中" : "Processing"}
+                  </span>
+                </p>
+                <p className="text-xs text-gray-500">
+                  {locale === "zh" ? "截止日期：" : "Due: "}
+                  {new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-gray-500">
+                {locale === "zh" ? "下一位" : "Next"}
+              </p>
+              <p className="text-sm font-medium text-gray-700">
+                {agentMapping?.humanApprover || (locale === "zh" ? "主管審批" : "Manager")}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stage Tabs - 單色設計 */}
       <div className="flex-shrink-0 bg-white border-b border-gray-100 px-4 py-2">

@@ -216,6 +216,17 @@ export const taskAgentMapping: Record<TaskType, {
 // 任務階段狀態
 export type StageStatus = "pending" | "ai_processing" | "human_required" | "completed";
 
+// 階段指派資訊
+export interface StageAssignment {
+  assigneeType: "ai" | "human";
+  assigneeId?: number;       // AI 員工 ID 或 人員 ID
+  assigneeName: string;
+  assigneeRole: string;
+  assignedAt: Date;
+  dueDate?: Date;            // 截止日期
+  completedAt?: Date;
+}
+
 // 任務實例
 export interface TaskInstance {
   id: string;
@@ -226,6 +237,7 @@ export interface TaskInstance {
   currentStage: number;
   totalStages: number;
   status: "active" | "completed" | "cancelled";
+  dueDate?: Date;           // 任務整體截止日期
   assignedAI: {
     id: number;
     name: string;
@@ -241,6 +253,7 @@ export interface TaskInstance {
     name: string;
     status: StageStatus;
     assignTo: "ai" | "human" | "both";
+    assignment?: StageAssignment;  // 當前階段的指派資訊
     completedAt?: Date;
     notes?: string;
   }[];
@@ -378,6 +391,86 @@ export async function notifyHumanApprover(task: TaskInstance, stage: number): Pr
   
   console.log(`[Notification] ${notification.title} - ${notification.message}`);
   return notification;
+}
+
+// 計算階段截止日期（預設 AI 階段 1 天，人工階段 3 天）
+function calculateStageDueDate(assignTo: "ai" | "human" | "both"): Date {
+  const dueDate = new Date();
+  if (assignTo === "ai") {
+    dueDate.setDate(dueDate.getDate() + 1); // AI 1 天
+  } else if (assignTo === "human") {
+    dueDate.setDate(dueDate.getDate() + 3); // 人工 3 天
+  } else {
+    dueDate.setDate(dueDate.getDate() + 2); // 協作 2 天
+  }
+  return dueDate;
+}
+
+// 指派階段給下一個處理者
+export function assignStageToNext(
+  task: TaskInstance, 
+  stageId: number,
+  customDueDate?: Date
+): TaskInstance {
+  const stage = task.stages.find(s => s.id === stageId);
+  if (!stage) return task;
+  
+  const mapping = taskAgentMapping[task.type];
+  const dueDate = customDueDate || calculateStageDueDate(stage.assignTo);
+  
+  if (stage.assignTo === "ai") {
+    // 指派給 AI
+    stage.assignment = {
+      assigneeType: "ai",
+      assigneeId: mapping.primary.id,
+      assigneeName: mapping.primary.name,
+      assigneeRole: mapping.primary.role,
+      assignedAt: new Date(),
+      dueDate,
+    };
+    stage.status = "ai_processing";
+    
+    // 通知（記錄）
+    createNotification("task_assigned", task, {
+      title: `任務指派：${task.title}`,
+      message: `階段「${stage.name}」已指派給 ${mapping.primary.name}，截止日期：${dueDate.toLocaleDateString()}`,
+      toRole: "system",
+      actionRequired: false,
+    });
+    
+  } else if (stage.assignTo === "human") {
+    // 指派給真人審批者
+    stage.assignment = {
+      assigneeType: "human",
+      assigneeName: mapping.humanApprover || "主管",
+      assigneeRole: mapping.humanApprover || "審批者",
+      assignedAt: new Date(),
+      dueDate,
+    };
+    stage.status = "human_required";
+    
+    // 通知真人
+    createNotification("approval_required", task, {
+      title: `需要您處理：${task.title}`,
+      message: `階段「${stage.name}」需要您完成，截止日期：${dueDate.toLocaleDateString()}`,
+      toRole: mapping.humanApprover,
+      actionRequired: true,
+    });
+    
+  } else {
+    // 協作：先由 AI 處理，然後交給人
+    stage.assignment = {
+      assigneeType: "ai",
+      assigneeId: mapping.primary.id,
+      assigneeName: `${mapping.primary.name} → ${mapping.humanApprover}`,
+      assigneeRole: "協作",
+      assignedAt: new Date(),
+      dueDate,
+    };
+    stage.status = "ai_processing";
+  }
+  
+  return task;
 }
 
 // AI 完成階段後的處理
