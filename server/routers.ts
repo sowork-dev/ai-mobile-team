@@ -102,6 +102,10 @@ const talentRouter = router({
       
       const [countResult] = await query<{total: number}>(countSql, countParams);
       
+      // 解析逗號分隔的字串為陣列
+      const parseCommaSeparated = (str: string | null) => 
+        str ? str.split(',').map(s => s.trim()).filter(Boolean) : [];
+      
       return {
         talents: talents.map((t: any) => ({
           id: t.id,
@@ -110,9 +114,9 @@ const talentRouter = router({
           role: t.role,
           layer: t.layer,
           avatar: t.avatar,
-          expertise: t.expertise ? JSON.parse(t.expertise) : [],
+          expertise: parseCommaSeparated(t.expertise),
           description: t.description,
-          platforms: t.platforms ? JSON.parse(t.platforms) : [],
+          platforms: parseCommaSeparated(t.platforms),
         })),
         total: countResult?.total || 0,
         hasMore: offset + limit < (countResult?.total || 0),
@@ -130,6 +134,14 @@ const talentRouter = router({
       
       if (!talent) return null;
       
+      const parseCommaSeparated = (str: string | null) => 
+        str ? str.split(',').map(s => s.trim()).filter(Boolean) : [];
+      
+      const tryParseJSON = (str: string | null) => {
+        if (!str) return null;
+        try { return JSON.parse(str); } catch { return null; }
+      };
+      
       return {
         id: talent.id,
         talentId: talent.talent_id,
@@ -137,11 +149,11 @@ const talentRouter = router({
         role: talent.role,
         layer: talent.layer,
         avatar: talent.avatar,
-        expertise: talent.expertise ? JSON.parse(talent.expertise) : [],
+        expertise: parseCommaSeparated(talent.expertise),
         description: talent.description,
-        platforms: talent.platforms ? JSON.parse(talent.platforms) : [],
-        caseStudy: talent.case_study ? JSON.parse(talent.case_study) : null,
-        kpis: talent.kpis ? JSON.parse(talent.kpis) : null,
+        platforms: parseCommaSeparated(talent.platforms),
+        caseStudy: tryParseJSON(talent.case_study),
+        kpis: tryParseJSON(talent.kpis),
       };
     }),
     
