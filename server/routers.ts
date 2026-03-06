@@ -84,8 +84,7 @@ const talentRouter = router({
         params.push(`%${search}%`, `%${search}%`, `%${search}%`);
       }
       
-      sql += ` ORDER BY layer ASC, name ASC LIMIT ? OFFSET ?`;
-      params.push(limit, offset);
+      sql += ` ORDER BY layer ASC, name ASC LIMIT ${Number(limit)} OFFSET ${Number(offset)}`;
       
       const talents = await query(sql, params);
       
