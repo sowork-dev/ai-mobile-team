@@ -10,8 +10,8 @@ import { useAuth } from "../_core/hooks/useAuth";
 // Mobile Pages
 import MobileContactsPage from "./pages/MobileContactsPage";
 import MobileChatPage from "./pages/MobileChatPage";
+import MobileAssistantPage from "./pages/MobileAssistantPage";
 import MobileTasksPage from "./pages/MobileTasksPage";
-import MobileGroupsPage from "./pages/MobileGroupsPage";
 import MobileProfilePage from "./pages/MobileProfilePage";
 import MobileOnboarding from "./pages/MobileOnboarding";
 import MobileChatDetailPage from "./pages/MobileChatDetailPage";
@@ -64,9 +64,9 @@ export default function MobileApp() {
           <Route path="/agent/:agentId" component={MobileAgentDetailPage} />
           <Route path="/chat" component={MobileChatPage} />
           <Route path="/chat/:conversationId" component={MobileChatDetailPage} />
+          <Route path="/assistant" component={MobileAssistantPage} />
           <Route path="/tasks" component={MobileTasksPage} />
           <Route path="/task/:taskId" component={MobileTaskDetailPage} />
-          <Route path="/groups" component={MobileGroupsPage} />
           <Route path="/group/:groupId" component={MobileGroupDetailPage} />
           <Route path="/profile" component={MobileProfilePage} />
           <Route component={() => <Redirect to="/chat" />} />
