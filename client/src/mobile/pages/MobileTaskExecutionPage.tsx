@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { taskTemplates, TaskTemplate, TaskStage } from "../components/TaskTemplates";
 import AIOnboardingModal from "../components/AIOnboardingModal";
 import { trpc } from "@/lib/trpc";
-import { generateDocument, GenerateOptions } from "@/lib/documentGenerator";
+import { generateDocument, generateAllFormats, GenerateOptions } from "@/lib/documentGenerator";
 
 interface StageProgress {
   stageId: number;
@@ -779,6 +779,35 @@ export default function MobileTaskExecutionPage() {
               </p>
             </div>
             
+            {/* 一鍵下載全部 */}
+            <button
+              onClick={async () => {
+                try {
+                  toast.loading(locale === "zh" ? "正在生成所有格式..." : "Generating all formats...");
+                  const options: GenerateOptions = {
+                    title: template.name,
+                    content: generateTaskContent(),
+                    author: agentMapping?.primary?.name || "AI 員工",
+                    date: new Date(),
+                    tableData: generateTableData(),
+                    slides: generateSlides(),
+                  };
+                  await generateAllFormats(template.outputFormats as any[], options);
+                  toast.dismiss();
+                  toast.success(locale === "zh" ? "已下載 ZIP 檔案！" : "ZIP file downloaded!");
+                  setShowExportModal(false);
+                  navigate("/tasks");
+                } catch (error) {
+                  toast.dismiss();
+                  toast.error(`${error}`);
+                }
+              }}
+              className="w-full py-4 bg-gray-900 text-white rounded-xl font-bold mb-4 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+            >
+              <span>📦</span>
+              <span>{locale === "zh" ? "一鍵下載全部格式" : "Download All Formats"}</span>
+            </button>
+
             <div className="grid grid-cols-2 gap-3 mb-4">
               {template.outputFormats.map((format) => (
                 <button
