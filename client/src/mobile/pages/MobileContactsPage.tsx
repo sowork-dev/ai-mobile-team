@@ -29,11 +29,19 @@ const SKILL_COLORS = [
 ];
 
 function AgentCard({ agent, onChat, onAdd }: { agent: any; onChat: () => void; onAdd: () => void }) {
-  const skills = Array.isArray(agent.skills)
-    ? agent.skills.slice(0, 3)
-    : typeof agent.skills === "string"
-    ? agent.skills.split(",").slice(0, 3)
+  // expertise 可能是陣列或需要解析
+  const skills = Array.isArray(agent.expertise)
+    ? agent.expertise.slice(0, 3)
     : [];
+
+  // Layer 標籤
+  const layerLabels: Record<number, string> = {
+    1: "L1 高管",
+    2: "L2 專家", 
+    3: "L3 經理",
+    4: "L4 執行",
+    5: "L5 助理",
+  };
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -41,8 +49,8 @@ function AgentCard({ agent, onChat, onAdd }: { agent: any; onChat: () => void; o
       <div className="px-4 pt-4 pb-3 flex items-start gap-3">
         {/* 頭像 */}
         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-base flex-shrink-0 shadow-sm">
-          {agent.avatarUrl ? (
-            <img src={agent.avatarUrl} alt={agent.name} className="w-full h-full object-cover rounded-xl" />
+          {agent.avatar ? (
+            <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover rounded-xl" />
           ) : (
             (agent.name || "A")[0]
           )}
@@ -50,26 +58,20 @@ function AgentCard({ agent, onChat, onAdd }: { agent: any; onChat: () => void; o
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
             <p className="font-semibold text-gray-900 text-sm">{agent.name}</p>
-            {agent.englishName && (
-              <p className="text-xs text-gray-400">{agent.englishName}</p>
+            {agent.layer && (
+              <span className="text-[10px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full font-medium">
+                {layerLabels[agent.layer] || `L${agent.layer}`}
+              </span>
             )}
           </div>
-          <p className="text-xs text-gray-500 mt-0.5">{agent.title}</p>
-          {agent.rating && (
-            <div className="flex items-center gap-1 mt-1">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="#F97316">
-                <path d="M6 1l1.5 3 3.5.5-2.5 2.5.5 3.5L6 9l-3 1.5.5-3.5L1 4.5l3.5-.5z"/>
-              </svg>
-              <span className="text-xs text-gray-600 font-medium">{agent.rating}</span>
-            </div>
-          )}
+          <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{agent.role}</p>
         </div>
       </div>
 
       {/* 簡介 */}
-      {agent.bio && (
+      {agent.description && (
         <p className="px-4 text-xs text-gray-500 leading-relaxed line-clamp-2 mb-3">
-          {agent.bio}
+          {agent.description}
         </p>
       )}
 
@@ -112,10 +114,14 @@ export default function MobileContactsPage() {
   const [search, setSearch] = useState("");
   const [selectedLayer, setSelectedLayer] = useState<string | undefined>(undefined);
 
-  // 從 agents 資料表取得 AI 員工
-  const { data: agentsData = [], isLoading } = trpc.cmo.listAgents.useQuery({
-    layer: selectedLayer as any,
+  // 從人才庫取得 AI 員工
+  const { data: talentData, isLoading } = trpc.talent.list.useQuery({
+    limit: 50,
+    layer: selectedLayer ? parseInt(selectedLayer) : undefined,
+    search: search || undefined,
   });
+  
+  const agentsData = talentData?.talents || [];
 
   const filteredAgents = agentsData.filter((a: any) => {
     if (!search) return true;
@@ -129,9 +135,10 @@ export default function MobileContactsPage() {
 
   const layers = [
     { id: undefined, label: "全部" },
-    { id: "strategy", label: "策略" },
-    { id: "execution", label: "執行" },
-    { id: "training", label: "培訓" },
+    { id: "1", label: "L1 高管" },
+    { id: "2", label: "L2 專家" },
+    { id: "3", label: "L3 經理" },
+    { id: "4", label: "L4 執行" },
   ];
 
   return (
