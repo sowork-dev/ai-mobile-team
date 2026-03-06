@@ -1,0 +1,373 @@
+/**
+ * 任務模板系統
+ * 預設常見任務類型，讓用戶快速建立任務
+ */
+
+export interface TaskTemplate {
+  id: string;
+  name: string;
+  nameEn: string;
+  icon: string;
+  description: string;
+  descriptionEn: string;
+  stages: TaskStage[];
+  estimatedTime: string;
+  outputFormats: ('pdf' | 'ppt' | 'doc' | 'xls')[];
+}
+
+export interface TaskStage {
+  id: number;
+  name: string;
+  nameEn: string;
+  description: string;
+  descriptionEn: string;
+  checklist: string[];
+  checklistEn: string[];
+}
+
+export const taskTemplates: TaskTemplate[] = [
+  {
+    id: "market-report",
+    name: "市場分析報告",
+    nameEn: "Market Analysis Report",
+    icon: "📊",
+    description: "完整的市場趨勢、競品分析和機會評估報告",
+    descriptionEn: "Complete market trends, competitor analysis and opportunity assessment",
+    estimatedTime: "2-3 hours",
+    outputFormats: ["pdf", "ppt"],
+    stages: [
+      {
+        id: 1,
+        name: "需求確認",
+        nameEn: "Requirements",
+        description: "確認分析目標和範圍",
+        descriptionEn: "Confirm analysis goals and scope",
+        checklist: ["目標市場", "分析時間範圍", "重點競品"],
+        checklistEn: ["Target market", "Time range", "Key competitors"],
+      },
+      {
+        id: 2,
+        name: "數據收集",
+        nameEn: "Data Collection",
+        description: "AI 自動收集市場數據",
+        descriptionEn: "AI collects market data automatically",
+        checklist: ["市場規模", "成長趨勢", "消費者洞察"],
+        checklistEn: ["Market size", "Growth trends", "Consumer insights"],
+      },
+      {
+        id: 3,
+        name: "分析整理",
+        nameEn: "Analysis",
+        description: "整理數據並生成洞察",
+        descriptionEn: "Organize data and generate insights",
+        checklist: ["SWOT 分析", "機會評估", "風險識別"],
+        checklistEn: ["SWOT analysis", "Opportunity assessment", "Risk identification"],
+      },
+      {
+        id: 4,
+        name: "審核確認",
+        nameEn: "Review",
+        description: "人工審核並調整內容",
+        descriptionEn: "Human review and content adjustment",
+        checklist: ["數據正確性", "結論合理性", "格式檢查"],
+        checklistEn: ["Data accuracy", "Conclusion validity", "Format check"],
+      },
+      {
+        id: 5,
+        name: "導出交付",
+        nameEn: "Export",
+        description: "生成最終報告文件",
+        descriptionEn: "Generate final report files",
+        checklist: ["選擇格式", "下載檔案", "分享連結"],
+        checklistEn: ["Choose format", "Download file", "Share link"],
+      },
+    ],
+  },
+  {
+    id: "pitch-deck",
+    name: "投資簡報",
+    nameEn: "Pitch Deck",
+    icon: "🎯",
+    description: "融資用的公司介紹和商業計劃簡報",
+    descriptionEn: "Company intro and business plan for fundraising",
+    estimatedTime: "3-4 hours",
+    outputFormats: ["ppt", "pdf"],
+    stages: [
+      {
+        id: 1,
+        name: "基本資訊",
+        nameEn: "Basic Info",
+        description: "確認公司和產品資訊",
+        descriptionEn: "Confirm company and product info",
+        checklist: ["公司簡介", "產品/服務", "目標融資金額"],
+        checklistEn: ["Company intro", "Product/Service", "Target funding"],
+      },
+      {
+        id: 2,
+        name: "市場機會",
+        nameEn: "Market Opportunity",
+        description: "分析市場規模和機會",
+        descriptionEn: "Analyze market size and opportunity",
+        checklist: ["TAM/SAM/SOM", "市場趨勢", "痛點驗證"],
+        checklistEn: ["TAM/SAM/SOM", "Market trends", "Pain point validation"],
+      },
+      {
+        id: 3,
+        name: "商業模式",
+        nameEn: "Business Model",
+        description: "定義收入模式和財務預測",
+        descriptionEn: "Define revenue model and projections",
+        checklist: ["收入來源", "定價策略", "財務預測"],
+        checklistEn: ["Revenue streams", "Pricing strategy", "Financial projections"],
+      },
+      {
+        id: 4,
+        name: "簡報設計",
+        nameEn: "Deck Design",
+        description: "AI 生成簡報內容和視覺",
+        descriptionEn: "AI generates content and visuals",
+        checklist: ["封面設計", "圖表生成", "版面編排"],
+        checklistEn: ["Cover design", "Chart generation", "Layout"],
+      },
+      {
+        id: 5,
+        name: "審核導出",
+        nameEn: "Review & Export",
+        description: "最終審核並導出檔案",
+        descriptionEn: "Final review and export",
+        checklist: ["內容審核", "格式檢查", "導出 PPT/PDF"],
+        checklistEn: ["Content review", "Format check", "Export PPT/PDF"],
+      },
+    ],
+  },
+  {
+    id: "content-calendar",
+    name: "內容行事曆",
+    nameEn: "Content Calendar",
+    icon: "📅",
+    description: "社群媒體內容規劃和排程表",
+    descriptionEn: "Social media content planning and schedule",
+    estimatedTime: "1-2 hours",
+    outputFormats: ["xls", "pdf"],
+    stages: [
+      {
+        id: 1,
+        name: "平台選擇",
+        nameEn: "Platform Selection",
+        description: "選擇目標社群平台",
+        descriptionEn: "Select target social platforms",
+        checklist: ["平台選擇", "發布頻率", "時間範圍"],
+        checklistEn: ["Platform selection", "Posting frequency", "Time range"],
+      },
+      {
+        id: 2,
+        name: "主題規劃",
+        nameEn: "Topic Planning",
+        description: "AI 建議內容主題",
+        descriptionEn: "AI suggests content topics",
+        checklist: ["主題分類", "關鍵字策略", "熱點追蹤"],
+        checklistEn: ["Topic categories", "Keyword strategy", "Trending topics"],
+      },
+      {
+        id: 3,
+        name: "內容生成",
+        nameEn: "Content Generation",
+        description: "批量生成貼文內容",
+        descriptionEn: "Batch generate post content",
+        checklist: ["文案撰寫", "圖片建議", "Hashtag"],
+        checklistEn: ["Copywriting", "Image suggestions", "Hashtags"],
+      },
+      {
+        id: 4,
+        name: "排程確認",
+        nameEn: "Schedule Confirmation",
+        description: "確認發布時間表",
+        descriptionEn: "Confirm posting schedule",
+        checklist: ["日期確認", "時間優化", "跨平台同步"],
+        checklistEn: ["Date confirmation", "Time optimization", "Cross-platform sync"],
+      },
+      {
+        id: 5,
+        name: "導出分享",
+        nameEn: "Export & Share",
+        description: "導出行事曆檔案",
+        descriptionEn: "Export calendar file",
+        checklist: ["Excel 導出", "團隊分享", "同步到日曆"],
+        checklistEn: ["Excel export", "Team sharing", "Calendar sync"],
+      },
+    ],
+  },
+  {
+    id: "competitor-analysis",
+    name: "競品分析",
+    nameEn: "Competitor Analysis",
+    icon: "🔍",
+    description: "深度競爭對手研究和差異化策略",
+    descriptionEn: "Deep competitor research and differentiation strategy",
+    estimatedTime: "2-3 hours",
+    outputFormats: ["pdf", "ppt"],
+    stages: [
+      {
+        id: 1,
+        name: "競品識別",
+        nameEn: "Competitor Identification",
+        description: "確認分析對象",
+        descriptionEn: "Identify analysis targets",
+        checklist: ["直接競品", "間接競品", "潛在競品"],
+        checklistEn: ["Direct competitors", "Indirect competitors", "Potential competitors"],
+      },
+      {
+        id: 2,
+        name: "資訊收集",
+        nameEn: "Information Gathering",
+        description: "AI 收集競品資訊",
+        descriptionEn: "AI gathers competitor info",
+        checklist: ["產品功能", "定價策略", "市場定位"],
+        checklistEn: ["Product features", "Pricing strategy", "Market positioning"],
+      },
+      {
+        id: 3,
+        name: "比較分析",
+        nameEn: "Comparative Analysis",
+        description: "生成比較矩陣",
+        descriptionEn: "Generate comparison matrix",
+        checklist: ["功能對比表", "優劣勢分析", "市場份額"],
+        checklistEn: ["Feature comparison", "Strengths/Weaknesses", "Market share"],
+      },
+      {
+        id: 4,
+        name: "策略建議",
+        nameEn: "Strategic Recommendations",
+        description: "AI 提供差異化建議",
+        descriptionEn: "AI provides differentiation advice",
+        checklist: ["差異化機會", "競爭策略", "行動計劃"],
+        checklistEn: ["Differentiation opportunities", "Competition strategy", "Action plan"],
+      },
+      {
+        id: 5,
+        name: "報告交付",
+        nameEn: "Report Delivery",
+        description: "生成完整報告",
+        descriptionEn: "Generate complete report",
+        checklist: ["審核內容", "選擇格式", "下載/分享"],
+        checklistEn: ["Review content", "Choose format", "Download/Share"],
+      },
+    ],
+  },
+  {
+    id: "meeting-summary",
+    name: "會議紀錄",
+    nameEn: "Meeting Summary",
+    icon: "📝",
+    description: "會議重點整理、待辦事項和追蹤",
+    descriptionEn: "Meeting highlights, action items and follow-ups",
+    estimatedTime: "30 mins",
+    outputFormats: ["pdf", "doc"],
+    stages: [
+      {
+        id: 1,
+        name: "會議資訊",
+        nameEn: "Meeting Info",
+        description: "輸入基本資訊",
+        descriptionEn: "Enter basic information",
+        checklist: ["會議主題", "參與者", "日期時間"],
+        checklistEn: ["Meeting topic", "Participants", "Date/Time"],
+      },
+      {
+        id: 2,
+        name: "內容輸入",
+        nameEn: "Content Input",
+        description: "輸入或上傳會議內容",
+        descriptionEn: "Input or upload meeting content",
+        checklist: ["語音轉文字", "重點標記", "附件上傳"],
+        checklistEn: ["Speech to text", "Key points", "Attachments"],
+      },
+      {
+        id: 3,
+        name: "AI 整理",
+        nameEn: "AI Summary",
+        description: "AI 自動整理重點",
+        descriptionEn: "AI automatically summarizes",
+        checklist: ["議題摘要", "決議事項", "待辦事項"],
+        checklistEn: ["Topic summary", "Decisions", "Action items"],
+      },
+      {
+        id: 4,
+        name: "確認分派",
+        nameEn: "Confirm & Assign",
+        description: "確認待辦並分派負責人",
+        descriptionEn: "Confirm tasks and assign owners",
+        checklist: ["負責人指派", "截止日期", "優先級"],
+        checklistEn: ["Assign owners", "Deadlines", "Priority"],
+      },
+      {
+        id: 5,
+        name: "發送追蹤",
+        nameEn: "Send & Track",
+        description: "發送紀錄並設定追蹤",
+        descriptionEn: "Send summary and set tracking",
+        checklist: ["發送給參與者", "設定提醒", "導出檔案"],
+        checklistEn: ["Send to participants", "Set reminders", "Export file"],
+      },
+    ],
+  },
+  {
+    id: "custom",
+    name: "自訂任務",
+    nameEn: "Custom Task",
+    icon: "✨",
+    description: "建立自訂工作流程的任務",
+    descriptionEn: "Create task with custom workflow",
+    estimatedTime: "Varies",
+    outputFormats: ["pdf", "ppt", "doc", "xls"],
+    stages: [
+      {
+        id: 1,
+        name: "定義任務",
+        nameEn: "Define Task",
+        description: "描述你要完成的任務",
+        descriptionEn: "Describe the task you want to complete",
+        checklist: ["任務目標", "預期產出", "時間限制"],
+        checklistEn: ["Task goal", "Expected output", "Time limit"],
+      },
+      {
+        id: 2,
+        name: "AI 規劃",
+        nameEn: "AI Planning",
+        description: "AI 建議執行步驟",
+        descriptionEn: "AI suggests execution steps",
+        checklist: ["步驟拆解", "資源需求", "風險評估"],
+        checklistEn: ["Step breakdown", "Resource needs", "Risk assessment"],
+      },
+      {
+        id: 3,
+        name: "執行任務",
+        nameEn: "Execute Task",
+        description: "按步驟完成任務",
+        descriptionEn: "Complete task step by step",
+        checklist: ["進度追蹤", "問題回報", "調整計劃"],
+        checklistEn: ["Progress tracking", "Issue reporting", "Adjust plan"],
+      },
+      {
+        id: 4,
+        name: "審核產出",
+        nameEn: "Review Output",
+        description: "審核任務成果",
+        descriptionEn: "Review task deliverables",
+        checklist: ["品質檢查", "修改建議", "最終確認"],
+        checklistEn: ["Quality check", "Revision suggestions", "Final confirmation"],
+      },
+      {
+        id: 5,
+        name: "完成交付",
+        nameEn: "Complete & Deliver",
+        description: "完成任務並交付成果",
+        descriptionEn: "Complete task and deliver results",
+        checklist: ["格式選擇", "導出檔案", "歸檔紀錄"],
+        checklistEn: ["Format selection", "Export file", "Archive record"],
+      },
+    ],
+  },
+];
+
+export default taskTemplates;

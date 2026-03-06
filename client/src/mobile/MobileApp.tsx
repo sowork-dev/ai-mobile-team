@@ -18,6 +18,7 @@ import MobileChatDetailPage from "./pages/MobileChatDetailPage";
 import MobileGroupDetailPage from "./pages/MobileGroupDetailPage";
 import MobileAgentDetailPage from "./pages/MobileAgentDetailPage";
 import MobileTaskDetailPage from "./pages/MobileTaskDetailPage";
+import MobileTaskExecutionPage from "./pages/MobileTaskExecutionPage";
 
 // Mobile Components
 import MobileTabBar from "./components/MobileTabBar";
@@ -36,7 +37,8 @@ export default function MobileApp() {
     location.startsWith("/agent/") ||
     location.startsWith("/task/") ||
     location === "/onboarding" ||
-    location.startsWith("/onboarding");
+    location.startsWith("/onboarding") ||
+    location === "/task/new";
 
   if (loading) {
     return (
@@ -66,6 +68,7 @@ export default function MobileApp() {
           <Route path="/chat/:conversationId" component={MobileChatDetailPage} />
           <Route path="/assistant" component={MobileAssistantPage} />
           <Route path="/tasks" component={MobileTasksPage} />
+          <Route path="/task/new" component={MobileTaskExecutionPage} />
           <Route path="/task/:taskId" component={MobileTaskDetailPage} />
           <Route path="/group/:groupId" component={MobileGroupDetailPage} />
           <Route path="/profile" component={MobileProfilePage} />

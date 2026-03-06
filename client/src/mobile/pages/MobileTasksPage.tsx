@@ -1,19 +1,22 @@
 /**
- * 任務頁面 — 所有交付物的統一收件匣
- * 按類型分類：簡報 / 社群 / 文案 / 策略 / 影片
+ * 任務頁面 — 任務模板系統 + 階段性檢查點
+ * P0 功能：讓用戶真正完成任務並拿到交付物
  */
 import { useState } from "react";
 import { useLocation } from "wouter";
 import MobileHeader from "../components/MobileHeader";
+import { useI18n } from "@/i18n";
+import { taskTemplates, TaskTemplate, TaskStage } from "../components/TaskTemplates";
 
-type TaskType = "all" | "presentation" | "social" | "copy" | "strategy" | "video";
 type TaskStatus = "pending" | "in_progress" | "completed" | "review";
 
 interface Task {
   id: string;
   title: string;
-  type: TaskType;
+  templateId: string;
   status: TaskStatus;
+  currentStage: number;
+  totalStages: number;
   agentName: string;
   agentAvatar: string;
   agentBg: string;
@@ -24,170 +27,126 @@ interface Task {
 const MOCK_TASKS: Task[] = [
   {
     id: "1",
-    title: "品牌社群貼文計畫（10 月份）",
-    type: "social",
-    status: "completed",
-    agentName: "Ken",
-    agentAvatar: "K",
-    agentBg: "from-blue-400 to-blue-600",
+    title: "Q4 市場分析報告",
+    templateId: "market-report",
+    status: "in_progress",
+    currentStage: 3,
+    totalStages: 5,
+    agentName: "Jessica Hall",
+    agentAvatar: "J",
+    agentBg: "from-purple-400 to-purple-600",
     createdAt: "今天 10:32",
-    preview: "包含 12 篇 Instagram 貼文草稿，涵蓋產品介紹、品牌故事...",
+    preview: "市場規模分析已完成，正在生成競品洞察...",
   },
   {
     id: "2",
-    title: "Q4 行銷策略報告",
-    type: "strategy",
-    status: "in_progress",
-    agentName: "Vivian",
-    agentAvatar: "V",
+    title: "Series A 投資簡報",
+    templateId: "pitch-deck",
+    status: "review",
+    currentStage: 4,
+    totalStages: 5,
+    agentName: "Timothy Garcia",
+    agentAvatar: "T",
     agentBg: "from-orange-400 to-orange-600",
     createdAt: "昨天 15:20",
-    preview: "分析競品動態、市場趨勢，制定第四季行銷重點...",
+    preview: "簡報設計已完成，待您審核確認...",
   },
   {
     id: "3",
-    title: "新品上市簡報",
-    type: "presentation",
-    status: "review",
-    agentName: "Luna",
-    agentAvatar: "L",
-    agentBg: "from-purple-400 to-purple-600",
-    createdAt: "週一 09:15",
-    preview: "20 頁 PPT，包含市場定位、競品分析、行銷計畫...",
-  },
-  {
-    id: "4",
-    title: "廣告文案 A/B 測試版本",
-    type: "copy",
+    title: "11月社群內容行事曆",
+    templateId: "content-calendar",
     status: "completed",
-    agentName: "Ken",
-    agentAvatar: "K",
+    currentStage: 5,
+    totalStages: 5,
+    agentName: "Joshua White",
+    agentAvatar: "JW",
     agentBg: "from-blue-400 to-blue-600",
-    createdAt: "週日 14:00",
-    preview: "3 組廣告文案，針對不同受眾測試點擊率...",
-  },
-  {
-    id: "5",
-    title: "品牌形象影片腳本",
-    type: "video",
-    status: "pending",
-    agentName: "Max",
-    agentAvatar: "M",
-    agentBg: "from-green-400 to-green-600",
-    createdAt: "上週五",
-    preview: "60 秒品牌形象影片的分鏡腳本與旁白文字...",
+    createdAt: "週一 09:15",
+    preview: "已生成 30 篇貼文排程，可下載 Excel...",
   },
 ];
 
-const TYPE_CONFIG: Record<TaskType, { label: string; color: string; bg: string; icon: JSX.Element }> = {
-  all: {
-    label: "全部",
-    color: "text-gray-700",
-    bg: "bg-gray-100",
-    icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><rect x="1" y="1" width="12" height="12" rx="1.5"/></svg>,
-  },
-  presentation: {
-    label: "簡報",
-    color: "text-purple-700",
-    bg: "bg-purple-50",
-    icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><rect x="1" y="1" width="12" height="9" rx="1"/><path d="M4 13h6M7 10v3"/></svg>,
-  },
-  social: {
-    label: "社群",
-    color: "text-pink-700",
-    bg: "bg-pink-50",
-    icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="7" cy="7" r="5"/><path d="M4.5 7h5M7 4.5v5"/></svg>,
-  },
-  copy: {
-    label: "文案",
-    color: "text-blue-700",
-    bg: "bg-blue-50",
-    icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M2 3h10M2 6h8M2 9h6"/></svg>,
-  },
-  strategy: {
-    label: "策略",
-    color: "text-orange-700",
-    bg: "bg-orange-50",
-    icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M2 10l3-3 2 2 5-5"/></svg>,
-  },
-  video: {
-    label: "影片",
-    color: "text-green-700",
-    bg: "bg-green-50",
-    icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M9 7L5 4v6l4-3z"/><rect x="1" y="2" width="12" height="10" rx="1.5"/></svg>,
-  },
-};
-
-const STATUS_CONFIG: Record<TaskStatus, { label: string; color: string; dot: string }> = {
-  pending: { label: "待處理", color: "text-gray-500", dot: "bg-gray-400" },
-  in_progress: { label: "進行中", color: "text-blue-600", dot: "bg-blue-500" },
-  review: { label: "待審核", color: "text-orange-600", dot: "bg-orange-500" },
-  completed: { label: "已完成", color: "text-green-600", dot: "bg-green-500" },
+const STATUS_CONFIG: Record<TaskStatus, { label: string; labelEn: string; color: string; dot: string }> = {
+  pending: { label: "待處理", labelEn: "Pending", color: "text-gray-500", dot: "bg-gray-400" },
+  in_progress: { label: "進行中", labelEn: "In Progress", color: "text-blue-600", dot: "bg-blue-500" },
+  review: { label: "待審核", labelEn: "Review", color: "text-orange-600", dot: "bg-orange-500" },
+  completed: { label: "已完成", labelEn: "Completed", color: "text-green-600", dot: "bg-green-500" },
 };
 
 export default function MobileTasksPage() {
   const [, navigate] = useLocation();
-  const [activeType, setActiveType] = useState<TaskType>("all");
+  const { locale, t } = useI18n();
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<TaskTemplate | null>(null);
 
-  const filtered = MOCK_TASKS.filter(
-    (t) => activeType === "all" || t.type === activeType
-  );
+  const getTemplateIcon = (templateId: string) => {
+    const template = taskTemplates.find(t => t.id === templateId);
+    return template?.icon || "📋";
+  };
 
-  const types: TaskType[] = ["all", "presentation", "social", "copy", "strategy", "video"];
+  const handleSelectTemplate = (template: TaskTemplate) => {
+    setSelectedTemplate(template);
+  };
+
+  const handleStartTask = () => {
+    if (selectedTemplate) {
+      // 實際會創建任務並導航到任務執行頁面
+      navigate(`/task/new?template=${selectedTemplate.id}`);
+      setShowTemplates(false);
+      setSelectedTemplate(null);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
-      <MobileHeader title="任務" />
+      <MobileHeader title={t("tasks.title")} />
 
-      {/* 類型篩選 */}
-      <div className="flex-shrink-0 bg-white border-b border-gray-100 px-4 py-2.5">
-        <div className="flex gap-2 overflow-x-auto scrollbar-none">
-          {types.map((type) => {
-            const cfg = TYPE_CONFIG[type];
-            const isActive = activeType === type;
-            return (
-              <button
-                key={type}
-                onClick={() => setActiveType(type)}
-                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  isActive
-                    ? "bg-orange-500 text-white"
-                    : `${cfg.bg} ${cfg.color}`
-                }`}
-              >
-                {cfg.icon}
-                {cfg.label}
-              </button>
-            );
-          })}
-        </div>
+      {/* 新增任務按鈕 */}
+      <div className="flex-shrink-0 bg-white border-b border-gray-100 px-4 py-3">
+        <button
+          onClick={() => setShowTemplates(true)}
+          className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-orange-500 to-orange-400 text-white rounded-xl font-semibold shadow-md shadow-orange-100 active:scale-[0.98] transition-transform"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <path d="M10 4v12M4 10h12"/>
+          </svg>
+          {locale === "zh" ? "建立新任務" : "Create New Task"}
+        </button>
       </div>
 
       {/* 任務列表 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {filtered.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
-            <p className="text-sm">此分類尚無任務</p>
+        {MOCK_TASKS.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round">
+                <rect x="4" y="6" width="24" height="20" rx="2"/>
+                <path d="M4 12h24M12 6v6"/>
+              </svg>
+            </div>
+            <p className="text-gray-500 text-sm">{t("tasks.noTasks")}</p>
+            <p className="text-gray-400 text-xs mt-1">
+              {locale === "zh" ? "點擊上方按鈕建立第一個任務" : "Click the button above to create your first task"}
+            </p>
           </div>
         ) : (
-          filtered.map((task) => {
-            const typeCfg = TYPE_CONFIG[task.type];
+          MOCK_TASKS.map((task) => {
             const statusCfg = STATUS_CONFIG[task.status];
+            const progress = (task.currentStage / task.totalStages) * 100;
             return (
               <button
                 key={task.id}
                 onClick={() => navigate(`/task/${task.id}`)}
                 className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-left active:bg-gray-50 transition-colors"
               >
-                {/* 頂部：類型 + 狀態 */}
+                {/* 頂部：圖示 + 狀態 */}
                 <div className="flex items-center justify-between mb-2.5">
-                  <span className={`flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full ${typeCfg.bg} ${typeCfg.color}`}>
-                    {typeCfg.icon}
-                    {typeCfg.label}
-                  </span>
+                  <span className="text-xl">{getTemplateIcon(task.templateId)}</span>
                   <div className="flex items-center gap-1.5">
                     <div className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
-                    <span className={`text-xs font-medium ${statusCfg.color}`}>{statusCfg.label}</span>
+                    <span className={`text-xs font-medium ${statusCfg.color}`}>
+                      {locale === "zh" ? statusCfg.label : statusCfg.labelEn}
+                    </span>
                   </div>
                 </div>
 
@@ -198,6 +157,22 @@ export default function MobileTasksPage() {
                 {task.preview && (
                   <p className="text-xs text-gray-500 line-clamp-2 mb-3">{task.preview}</p>
                 )}
+
+                {/* 進度條 */}
+                <div className="mb-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-gray-500">
+                      {locale === "zh" ? `階段 ${task.currentStage}/${task.totalStages}` : `Stage ${task.currentStage}/${task.totalStages}`}
+                    </span>
+                    <span className="text-xs text-gray-400">{Math.round(progress)}%</span>
+                  </div>
+                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-orange-400 to-orange-500 rounded-full transition-all"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
 
                 {/* 底部：AI 員工 + 時間 */}
                 <div className="flex items-center justify-between">
@@ -216,6 +191,124 @@ export default function MobileTasksPage() {
           })
         )}
       </div>
+
+      {/* 任務模板選擇 Modal */}
+      {showTemplates && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-white">
+          {/* Modal Header */}
+          <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-100">
+            <button
+              onClick={() => {
+                setShowTemplates(false);
+                setSelectedTemplate(null);
+              }}
+              className="text-gray-500 text-sm"
+            >
+              {locale === "zh" ? "取消" : "Cancel"}
+            </button>
+            <h2 className="font-semibold text-gray-900">
+              {locale === "zh" ? "選擇任務模板" : "Choose Template"}
+            </h2>
+            <div className="w-10" />
+          </div>
+
+          {/* Template List or Detail */}
+          <div className="flex-1 overflow-y-auto">
+            {selectedTemplate ? (
+              /* Template Detail View */
+              <div className="p-4">
+                {/* Template Header */}
+                <div className="text-center mb-6">
+                  <span className="text-4xl mb-3 block">{selectedTemplate.icon}</span>
+                  <h3 className="font-bold text-lg text-gray-900">
+                    {locale === "zh" ? selectedTemplate.name : selectedTemplate.nameEn}
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {locale === "zh" ? selectedTemplate.description : selectedTemplate.descriptionEn}
+                  </p>
+                  <div className="flex items-center justify-center gap-3 mt-3">
+                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                      ⏱ {selectedTemplate.estimatedTime}
+                    </span>
+                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                      📄 {selectedTemplate.outputFormats.map(f => f.toUpperCase()).join(", ")}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Stages */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-gray-900 text-sm">
+                    {locale === "zh" ? "執行階段" : "Execution Stages"}
+                  </h4>
+                  {selectedTemplate.stages.map((stage, index) => (
+                    <div key={stage.id} className="bg-gray-50 rounded-xl p-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                          {index + 1}
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900 text-sm">
+                            {locale === "zh" ? stage.name : stage.nameEn}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {locale === "zh" ? stage.description : stage.descriptionEn}
+                          </p>
+                          <div className="flex flex-wrap gap-1.5 mt-2">
+                            {(locale === "zh" ? stage.checklist : stage.checklistEn).map((item, i) => (
+                              <span key={i} className="text-[10px] bg-white text-gray-600 px-2 py-0.5 rounded-full border border-gray-200">
+                                {item}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Start Button */}
+                <div className="mt-6 space-y-2">
+                  <button
+                    onClick={handleStartTask}
+                    className="w-full py-3.5 bg-gradient-to-r from-orange-500 to-orange-400 text-white rounded-xl font-semibold shadow-md active:scale-[0.98] transition-transform"
+                  >
+                    {locale === "zh" ? "開始任務" : "Start Task"}
+                  </button>
+                  <button
+                    onClick={() => setSelectedTemplate(null)}
+                    className="w-full py-3 text-gray-500 text-sm"
+                  >
+                    {locale === "zh" ? "返回選擇其他模板" : "Back to templates"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Template Grid */
+              <div className="p-4 grid grid-cols-2 gap-3">
+                {taskTemplates.map((template) => (
+                  <button
+                    key={template.id}
+                    onClick={() => handleSelectTemplate(template)}
+                    className="bg-white rounded-2xl border border-gray-100 p-4 text-left active:bg-gray-50 transition-colors"
+                  >
+                    <span className="text-3xl mb-2 block">{template.icon}</span>
+                    <p className="font-semibold text-gray-900 text-sm">
+                      {locale === "zh" ? template.name : template.nameEn}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                      {locale === "zh" ? template.description : template.descriptionEn}
+                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-[10px] text-gray-400">⏱ {template.estimatedTime}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
