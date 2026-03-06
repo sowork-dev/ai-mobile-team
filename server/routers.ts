@@ -16,8 +16,14 @@ export const publicProcedure = t.procedure;
 // Auth Router
 const authRouter = router({
   me: publicProcedure.query(async () => {
-    // TODO: 實作 session 驗證
-    return null;
+    // 開發模式：返回測試用戶
+    return {
+      id: "dev-user-001",
+      email: "cj@sowork.ai",
+      name: "CJ Wang",
+      avatar: null,
+      role: "admin",
+    };
   }),
   
   logout: publicProcedure.mutation(async () => {
