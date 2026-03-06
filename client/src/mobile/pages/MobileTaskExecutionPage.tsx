@@ -51,6 +51,7 @@ export default function MobileTaskExecutionPage() {
   const [scanComplete, setScanComplete] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [taskStatus, setTaskStatus] = useState<"preparing" | "ai_processing" | "human_required" | "completed">("preparing");
+  const [showStageOverview, setShowStageOverview] = useState(false);
   
   // 獲取 AI 員工配對
   const { data: agentMapping } = trpc.task.getAgentMapping.useQuery({ taskType: templateId });
@@ -182,7 +183,8 @@ export default function MobileTaskExecutionPage() {
         setTaskStatus("human_required");
       }
       
-      setCurrentStage(currentStage + 1);
+      // 顯示階段總覽
+      setShowStageOverview(true);
     } else {
       // 最後一個階段，顯示導出選項
       setStageProgress(prev => {
@@ -557,6 +559,113 @@ export default function MobileTaskExecutionPage() {
               </button>
             );
           })()}
+        </div>
+      )}
+
+      {/* Stage Overview Modal - 階段完成後回顧 */}
+      {showStageOverview && (
+        <div className="fixed inset-0 z-50 flex items-end bg-black/50" onClick={() => {
+          setShowStageOverview(false);
+          setCurrentStage(currentStage + 1);
+        }}>
+          <div className="w-full bg-white rounded-t-3xl p-6 animate-slide-up max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-4" />
+            
+            {/* Header */}
+            <div className="text-center mb-6">
+              <div className="w-14 h-14 rounded-full bg-gray-900 flex items-center justify-center mx-auto mb-3">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+              <h2 className="font-bold text-xl text-gray-900">
+                {locale === "zh" ? "階段完成！" : "Stage Complete!"}
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                {locale === "zh" 
+                  ? `已完成 ${currentStage} / ${template.stages.length} 階段` 
+                  : `Completed ${currentStage} / ${template.stages.length} stages`}
+              </p>
+            </div>
+            
+            {/* Progress Bar */}
+            <div className="mb-6">
+              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gray-900 rounded-full transition-all duration-500"
+                  style={{ width: `${(currentStage / template.stages.length) * 100}%` }}
+                />
+              </div>
+            </div>
+            
+            {/* Stages List */}
+            <div className="space-y-3 mb-6">
+              {template.stages.map((stage, index) => {
+                const isCompleted = index < currentStage;
+                const isCurrent = index === currentStage;
+                const isPending = index > currentStage;
+                
+                return (
+                  <div 
+                    key={stage.id}
+                    className={`flex items-center gap-3 p-3 rounded-xl ${
+                      isCompleted ? "bg-gray-100" : isCurrent ? "bg-gray-900 text-white" : "bg-gray-50"
+                    }`}
+                  >
+                    {/* Step Number / Check */}
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      isCompleted ? "bg-gray-900 text-white" : isCurrent ? "bg-white text-gray-900" : "bg-gray-200 text-gray-500"
+                    }`}>
+                      {isCompleted ? (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      ) : (
+                        <span className="text-sm font-bold">{index + 1}</span>
+                      )}
+                    </div>
+                    
+                    {/* Stage Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className={`font-medium truncate ${isCompleted ? "text-gray-600" : isCurrent ? "text-white" : "text-gray-500"}`}>
+                        {locale === "zh" ? stage.name : stage.nameEn}
+                      </p>
+                      <p className={`text-xs truncate ${isCompleted ? "text-gray-400" : isCurrent ? "text-gray-300" : "text-gray-400"}`}>
+                        {stage.assignTo === "ai" 
+                          ? (locale === "zh" ? "AI 處理" : "AI handles")
+                          : stage.assignTo === "human"
+                          ? (locale === "zh" ? "真人處理" : "Human handles")
+                          : (locale === "zh" ? "協作" : "Collaboration")}
+                      </p>
+                    </div>
+                    
+                    {/* Status Badge */}
+                    {isCompleted && (
+                      <span className="text-xs text-gray-500 flex-shrink-0">
+                        {locale === "zh" ? "已完成" : "Done"}
+                      </span>
+                    )}
+                    {isCurrent && (
+                      <span className="text-xs bg-white/20 px-2 py-0.5 rounded flex-shrink-0">
+                        {locale === "zh" ? "下一步" : "Next"}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Action Button */}
+            <button
+              onClick={() => {
+                setShowStageOverview(false);
+                setCurrentStage(currentStage + 1);
+              }}
+              className="w-full py-3.5 bg-gray-900 text-white rounded-xl font-semibold active:scale-[0.98] transition-transform"
+            >
+              {locale === "zh" ? "繼續下一階段" : "Continue to Next Stage"}
+            </button>
+          </div>
         </div>
       )}
 
