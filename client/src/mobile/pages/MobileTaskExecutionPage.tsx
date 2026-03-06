@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { taskTemplates, TaskTemplate, TaskStage } from "../components/TaskTemplates";
 import AIOnboardingModal from "../components/AIOnboardingModal";
 import { trpc } from "@/lib/trpc";
+import { generateDocument, GenerateOptions } from "@/lib/documentGenerator";
 
 interface StageProgress {
   stageId: number;
@@ -197,14 +198,108 @@ export default function MobileTaskExecutionPage() {
     }
   };
 
-  const handleExport = (format: string) => {
-    // 模擬導出
-    alert(locale === "zh" 
-      ? `正在生成 ${format.toUpperCase()} 檔案...` 
-      : `Generating ${format.toUpperCase()} file...`
+  const handleExport = async (format: string) => {
+    try {
+      toast.loading(
+        locale === "zh" 
+          ? `正在生成 ${format.toUpperCase()} 檔案...` 
+          : `Generating ${format.toUpperCase()} file...`
+      );
+      
+      // 根據任務類型生成對應內容
+      const options: GenerateOptions = {
+        title: template.name,
+        content: generateTaskContent(),
+        author: agentMapping?.primary?.name || "AI 員工",
+        date: new Date(),
+        tableData: generateTableData(),
+        slides: generateSlides(),
+      };
+      
+      // 映射格式
+      const formatMap: Record<string, "pdf" | "xls" | "ppt" | "doc" | "markdown"> = {
+        pdf: "pdf",
+        xls: "xls",
+        ppt: "ppt",
+        doc: "doc",
+        markdown: "markdown",
+      };
+      
+      await generateDocument(formatMap[format] || "pdf", options);
+      
+      toast.dismiss();
+      toast.success(
+        locale === "zh" 
+          ? `${format.toUpperCase()} 檔案已下載！` 
+          : `${format.toUpperCase()} file downloaded!`
+      );
+      
+      setShowExportModal(false);
+      navigate("/tasks");
+    } catch (error) {
+      toast.dismiss();
+      toast.error(
+        locale === "zh" 
+          ? `生成失敗：${error}` 
+          : `Generation failed: ${error}`
+      );
+    }
+  };
+  
+  // 根據任務類型生成內容
+  const generateTaskContent = (): string => {
+    const completedChecks = stageProgress.flatMap((stage, i) => 
+      Object.entries(stage.checklist)
+        .filter(([_, done]) => done)
+        .map(([item]) => `✓ ${item}`)
     );
-    setShowExportModal(false);
-    navigate("/tasks");
+    
+    return `任務：${template.name}\n\n` +
+      `完成日期：${new Date().toLocaleDateString()}\n` +
+      `負責 AI：${agentMapping?.primary?.name || "AI 員工"}\n\n` +
+      `完成項目：\n${completedChecks.join("\n")}\n\n` +
+      `備註：任務已完成所有階段。`;
+  };
+  
+  // 生成表格數據
+  const generateTableData = () => {
+    return {
+      headers: ["階段", "狀態", "負責人", "完成日期"],
+      rows: template.stages.map((stage, i) => [
+        locale === "zh" ? stage.name : stage.nameEn,
+        stageProgress[i]?.completed ? "✓ 完成" : "○ 待處理",
+        stage.assignTo === "ai" ? (agentMapping?.primary?.name || "AI") : (agentMapping?.humanApprover || "主管"),
+        stageProgress[i]?.completed ? new Date().toLocaleDateString() : "-",
+      ]),
+    };
+  };
+  
+  // 生成簡報投影片
+  const generateSlides = () => {
+    return [
+      {
+        title: "任務概覽",
+        content: [
+          `任務名稱：${template.name}`,
+          `完成階段：${stageProgress.filter(s => s.completed).length} / ${template.stages.length}`,
+          `負責 AI：${agentMapping?.primary?.name || "AI 員工"}`,
+        ],
+      },
+      ...template.stages.map((stage, i) => ({
+        title: locale === "zh" ? stage.name : stage.nameEn,
+        content: (locale === "zh" ? stage.checklist : stage.checklistEn).map(
+          item => `${stageProgress[i]?.checklist[item] ? "✓" : "○"} ${item}`
+        ),
+      })),
+      {
+        title: "結論",
+        content: [
+          "任務已完成所有階段",
+          `總耗時：約 ${template.estimatedTime}`,
+          "下一步：歸檔或分享給相關人員",
+        ],
+      },
+    ];
   };
 
   const overallProgress = (stageProgress.filter(s => s.completed).length / template.stages.length) * 100;
