@@ -135,10 +135,9 @@ export default function MobileContactsPage() {
 
   const layers = [
     { id: undefined, label: "全部" },
-    { id: "1", label: "L1 高管" },
-    { id: "2", label: "L2 專家" },
-    { id: "3", label: "L3 經理" },
-    { id: "4", label: "L4 執行" },
+    { id: "strategy", label: "策略" },
+    { id: "execution", label: "執行" },
+    { id: "training", label: "培訓" },
   ];
 
   return (

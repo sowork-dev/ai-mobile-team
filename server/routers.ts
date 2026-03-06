@@ -54,23 +54,23 @@ const authRouter = router({
     }),
 });
 
-// Talent Pool Router (人才庫)
+// Talent Pool Router (人才庫) - 使用 agents 表
 const talentRouter = router({
   // 獲取人才列表
   list: publicProcedure
     .input(z.object({
       limit: z.number().min(1).max(100).default(20),
       offset: z.number().min(0).default(0),
-      layer: z.number().min(1).max(5).optional(),
+      layer: z.string().optional(),
       search: z.string().optional(),
     }).optional())
     .query(async ({ input }) => {
       const { limit = 20, offset = 0, layer, search } = input || {};
       
       let sql = `
-        SELECT id, talent_id, name, role, layer, avatar, expertise, description, platforms
-        FROM cmo_talent_pool 
-        WHERE is_active = 1
+        SELECT id, slug, name, englishName, title, layer, avatarUrl, bio, specialty, skills, rating
+        FROM agents 
+        WHERE isAvailable = 1
       `;
       const params: any[] = [];
       
@@ -80,24 +80,24 @@ const talentRouter = router({
       }
       
       if (search) {
-        sql += ` AND (name LIKE ? OR role LIKE ? OR expertise LIKE ?)`;
-        params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+        sql += ` AND (name LIKE ? OR title LIKE ? OR specialty LIKE ? OR skills LIKE ?)`;
+        params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
       }
       
-      sql += ` ORDER BY layer ASC, name ASC LIMIT ${Number(limit)} OFFSET ${Number(offset)}`;
+      sql += ` ORDER BY isFeatured DESC, rating DESC, name ASC LIMIT ${Number(limit)} OFFSET ${Number(offset)}`;
       
       const talents = await query(sql, params);
       
       // 獲取總數
-      let countSql = `SELECT COUNT(*) as total FROM cmo_talent_pool WHERE is_active = 1`;
+      let countSql = `SELECT COUNT(*) as total FROM agents WHERE isAvailable = 1`;
       const countParams: any[] = [];
       if (layer) {
         countSql += ` AND layer = ?`;
         countParams.push(layer);
       }
       if (search) {
-        countSql += ` AND (name LIKE ? OR role LIKE ? OR expertise LIKE ?)`;
-        countParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
+        countSql += ` AND (name LIKE ? OR title LIKE ? OR specialty LIKE ? OR skills LIKE ?)`;
+        countParams.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
       }
       
       const [countResult] = await query<{total: number}>(countSql, countParams);
@@ -109,14 +109,16 @@ const talentRouter = router({
       return {
         talents: talents.map((t: any) => ({
           id: t.id,
-          talentId: t.talent_id,
+          slug: t.slug,
           name: t.name,
-          role: t.role,
+          englishName: t.englishName,
+          role: t.title,
           layer: t.layer,
-          avatar: t.avatar,
-          expertise: parseCommaSeparated(t.expertise),
-          description: t.description,
-          platforms: parseCommaSeparated(t.platforms),
+          avatar: t.avatarUrl,
+          expertise: parseCommaSeparated(t.skills),
+          description: t.bio,
+          specialty: t.specialty,
+          rating: t.rating,
         })),
         total: countResult?.total || 0,
         hasMore: offset + limit < (countResult?.total || 0),
@@ -128,7 +130,7 @@ const talentRouter = router({
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
       const [talent] = await query(
-        `SELECT * FROM cmo_talent_pool WHERE id = ? AND is_active = 1`,
+        `SELECT * FROM agents WHERE id = ? AND isAvailable = 1`,
         [input.id]
       );
       
@@ -139,21 +141,29 @@ const talentRouter = router({
       
       const tryParseJSON = (str: string | null) => {
         if (!str) return null;
-        try { return JSON.parse(str); } catch { return null; }
+        try { return JSON.parse(str); } catch { return str; }
       };
       
       return {
         id: talent.id,
-        talentId: talent.talent_id,
+        slug: talent.slug,
         name: talent.name,
-        role: talent.role,
+        englishName: talent.englishName,
+        role: talent.title,
         layer: talent.layer,
-        avatar: talent.avatar,
-        expertise: parseCommaSeparated(talent.expertise),
-        description: talent.description,
-        platforms: parseCommaSeparated(talent.platforms),
-        caseStudy: tryParseJSON(talent.case_study),
-        kpis: tryParseJSON(talent.kpis),
+        avatar: talent.avatarUrl,
+        coverUrl: talent.coverUrl,
+        bio: talent.bio,
+        experienceDetail: talent.experienceDetail,
+        specialty: talent.specialty,
+        expertise: parseCommaSeparated(talent.skills),
+        industries: parseCommaSeparated(talent.industries),
+        caseStudies: tryParseJSON(talent.caseStudies),
+        rating: talent.rating,
+        reviewCount: talent.reviewCount,
+        taskCount: talent.taskCount,
+        priceMonthly: talent.priceMonthly,
+        pricePerTask: talent.pricePerTask,
       };
     }),
     
@@ -161,14 +171,14 @@ const talentRouter = router({
   stats: publicProcedure.query(async () => {
     const stats = await query(`
       SELECT layer, COUNT(*) as count 
-      FROM cmo_talent_pool 
-      WHERE is_active = 1 
+      FROM agents 
+      WHERE isAvailable = 1 
       GROUP BY layer 
       ORDER BY layer ASC
     `);
     
     const [total] = await query<{total: number}>(`
-      SELECT COUNT(*) as total FROM cmo_talent_pool WHERE is_active = 1
+      SELECT COUNT(*) as total FROM agents WHERE isAvailable = 1
     `);
     
     return {
