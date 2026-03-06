@@ -6,11 +6,11 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
 const SKILL_COLORS = [
-  "bg-blue-50 text-blue-600",
-  "bg-purple-50 text-purple-600",
-  "bg-green-50 text-green-600",
-  "bg-orange-50 text-orange-600",
-  "bg-pink-50 text-pink-600",
+  "bg-gray-100 text-gray-700",
+  "bg-gray-100 text-gray-700",
+  "bg-gray-100 text-gray-700",
+  "bg-gray-100 text-gray-700",
+  "bg-gray-100 text-gray-700",
 ];
 
 export default function MobileAgentDetailPage() {
@@ -27,7 +27,7 @@ export default function MobileAgentDetailPage() {
     return (
       <div className="flex flex-col h-full bg-white items-center justify-center">
         <p className="text-gray-400 text-sm">找不到此 AI 員工</p>
-        <button onClick={() => navigate("/contacts")} className="mt-3 text-orange-500 text-sm font-medium">
+        <button onClick={() => navigate("/contacts")} className="mt-3 text-gray-900 text-sm font-medium">
           返回聯絡人
         </button>
       </div>
@@ -159,7 +159,7 @@ export default function MobileAgentDetailPage() {
           </button>
           <button
             onClick={() => navigate(`/chat/${agent.slug || agent.id}`)}
-            className="flex-1 py-3 bg-orange-500 text-white rounded-xl font-semibold text-sm active:scale-95 transition-transform shadow-md shadow-orange-100"
+            className="flex-1 py-3 bg-gray-900 text-white rounded-xl font-semibold text-sm active:scale-95 transition-transform shadow-md shadow-gray-200"
           >
             開始對話
           </button>

@@ -115,7 +115,7 @@ export default function MobileChatPage() {
             <p className="mt-3 text-sm">尚無對話</p>
             <button
               onClick={() => navigate("/contacts")}
-              className="mt-3 text-sm text-orange-500 font-medium"
+              className="mt-3 text-sm text-gray-900 font-medium"
             >
               找 AI 員工開始對話
             </button>
@@ -136,7 +136,7 @@ export default function MobileChatPage() {
                     {conv.avatar}
                   </div>
                   {conv.online && (
-                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
+                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-gray-900 rounded-full border-2 border-white" />
                   )}
                 </div>
 
@@ -146,7 +146,7 @@ export default function MobileChatPage() {
                     <div className="flex items-center gap-1.5">
                       <span className="font-semibold text-gray-900 text-sm">{conv.name}</span>
                       {conv.type === "ai" && (
-                        <span className="text-[10px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full font-medium">AI</span>
+                        <span className="text-[10px] bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-full font-medium">AI</span>
                       )}
                     </div>
                     <span className="text-xs text-gray-400 flex-shrink-0">{conv.time}</span>
@@ -156,7 +156,7 @@ export default function MobileChatPage() {
 
                 {/* 未讀數 */}
                 {conv.unread > 0 && (
-                  <div className="flex-shrink-0 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
+                  <div className="flex-shrink-0 w-5 h-5 bg-gray-900 rounded-full flex items-center justify-center">
                     <span className="text-white text-[10px] font-bold">{conv.unread}</span>
                   </div>
                 )}

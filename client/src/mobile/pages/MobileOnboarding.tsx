@@ -271,7 +271,7 @@ export default function MobileOnboarding() {
           </div>
           <div>
             <p className="text-sm font-semibold text-gray-900">Vivian</p>
-            <p className="text-xs text-green-500">品牌定位顧問</p>
+            <p className="text-xs text-gray-700">品牌定位顧問</p>
           </div>
         </div>
         <button
@@ -297,7 +297,7 @@ export default function MobileOnboarding() {
                 <div
                   className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                     msg.role === "user"
-                      ? "bg-orange-500 text-white rounded-tr-sm"
+                      ? "bg-gray-900 text-white rounded-tr-sm"
                       : "bg-gray-100 text-gray-900 rounded-tl-sm"
                   }`}
                 >
@@ -322,7 +322,7 @@ export default function MobileOnboarding() {
                   {!isConfirmed && (
                     <button
                       onClick={handleConfirmCard}
-                      className="w-full py-3 bg-orange-500 text-white rounded-xl font-semibold text-sm shadow-md shadow-orange-100 active:scale-95 transition-transform"
+                      className="w-full py-3 bg-gray-900 text-white rounded-xl font-semibold text-sm shadow-md shadow-gray-200 active:scale-95 transition-transform"
                     >
                       確認定案
                     </button>
@@ -343,7 +343,7 @@ export default function MobileOnboarding() {
                           handleOptionSelect(option);
                         }
                       }}
-                      className="w-full text-left px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 font-medium active:bg-orange-50 active:border-orange-300 transition-colors shadow-sm"
+                      className="w-full text-left px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 font-medium active:bg-gray-50 active:border-gray-300 transition-colors shadow-sm"
                     >
                       {option}
                     </button>
@@ -389,7 +389,7 @@ export default function MobileOnboarding() {
             <button
               onClick={handleBrandNameSubmit}
               disabled={!brandName.trim()}
-              className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center disabled:opacity-40 active:scale-95 transition-transform"
+              className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center disabled:opacity-40 active:scale-95 transition-transform"
             >
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                 <path d="M3 9h12M9 3l6 6-6 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -414,13 +414,13 @@ function BrandPositioningCardView({ card }: { card: BrandPositioningCard }) {
   ];
 
   return (
-    <div className="bg-white border border-orange-200 rounded-2xl overflow-hidden shadow-sm">
+    <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
       {/* Card Header */}
       <div className="bg-gradient-to-r from-orange-500 to-orange-400 px-4 py-3">
         <p className="text-white text-xs font-medium opacity-80">品牌定位卡片</p>
         <p className="text-white font-bold text-base mt-0.5">{card.brandName}</p>
         {card.tagline && (
-          <p className="text-orange-100 text-xs mt-1 italic">"{card.tagline}"</p>
+          <p className="text-gray-400 text-xs mt-1 italic">"{card.tagline}"</p>
         )}
       </div>
       {/* Card Body */}

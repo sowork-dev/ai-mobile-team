@@ -36,8 +36,8 @@ export default function MobileProfilePage() {
           label: "品牌定位設定",
           desc: "重新進行品牌定位對話",
           action: () => navigate("/onboarding"),
-          color: "text-orange-500",
-          bg: "bg-orange-50",
+          color: "text-gray-900",
+          bg: "bg-gray-50",
         },
         {
           icon: (
@@ -49,8 +49,8 @@ export default function MobileProfilePage() {
           label: "我的 AI 團隊",
           desc: "管理您的 AI 員工",
           action: () => navigate("/contacts?tab=my-team"),
-          color: "text-blue-500",
-          bg: "bg-blue-50",
+          color: "text-gray-700",
+          bg: "bg-gray-50",
         },
       ],
     },
@@ -70,8 +70,8 @@ export default function MobileProfilePage() {
             toggleLocale();
             toast.success(locale === "zh" ? "Language changed to English" : "已切換至繁體中文");
           },
-          color: "text-green-500",
-          bg: "bg-green-50",
+          color: "text-gray-700",
+          bg: "bg-gray-50",
         },
         {
           icon: (
@@ -83,8 +83,8 @@ export default function MobileProfilePage() {
           label: "通知設定",
           desc: "管理推播通知",
           action: () => toast.info("通知設定即將上線"),
-          color: "text-purple-500",
-          bg: "bg-purple-50",
+          color: "text-gray-700",
+          bg: "bg-gray-50",
         },
         {
           icon: (
@@ -117,7 +117,7 @@ export default function MobileProfilePage() {
               <p className="font-bold text-gray-900 text-lg">{(user as any)?.name || "用戶"}</p>
               <p className="text-sm text-gray-500">{(user as any)?.email || ""}</p>
               <div className="flex items-center gap-1.5 mt-1.5">
-                <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-medium">
+                <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full font-medium">
                   免費方案
                 </span>
               </div>
@@ -131,7 +131,7 @@ export default function MobileProfilePage() {
         </div>
 
         {/* 品牌定位卡片預覽 */}
-        <div className="mx-4 mt-4 bg-gradient-to-r from-orange-500 to-orange-400 rounded-2xl p-4 shadow-md shadow-orange-100">
+        <div className="mx-4 mt-4 bg-gradient-to-r from-orange-500 to-orange-400 rounded-2xl p-4 shadow-md shadow-gray-200">
           <div className="flex items-center justify-between mb-2">
             <p className="text-white text-xs font-medium opacity-80">品牌定位</p>
             <button
@@ -142,10 +142,10 @@ export default function MobileProfilePage() {
             </button>
           </div>
           <p className="text-white font-bold text-base mb-1">尚未設定品牌定位</p>
-          <p className="text-orange-100 text-xs">完成品牌定位，讓 AI 員工更了解您的品牌</p>
+          <p className="text-gray-300 text-xs">完成品牌定位，讓 AI 員工更了解您的品牌</p>
           <button
             onClick={() => navigate("/onboarding")}
-            className="mt-3 w-full py-2 bg-white text-orange-500 rounded-xl text-sm font-semibold active:scale-95 transition-transform"
+            className="mt-3 w-full py-2 bg-white text-gray-900 rounded-xl text-sm font-semibold active:scale-95 transition-transform"
           >
             立即設定
           </button>

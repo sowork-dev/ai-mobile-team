@@ -37,8 +37,8 @@ export default function NotificationCenter({
     switch (type) {
       case "approval_required":
         return (
-          <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2">
+          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111827" strokeWidth="2">
               <circle cx="12" cy="12" r="10"/>
               <path d="M12 8v4l3 3"/>
             </svg>
@@ -47,8 +47,8 @@ export default function NotificationCenter({
       case "stage_complete":
       case "task_complete":
         return (
-          <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2">
+          <div className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2">
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
               <polyline points="22 4 12 14.01 9 11.01"/>
             </svg>
@@ -56,8 +56,8 @@ export default function NotificationCenter({
         );
       case "ai_question":
         return (
-          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2">
+          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#374151" strokeWidth="2">
               <circle cx="12" cy="12" r="10"/>
               <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
               <path d="M12 17h.01"/>
@@ -106,7 +106,7 @@ export default function NotificationCenter({
             <h2 className="text-lg font-bold text-gray-900">
               {locale === "zh" ? "通知" : "Notifications"}
               {unreadCount > 0 && (
-                <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
+                <span className="ml-2 px-2 py-0.5 bg-gray-900 text-white text-xs rounded-full">
                   {unreadCount}
                 </span>
               )}
@@ -143,7 +143,7 @@ export default function NotificationCenter({
                   key={notification.id}
                   onClick={() => onNotificationClick(notification)}
                   className={`w-full flex items-start gap-3 p-4 text-left hover:bg-gray-50 transition-colors ${
-                    !notification.readAt ? "bg-blue-50/30" : ""
+                    !notification.readAt ? "bg-gray-50" : ""
                   }`}
                 >
                   {getIcon(notification.type)}
@@ -153,7 +153,7 @@ export default function NotificationCenter({
                         {notification.title}
                       </p>
                       {!notification.readAt && (
-                        <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1.5" />
+                        <span className="w-2 h-2 rounded-full bg-gray-900 flex-shrink-0 mt-1.5" />
                       )}
                     </div>
                     <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">
@@ -169,7 +169,7 @@ export default function NotificationCenter({
                         {formatTime(notification.createdAt)}
                       </span>
                       {notification.actionRequired && (
-                        <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">
+                        <span className="text-xs bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded">
                           {locale === "zh" ? "需處理" : "Action needed"}
                         </span>
                       )}

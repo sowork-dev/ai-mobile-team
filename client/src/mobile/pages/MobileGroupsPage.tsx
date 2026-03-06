@@ -85,7 +85,7 @@ export default function MobileGroupsPage() {
               <div className="flex flex-col items-end gap-1 ml-2">
                 <span className="text-xs text-gray-400">{group.time}</span>
                 {group.unread > 0 && (
-                  <div className="w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
+                  <div className="w-5 h-5 bg-gray-900 rounded-full flex items-center justify-center">
                     <span className="text-white text-[10px] font-bold">{group.unread}</span>
                   </div>
                 )}
@@ -125,15 +125,15 @@ export default function MobileGroupsPage() {
         {/* 建立群組 CTA */}
         <button
           onClick={() => setShowCreate(true)}
-          className="w-full bg-orange-50 border-2 border-dashed border-orange-200 rounded-2xl p-5 flex flex-col items-center gap-2 active:bg-orange-100 transition-colors"
+          className="w-full bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-5 flex flex-col items-center gap-2 active:bg-gray-100 transition-colors"
         >
-          <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
+          <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round">
               <path d="M10 4v12M4 10h12" />
             </svg>
           </div>
-          <p className="text-sm font-semibold text-orange-600">建立新群組</p>
-          <p className="text-xs text-orange-400 text-center">將 AI 員工與真實同事組成專屬工作群組</p>
+          <p className="text-sm font-semibold text-gray-700">建立新群組</p>
+          <p className="text-xs text-gray-500 text-center">將 AI 員工與真實同事組成專屬工作群組</p>
         </button>
       </div>
 
@@ -187,7 +187,7 @@ function CreateGroupModal({ onClose, onCreated }: { onClose: () => void; onCreat
                   onClick={() => toggleAgent(String(agent.id))}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-colors ${
                     selectedAgents.includes(String(agent.id))
-                      ? "border-orange-500 bg-orange-50"
+                      ? "border-gray-900 bg-gray-50"
                       : "border-gray-200 bg-white"
                   }`}
                 >
@@ -212,7 +212,7 @@ function CreateGroupModal({ onClose, onCreated }: { onClose: () => void; onCreat
           <button
             onClick={() => onCreated("new-group-" + Date.now())}
             disabled={!name.trim()}
-            className="w-full py-3.5 bg-orange-500 text-white rounded-xl font-semibold text-sm disabled:opacity-40 active:scale-95 transition-transform shadow-md shadow-orange-100"
+            className="w-full py-3.5 bg-gray-900 text-white rounded-xl font-semibold text-sm disabled:opacity-40 active:scale-95 transition-transform shadow-md shadow-gray-200"
           >
             建立群組
           </button>

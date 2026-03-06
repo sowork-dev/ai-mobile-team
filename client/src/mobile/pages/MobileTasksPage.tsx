@@ -35,7 +35,7 @@ const MOCK_TASKS: Task[] = [
     totalStages: 5,
     agentName: "Rita Chu",
     agentAvatar: "R",
-    agentBg: "from-green-400 to-green-600",
+    agentBg: "from-gray-700 to-gray-900",
     createdAt: "今天 10:32",
     preview: "帳號已建立，正在準備系統培訓教材...",
   },
@@ -48,7 +48,7 @@ const MOCK_TASKS: Task[] = [
     totalStages: 5,
     agentName: "Jason Allen",
     agentAvatar: "J",
-    agentBg: "from-blue-400 to-blue-600",
+    agentBg: "from-gray-600 to-gray-800",
     createdAt: "昨天 15:20",
     preview: "預算草案已完成，等待財務長審核...",
   },
@@ -61,7 +61,7 @@ const MOCK_TASKS: Task[] = [
     totalStages: 5,
     agentName: "IT Support AI",
     agentAvatar: "IT",
-    agentBg: "from-orange-400 to-orange-600",
+    agentBg: "from-gray-500 to-gray-700",
     createdAt: "週一 09:15",
     preview: "問題已修復，根因分析報告已歸檔...",
   },
@@ -69,9 +69,9 @@ const MOCK_TASKS: Task[] = [
 
 const STATUS_CONFIG: Record<TaskStatus, { label: string; labelEn: string; color: string; dot: string }> = {
   pending: { label: "待處理", labelEn: "Pending", color: "text-gray-500", dot: "bg-gray-400" },
-  in_progress: { label: "進行中", labelEn: "In Progress", color: "text-blue-600", dot: "bg-blue-500" },
-  review: { label: "待審核", labelEn: "Review", color: "text-amber-600", dot: "bg-amber-500" },
-  completed: { label: "已完成", labelEn: "Completed", color: "text-green-600", dot: "bg-green-500" },
+  in_progress: { label: "進行中", labelEn: "In Progress", color: "text-gray-700", dot: "bg-gray-600" },
+  review: { label: "待審核", labelEn: "Review", color: "text-gray-600", dot: "bg-gray-500" },
+  completed: { label: "已完成", labelEn: "Completed", color: "text-gray-900", dot: "bg-gray-900" },
 };
 
 export default function MobileTasksPage() {
@@ -245,12 +245,12 @@ export default function MobileTasksPage() {
 
                 {/* AI 員工配對 */}
                 {agentMapping && (
-                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 mb-6 border border-blue-100">
+                  <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-4 mb-6 border border-gray-200">
                     <h4 className="font-semibold text-gray-900 text-sm mb-3">
                       {locale === "zh" ? "🤖 AI 員工已就緒" : "🤖 AI Agent Ready"}
                     </h4>
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold overflow-hidden">
+                      <div className="w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center text-white font-bold overflow-hidden">
                         {agentMapping.primary?.avatar ? (
                           <img src={agentMapping.primary.avatar} alt="" className="w-full h-full object-cover" />
                         ) : (
@@ -265,9 +265,9 @@ export default function MobileTasksPage() {
                       </div>
                     </div>
                     {agentMapping.humanApprover && (
-                      <div className="mt-3 pt-3 border-t border-blue-100">
+                      <div className="mt-3 pt-3 border-t border-gray-200">
                         <p className="text-xs text-gray-600">
-                          <span className="text-blue-600 font-medium">👤 {locale === "zh" ? "需要審批" : "Approval required"}: </span>
+                          <span className="text-gray-700 font-medium">👤 {locale === "zh" ? "需要審批" : "Approval required"}: </span>
                           {agentMapping.humanApprover}
                         </p>
                       </div>

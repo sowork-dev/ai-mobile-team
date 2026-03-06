@@ -212,7 +212,7 @@ export default function MobileGroupDetailPage() {
               <div
                 className={`rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
                   msg.senderType === "human"
-                    ? "bg-orange-500 text-white rounded-tr-sm"
+                    ? "bg-gray-900 text-white rounded-tr-sm"
                     : "bg-white text-gray-900 rounded-tl-sm shadow-sm border border-gray-100"
                 }`}
               >
@@ -294,7 +294,7 @@ export default function MobileGroupDetailPage() {
           <button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className="w-9 h-9 bg-orange-500 rounded-full flex items-center justify-center disabled:opacity-40 active:scale-95 transition-transform flex-shrink-0 shadow-sm shadow-orange-200"
+            className="w-9 h-9 bg-gray-900 rounded-full flex items-center justify-center disabled:opacity-40 active:scale-95 transition-transform flex-shrink-0 shadow-sm shadow-gray-200"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M14 2L2 7.5 7 8.5M14 2L9 14 7 8.5M14 2L7 8.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>

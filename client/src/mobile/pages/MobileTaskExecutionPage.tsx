@@ -216,9 +216,9 @@ export default function MobileTaskExecutionPage() {
                   {agentMapping.primary.name?.charAt(0) || "AI"}
                 </div>
                 <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
-                  taskStatus === "ai_processing" ? "bg-green-500 animate-pulse" 
-                  : taskStatus === "human_required" ? "bg-amber-500"
-                  : taskStatus === "completed" ? "bg-blue-500"
+                  taskStatus === "ai_processing" ? "bg-gray-900 animate-pulse" 
+                  : taskStatus === "human_required" ? "bg-gray-500"
+                  : taskStatus === "completed" ? "bg-gray-900"
                   : "bg-gray-400"
                 }`} />
               </div>
@@ -277,8 +277,8 @@ export default function MobileTaskExecutionPage() {
       <div className="flex-1 overflow-y-auto p-4">
         {isProcessing ? (
           <div className="flex flex-col items-center justify-center h-full">
-            <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center mb-4 animate-pulse">
-              <svg className="w-8 h-8 text-orange-500 animate-spin" viewBox="0 0 24 24" fill="none">
+            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4 animate-pulse">
+              <svg className="w-8 h-8 text-gray-900 animate-spin" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeDasharray="60" strokeDashoffset="20"/>
               </svg>
             </div>
@@ -332,8 +332,8 @@ export default function MobileTaskExecutionPage() {
                       result.scanning
                         ? "border-gray-200 bg-gray-50"
                         : result.found 
-                        ? "border-green-200 bg-green-50" 
-                        : "border-amber-200 bg-amber-50"
+                        ? "border-gray-300 bg-gray-50" 
+                        : "border-gray-200 bg-white"
                     }`}
                   >
                     {/* 狀態圖示 */}
@@ -341,8 +341,8 @@ export default function MobileTaskExecutionPage() {
                       result.scanning
                         ? "bg-gray-200"
                         : result.found 
-                        ? "bg-green-500" 
-                        : "bg-amber-500"
+                        ? "bg-gray-900" 
+                        : "bg-gray-400"
                     }`}>
                       {result.scanning ? (
                         <svg className="w-3 h-3 text-gray-500 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -362,12 +362,12 @@ export default function MobileTaskExecutionPage() {
                     {/* 內容 */}
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-medium ${
-                        result.scanning ? "text-gray-500" : result.found ? "text-green-700" : "text-amber-700"
+                        result.scanning ? "text-gray-500" : result.found ? "text-gray-900" : "text-gray-600"
                       }`}>
                         {result.item}
                       </p>
                       {result.found && result.fileName && (
-                        <p className="text-xs text-green-600 truncate flex items-center gap-1 mt-0.5">
+                        <p className="text-xs text-gray-600 truncate flex items-center gap-1 mt-0.5">
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                             <polyline points="14,2 14,8 20,8"/>
@@ -376,7 +376,7 @@ export default function MobileTaskExecutionPage() {
                         </p>
                       )}
                       {!result.scanning && !result.found && (
-                        <p className="text-xs text-amber-600 mt-0.5">
+                        <p className="text-xs text-gray-500 mt-0.5">
                           {locale === "zh" ? "未找到相關檔案" : "No file found"}
                         </p>
                       )}

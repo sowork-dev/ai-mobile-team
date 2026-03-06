@@ -48,7 +48,7 @@ export default function MobileLoginPage() {
       <div className="flex-1 flex flex-col items-center justify-center px-6 pb-8">
         {/* Logo */}
         <div className="mb-8 flex flex-col items-center">
-          <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+          <div className="w-16 h-16 bg-gray-900 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
               <path d="M8 20L16 8L24 20" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M10 17h12" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
@@ -128,7 +128,7 @@ export default function MobileLoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3.5 bg-orange-500 text-white rounded-xl font-semibold text-sm transition-all active:scale-95 disabled:opacity-50 shadow-md shadow-orange-200"
+            className="w-full py-3.5 bg-gray-900 text-white rounded-xl font-semibold text-sm transition-all active:scale-95 disabled:opacity-50 shadow-md"
           >
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">
@@ -146,7 +146,7 @@ export default function MobileLoginPage() {
               還沒有帳號？{" "}
               <button
                 onClick={() => setMode("register")}
-                className="text-orange-500 font-semibold"
+                className="text-gray-900 font-semibold"
               >
                 立即註冊
               </button>
@@ -156,7 +156,7 @@ export default function MobileLoginPage() {
               已有帳號？{" "}
               <button
                 onClick={() => setMode("login")}
-                className="text-orange-500 font-semibold"
+                className="text-gray-900 font-semibold"
               >
                 返回登入
               </button>

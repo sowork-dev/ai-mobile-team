@@ -90,7 +90,7 @@ export default function AIOnboardingModal({ onboarding, onClose, onStart }: Prop
             <ul className="space-y-2">
               {onboarding.canHelp.map((h, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" className="flex-shrink-0 mt-0.5">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#111827" strokeWidth="2" className="flex-shrink-0 mt-0.5">
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
                   {h}
@@ -113,7 +113,7 @@ export default function AIOnboardingModal({ onboarding, onClose, onStart }: Prop
             <div className="space-y-2">
               {onboarding.successCases.map((c, i) => (
                 <div key={i} className="flex items-start gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg p-2.5">
-                  <span className="text-green-500 font-medium">✓</span>
+                  <span className="text-gray-900 font-medium">✓</span>
                   {c}
                 </div>
               ))}
