@@ -102,9 +102,20 @@ const talentRouter = router({
       
       const [countResult] = await query<{total: number}>(countSql, countParams);
       
-      // 解析逗號分隔的字串為陣列
-      const parseCommaSeparated = (str: string | null) => 
-        str ? str.split(',').map(s => s.trim()).filter(Boolean) : [];
+      // 解析 JSON 或逗號分隔的字串為陣列
+      const parseSkills = (data: any) => {
+        if (!data) return [];
+        if (Array.isArray(data)) return data;
+        if (typeof data === 'string') {
+          try {
+            const parsed = JSON.parse(data);
+            return Array.isArray(parsed) ? parsed : [];
+          } catch {
+            return data.split(',').map((s: string) => s.trim()).filter(Boolean);
+          }
+        }
+        return [];
+      };
       
       return {
         talents: talents.map((t: any) => ({
@@ -115,7 +126,7 @@ const talentRouter = router({
           role: t.title,
           layer: t.layer,
           avatar: t.avatarUrl,
-          expertise: parseCommaSeparated(t.skills),
+          expertise: parseSkills(t.skills),
           description: t.bio,
           specialty: t.specialty,
           rating: t.rating,
@@ -136,12 +147,13 @@ const talentRouter = router({
       
       if (!talent) return null;
       
-      const parseCommaSeparated = (str: string | null) => 
-        str ? str.split(',').map(s => s.trim()).filter(Boolean) : [];
-      
-      const tryParseJSON = (str: string | null) => {
-        if (!str) return null;
-        try { return JSON.parse(str); } catch { return str; }
+      const parseArray = (data: any) => {
+        if (!data) return [];
+        if (Array.isArray(data)) return data;
+        if (typeof data === 'string') {
+          try { return JSON.parse(data); } catch { return []; }
+        }
+        return [];
       };
       
       return {
@@ -156,9 +168,11 @@ const talentRouter = router({
         bio: talent.bio,
         experienceDetail: talent.experienceDetail,
         specialty: talent.specialty,
-        expertise: parseCommaSeparated(talent.skills),
-        industries: parseCommaSeparated(talent.industries),
-        caseStudies: tryParseJSON(talent.caseStudies),
+        methodology: talent.methodology,
+        knowledgeSources: parseArray(talent.knowledgeSources),
+        expertise: parseArray(talent.skills),
+        industries: parseArray(talent.industries),
+        caseStudies: parseArray(talent.caseStudies),
         rating: talent.rating,
         reviewCount: talent.reviewCount,
         taskCount: talent.taskCount,
