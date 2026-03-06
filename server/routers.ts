@@ -34,6 +34,17 @@ const authRouter = router({
       // TODO: 實作登入
       return { success: true, user: null };
     }),
+    
+  register: publicProcedure
+    .input(z.object({
+      email: z.string().email(),
+      password: z.string().min(6),
+      name: z.string().min(1),
+    }))
+    .mutation(async ({ input }) => {
+      // TODO: 實作註冊
+      return { success: true, user: null };
+    }),
 });
 
 // Main App Router
