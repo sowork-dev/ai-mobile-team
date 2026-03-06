@@ -8,6 +8,7 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import MobileHeader from "../components/MobileHeader";
+import MessageActions from "../components/MessageActions";
 
 // ── 類型定義 ──────────────────────────────────────────────────
 interface Message {
@@ -85,7 +86,7 @@ function WaitingAnimation({ elapsed }: { elapsed: number }) {
           {[0, 150, 300].map((delay) => (
             <div
               key={delay}
-              className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-bounce"
+              className="w-1.5 h-1.5 bg-gray-600 rounded-full animate-bounce"
               style={{ animationDelay: `${delay}ms` }}
             />
           ))}
@@ -93,7 +94,7 @@ function WaitingAnimation({ elapsed }: { elapsed: number }) {
         </div>
         <div className="w-32 h-1 bg-gray-200 rounded-full overflow-hidden">
           <div
-            className="h-full bg-orange-400 rounded-full transition-all duration-1000"
+            className="h-full bg-gray-600 rounded-full transition-all duration-1000"
             style={{ width: `${Math.min(((elapsed - 5) / 10) * 100, 90)}%` }}
           />
         </div>
@@ -104,7 +105,7 @@ function WaitingAnimation({ elapsed }: { elapsed: number }) {
     return (
       <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
+          <div className="w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin" />
           <span className="text-xs text-gray-500">正在深度分析，請稍候...</span>
         </div>
         <p className="text-xs text-gray-400">這個問題需要更多時間，通常在 30 秒內完成</p>
@@ -240,7 +241,7 @@ function DeliverableCard({ deliverable }: { deliverable: DeliverableData }) {
           <p className="text-xs text-gray-500">{typeLabels[deliverable.type]}</p>
         </div>
         {deliverable.status === "generating" ? (
-          <div className="w-5 h-5 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
+          <div className="w-5 h-5 border-2 border-gray-600 border-t-transparent rounded-full animate-spin" />
         ) : (
           <button className="flex items-center gap-1 text-xs text-orange-500 font-medium px-2.5 py-1.5 bg-orange-50 rounded-lg active:bg-orange-100">
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -319,12 +320,51 @@ export default function MobileChatDetailPage() {
 
   const getAgentAvatarBg = (id: string) => {
     const map: Record<string, string> = {
-      "vivian-brand": "from-orange-400 to-orange-600",
-      "ken-copy": "from-blue-400 to-blue-600",
-      "luna-design": "from-purple-400 to-purple-600",
-      "max-data": "from-green-400 to-green-600",
+      "vivian-brand": "from-gray-700 to-gray-900",
+      "ken-copy": "from-gray-600 to-gray-800",
+      "luna-design": "from-gray-500 to-gray-700",
+      "max-data": "from-gray-600 to-gray-800",
     };
-    return map[id] || "from-gray-400 to-gray-600";
+    return map[id] || "from-gray-600 to-gray-800";
+  };
+
+  // 取得 AI 職位（用於訊息旁功能）
+  const getAgentRole = (id: string) => {
+    const map: Record<string, string> = {
+      "vivian-brand": "pm",        // 品牌 = PM
+      "ken-copy": "pm",            // 文案 = PM  
+      "luna-design": "pm",         // 設計 = PM
+      "max-data": "finance",       // 數據 = Finance
+      "rita-hr": "hr",
+      "finance-ai": "finance",
+      "it-support": "it",
+      "secretary": "secretary",
+      "operations": "operations",
+    };
+    return map[id] || "default";
+  };
+
+  // 處理訊息旁功能
+  const handleMessageAction = (actionId: string, messageContent: string) => {
+    const actionLabels: Record<string, string> = {
+      "create-task": "建立任務",
+      "add-calendar": "加入行事曆",
+      "set-reminder": "設提醒",
+      "generate-contract": "生成合約",
+      "onboarding-task": "入職任務",
+      "generate-report": "生成報表",
+      "create-expense": "建立報銷單",
+      "create-presentation": "建立簡報",
+      "schedule-meeting": "排程會議",
+      "create-ticket": "建立工單",
+      "tech-doc": "技術文件",
+      "pdf-report": "PDF 報告",
+      "spreadsheet": "試算表",
+      "markdown": "摘要筆記",
+      "notify-team": "通知相關人",
+    };
+    toast.success(`正在${actionLabels[actionId] || actionId}...`);
+    // TODO: 實際執行對應功能
   };
 
   const handleSend = async () => {
@@ -479,7 +519,7 @@ export default function MobileChatDetailPage() {
                 <div
                   className={`rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
                     msg.role === "user"
-                      ? "bg-orange-500 text-white rounded-tr-sm"
+                      ? "bg-gray-900 text-white rounded-tr-sm"
                       : "bg-gray-100 text-gray-900 rounded-tl-sm"
                   }`}
                   onContextMenu={(e) => {
@@ -522,20 +562,14 @@ export default function MobileChatDetailPage() {
               {/* 交付物卡片 */}
               {msg.deliverable && <DeliverableCard deliverable={msg.deliverable} />}
 
-              {/* AI 訊息下方工具列（hover/tap 顯示） */}
-              {msg.role === "assistant" && !activeToolbar && (
-                <div className="flex gap-1 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => setActiveToolbar(msg.id)}
-                    className="text-xs text-gray-400 px-2 py-1 rounded-lg active:bg-gray-100 flex items-center gap-1"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                      <circle cx="3" cy="6" r="1" fill="currentColor" />
-                      <circle cx="6" cy="6" r="1" fill="currentColor" />
-                      <circle cx="9" cy="6" r="1" fill="currentColor" />
-                    </svg>
-                  </button>
-                </div>
+              {/* AI 訊息下方智能功能列 */}
+              {msg.role === "assistant" && !msg.isStreaming && (
+                <MessageActions
+                  agentRole={getAgentRole(conversationId)}
+                  messageId={msg.id}
+                  messageContent={msg.content}
+                  onAction={handleMessageAction}
+                />
               )}
             </div>
           </div>
