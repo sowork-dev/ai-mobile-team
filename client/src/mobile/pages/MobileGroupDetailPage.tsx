@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useLocation } from "wouter";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+import RegroupConversation from "../components/RegroupConversation";
 
 interface GroupMessage {
   id: string;
@@ -22,15 +23,15 @@ const GROUP_CONFIGS: Record<string, { name: string; members: any[] }> = {
   "brand-team": {
     name: "品牌行銷小組",
     members: [
-      { name: "Vivian", avatar: "V", bg: "from-orange-400 to-orange-600", type: "ai" },
-      { name: "Ken", avatar: "K", bg: "from-blue-400 to-blue-600", type: "ai" },
+      { name: "Vivian", avatar: "V", bg: "from-gray-700 to-gray-900", type: "ai" },
+      { name: "Ken", avatar: "K", bg: "from-gray-600 to-gray-800", type: "ai" },
     ],
   },
   "content-team": {
     name: "內容創作組",
     members: [
-      { name: "Ken", avatar: "K", bg: "from-blue-400 to-blue-600", type: "ai" },
-      { name: "Luna", avatar: "L", bg: "from-purple-400 to-purple-600", type: "ai" },
+      { name: "Ken", avatar: "K", bg: "from-gray-600 to-gray-800", type: "ai" },
+      { name: "Luna", avatar: "L", bg: "from-gray-500 to-gray-700", type: "ai" },
     ],
   },
 };
@@ -38,8 +39,8 @@ const GROUP_CONFIGS: Record<string, { name: string; members: any[] }> = {
 const DEFAULT_GROUP = {
   name: "工作群組",
   members: [
-    { name: "Vivian", avatar: "V", bg: "from-orange-400 to-orange-600", type: "ai" },
-    { name: "Ken", avatar: "K", bg: "from-blue-400 to-blue-600", type: "ai" },
+    { name: "Vivian", avatar: "V", bg: "from-gray-700 to-gray-900", type: "ai" },
+    { name: "Ken", avatar: "K", bg: "from-gray-600 to-gray-800", type: "ai" },
   ],
 };
 
@@ -52,6 +53,7 @@ export default function MobileGroupDetailPage() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [respondingAgent, setRespondingAgent] = useState<string | null>(null);
+  const [showRegroup, setShowRegroup] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -175,12 +177,12 @@ export default function MobileGroupDetailPage() {
           </p>
         </div>
 
-        <button className="w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#6B7280" strokeWidth="1.8" strokeLinecap="round">
-            <circle cx="10" cy="5" r="1" fill="#6B7280" />
-            <circle cx="10" cy="10" r="1" fill="#6B7280" />
-            <circle cx="10" cy="15" r="1" fill="#6B7280" />
-          </svg>
+        {/* 整理對話按鈕 */}
+        <button 
+          onClick={() => setShowRegroup(true)}
+          className="px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg active:scale-95 transition-transform"
+        >
+          整理對話
         </button>
       </div>
 
@@ -302,6 +304,14 @@ export default function MobileGroupDetailPage() {
           </button>
         </div>
       </div>
+      
+      {/* 整理對話彈窗 */}
+      {showRegroup && (
+        <RegroupConversation 
+          chatId={groupId || "default"} 
+          onClose={() => setShowRegroup(false)} 
+        />
+      )}
     </div>
   );
 }
