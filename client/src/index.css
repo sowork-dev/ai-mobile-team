@@ -1,0 +1,611 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* 禁用系統深色模式偵測，dark: 變體改為 class-based（本專案不支援深色模式） */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ========================================
+   Monocle Magazine Design System
+   Minimalist, Elegant, Refined Typography
+   ======================================== */
+
+@theme {
+  /* ===== Monocle Color Palette ===== */
+  /* Cream Background */
+  --color-cream-50: oklch(0.99 0.01 60);
+  --color-cream-100: oklch(0.97 0.02 60); /* #F5F1E8 */
+  --color-cream-200: oklch(0.95 0.03 60);
+
+  /* Black & Grays */
+  --color-black: oklch(0.20 0 0); /* #1A1A1A */
+  --color-gray-dark: oklch(0.30 0 0); /* #2C2C2C */
+  --color-gray-mid: oklch(0.50 0 0);
+  --color-gray-light: oklch(0.70 0 0);
+
+  /* Accent Deep Blue */
+  --color-accent: oklch(0.35 0.12 250); /* Deep Blue */
+  --color-accent-hover: oklch(0.30 0.14 250);
+
+  /* Spacing Scale - Generous White Space */
+  /* NOTE: Use --space-* prefix (not --spacing-*) to avoid overriding Tailwind v4's
+     built-in spacing scale, which would break utilities like max-w-2xl, gap-xl, etc. */
+  --space-xs: 0.5rem;    /* 8px */
+  --space-sm: 1rem;      /* 16px */
+  --space-md: 1.5rem;    /* 24px */
+  --space-lg: 2rem;      /* 32px */
+  --space-xl: 3rem;      /* 48px */
+  --space-2xl: 4rem;     /* 64px */
+  --space-3xl: 6rem;     /* 96px */
+  --space-4xl: 8rem;     /* 128px */
+
+  /* Border Radius - Minimal */
+  --radius-none: 0;
+  --radius-sm: 0.125rem;   /* 2px */
+  --radius-md: 0.25rem;    /* 4px */
+
+  /* Shadows - Removed, using borders instead */
+  --shadow-none: none;
+
+  /* shadcn/ui 色彩 — 直接定義值（不使用 var 引用） */
+  --color-background: transparent;
+  --color-foreground: oklch(0.20 0 0);
+  --color-card: oklch(0.99 0.01 60);
+  --color-card-foreground: oklch(0.20 0 0);
+  --color-popover: oklch(0.99 0.01 60);
+  --color-popover-foreground: oklch(0.20 0 0);
+  --color-primary: oklch(0.35 0.12 250);
+  --color-primary-foreground: oklch(0.99 0.01 60);
+  --color-secondary: oklch(0.95 0.03 60);
+  --color-secondary-foreground: oklch(0.20 0 0);
+  --color-muted: oklch(0.95 0.03 60);
+  --color-muted-foreground: oklch(0.50 0 0);
+  --color-accent-foreground: oklch(0.99 0.01 60);
+  --color-destructive: oklch(0.55 0.22 25);
+  --color-destructive-foreground: oklch(0.99 0.01 60);
+  --color-border: oklch(0.20 0 0);
+  --color-input: oklch(0.20 0 0);
+  --color-ring: oklch(0.35 0.12 250);
+
+  /* Sidebar */
+  --color-sidebar: transparent;
+  --color-sidebar-foreground: oklch(0.20 0 0);
+  --color-sidebar-border: oklch(0.90 0.02 60);
+  --color-sidebar-accent: oklch(0.93 0.02 60);
+  --color-sidebar-accent-foreground: oklch(0.20 0 0);
+  --color-sidebar-ring: oklch(0.35 0.12 250);
+}
+
+/* ========================================
+   Global Styles
+   ======================================== */
+@layer base {
+  :root {
+    /* shadcn/ui CSS Variables - using oklch() */
+    --background: oklch(0.97 0.02 60); /* Cream background */
+    --foreground: oklch(0.20 0 0); /* Black text */
+
+    --card: oklch(0.99 0.01 60); /* Lighter cream */
+    --card-foreground: oklch(0.20 0 0);
+
+    --popover: oklch(0.99 0.01 60);
+    --popover-foreground: oklch(0.20 0 0);
+
+    --primary: oklch(0.35 0.12 250); /* Deep blue */
+    --primary-foreground: oklch(0.99 0.01 60);
+
+    --secondary: oklch(0.95 0.03 60);
+    --secondary-foreground: oklch(0.20 0 0);
+
+    --muted: oklch(0.95 0.03 60);
+    --muted-foreground: oklch(0.50 0 0);
+
+    --accent: oklch(0.35 0.12 250);
+    --accent-foreground: oklch(0.99 0.01 60);
+
+    --destructive: oklch(0.55 0.22 25); /* Red */
+    --destructive-foreground: oklch(0.99 0.01 60);
+
+    --border: oklch(0.20 0 0); /* Black */
+    --input: oklch(0.20 0 0);
+    --ring: oklch(0.35 0.12 250);
+
+    --radius: 0.25rem;
+  }
+
+  * {
+    border-color: var(--color-black);
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--color-black);
+    background-color: #F5F1E8;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.01em;
+  }
+
+  /* Typography - Refined Hierarchy */
+  h1 {
+    font-size: 3rem;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--color-black);
+  }
+
+  @media (min-width: 768px) {
+    h1 { font-size: 3.5rem; }
+  }
+
+  @media (min-width: 1024px) {
+    h1 { font-size: 4rem; }
+  }
+
+  h2 {
+    font-size: 2rem;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+    color: var(--color-black);
+  }
+
+  @media (min-width: 768px) {
+    h2 { font-size: 2.25rem; }
+  }
+
+  h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--color-black);
+  }
+
+  h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--color-black);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  p {
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--color-gray-dark);
+  }
+
+  /* Container - Custom Padding */
+  .container {
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    max-width: 1280px;
+  }
+
+  @media (min-width: 768px) {
+    .container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container {
+      padding-left: 3rem;
+      padding-right: 3rem;
+    }
+  }
+
+  /* Flex - Prevent Overflow */
+  .flex {
+    min-width: 0;
+    min-height: 0;
+  }
+}
+
+/* ========================================
+   Monocle Components
+   ======================================== */
+@layer components {
+  /* Card - White with Black Border */
+  .monocle-card {
+    background-color: #FFFFFF;
+    border: 1px solid var(--color-black);
+    border-radius: var(--radius-none);
+    padding: var(--space-lg);
+    transition: all 0.2s ease;
+  }
+
+  .monocle-card:hover {
+    border-width: 2px;
+  }
+
+  /* Button - Primary (Black) */
+  .monocle-btn-primary {
+    background-color: var(--color-black);
+    color: #FFFFFF;
+    border: 1px solid var(--color-black);
+    border-radius: var(--radius-none);
+    font-weight: 500;
+    font-size: 0.875rem;
+    padding: 0.75rem 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .monocle-btn-primary:hover {
+    background-color: var(--color-gray-dark);
+  }
+
+  /* Button - Secondary (White) */
+  .monocle-btn-secondary {
+    background-color: #FFFFFF;
+    color: var(--color-black);
+    border: 1px solid var(--color-black);
+    border-radius: var(--radius-none);
+    font-weight: 500;
+    font-size: 0.875rem;
+    padding: 0.75rem 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .monocle-btn-secondary:hover {
+    background-color: #F5F1E8;
+  }
+
+  /* Badge - Accent Blue */
+  .monocle-badge-blue {
+    background-color: var(--color-accent);
+    color: #FFFFFF;
+    border-radius: var(--radius-none);
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Input - Minimal Border */
+  .monocle-input {
+    background-color: #FFFFFF;
+    border: 1px solid var(--color-black);
+    border-radius: var(--radius-none);
+    padding: 0.75rem 1rem;
+    font-size: 0.9375rem;
+    color: var(--color-black);
+    transition: all 0.2s ease;
+  }
+
+  .monocle-input:focus {
+    outline: none;
+    border-width: 2px;
+  }
+
+  /* Section Spacing - Generous */
+  .monocle-section {
+    padding-top: var(--space-3xl);
+    padding-bottom: var(--space-3xl);
+  }
+
+  @media (min-width: 768px) {
+    .monocle-section {
+      padding-top: var(--space-4xl);
+      padding-bottom: var(--space-4xl);
+    }
+  }
+}
+
+/* ========================================
+   Animations - Subtle
+   ======================================== */
+@layer utilities {
+  /* Fade In */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  /* Fade In Up */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.4s ease-out;
+  }
+
+  /* Smooth Transition */
+  .transition-smooth {
+    transition: all 0.2s ease;
+  }
+}
+
+/* ========================================
+   Utility Classes
+   ======================================== */
+@layer utilities {
+  /* Background Colors */
+  .bg-monocle-cream {
+    background-color: #F5F1E8;
+  }
+
+  .bg-monocle-white {
+    background-color: #FFFFFF;
+  }
+
+  .bg-monocle-black {
+    background-color: var(--color-black);
+  }
+
+  .bg-monocle-accent {
+    background-color: var(--color-accent);
+  }
+
+  /* Text Colors */
+  .text-monocle-black {
+    color: var(--color-black);
+  }
+
+  .text-monocle-gray {
+    color: var(--color-gray-dark);
+  }
+
+  .text-monocle-accent {
+    color: var(--color-accent);
+  }
+
+  /* Border */
+  .border-monocle {
+    border: 1px solid var(--color-black);
+  }
+
+  .border-monocle-2 {
+    border: 2px solid var(--color-black);
+  }
+}
+
+
+/* ========================================
+   AwardDataBanner Marquee Animation
+   ======================================== */
+@keyframes marquee-design {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-33.333%); }
+}
+
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 32s linear infinite;
+  will-change: transform;
+}
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* ========================================
+   Enhanced Progress Bar Animations
+   ======================================== */
+@keyframes pulse-wave {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-pulse-wave {
+  animation: pulse-wave 2s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+/* ========================================
+   Enhanced PageHeader Styles
+   ======================================== */
+.enhanced-action-button button {
+  border: 2px solid var(--color-black) !important;
+  transition: all 0.2s ease;
+}
+
+.enhanced-action-button button:hover {
+  border-width: 3px !important;
+  transform: translateY(-1px);
+}
+
+.enhanced-action-button button:active {
+  transform: translateY(0);
+}
+
+/* ========================================
+   Copywriting Loading Animation
+   ======================================== */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+/* ========================================
+   Marketing Landing Page Theme - Kinetic Minimalism
+   Scoped to .marketing-theme wrapper only
+   ======================================== */
+.marketing-theme {
+  --mk-primary: #FF6B35;
+  --mk-primary-foreground: #FFFFFF;
+  --mk-background: #000000;
+  --mk-foreground: #FAFAFA;
+  --mk-card: #0F0F0F;
+  --mk-card-foreground: #FAFAFA;
+  --mk-secondary: #1A1A1A;
+  --mk-secondary-foreground: #E5E5E5;
+  --mk-muted: #1A1A1A;
+  --mk-muted-foreground: #999999;
+  --mk-accent: #FF6B35;
+  --mk-accent-foreground: #FFFFFF;
+  --mk-destructive: #EF4444;
+  --mk-destructive-foreground: #FFFFFF;
+  --mk-border: rgba(255, 255, 255, 0.05);
+  --mk-input: rgba(255, 255, 255, 0.1);
+  --mk-ring: #FF6B35;
+  --mk-radius: 16px;
+
+  /* Override shadcn/ui CSS variables (--var format) */
+  --primary: oklch(0.65 0.20 35);
+  --primary-foreground: oklch(1.00 0 0);
+  --background: oklch(0.00 0 0);
+  --foreground: oklch(0.98 0 0);
+  --card: oklch(0.10 0 0);
+  --card-foreground: oklch(0.98 0 0);
+  --popover: oklch(0.10 0 0);
+  --popover-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.15 0 0);
+  --secondary-foreground: oklch(0.90 0 0);
+  --muted: oklch(0.15 0 0);
+  --muted-foreground: oklch(0.63 0 0);
+  --accent: oklch(0.65 0.20 35);
+  --accent-foreground: oklch(1.00 0 0);
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(1.00 0 0);
+  --border: oklch(1.00 0 0 / 0.05);
+  --input: oklch(1.00 0 0 / 0.10);
+  --ring: oklch(0.65 0.20 35);
+  --radius: 1rem;
+
+  /* Override Tailwind v4 @theme tokens (--color-* format) so utility classes work in dark theme */
+  --color-primary: oklch(0.65 0.20 35);
+  --color-primary-foreground: oklch(1.00 0 0);
+  --color-background: oklch(0.00 0 0);
+  --color-foreground: oklch(0.98 0 0);
+  --color-card: oklch(0.10 0 0);
+  --color-card-foreground: oklch(0.98 0 0);
+  --color-popover: oklch(0.10 0 0);
+  --color-popover-foreground: oklch(0.98 0 0);
+  --color-secondary: oklch(0.15 0 0);
+  --color-secondary-foreground: oklch(0.90 0 0);
+  --color-muted: oklch(0.15 0 0);
+  --color-muted-foreground: oklch(0.63 0 0);
+  --color-accent: oklch(0.65 0.20 35);
+  --color-accent-foreground: oklch(1.00 0 0);
+  --color-destructive: oklch(0.55 0.22 25);
+  --color-destructive-foreground: oklch(1.00 0 0);
+  --color-border: oklch(1.00 0 0 / 0.05);
+  --color-input: oklch(1.00 0 0 / 0.10);
+  --color-ring: oklch(0.65 0.20 35);
+
+  background-color: #000000;
+  color: #FAFAFA;
+}
+
+.marketing-theme * {
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.marketing-theme h1,
+.marketing-theme h2,
+.marketing-theme h3,
+.marketing-theme h4,
+.marketing-theme h5,
+.marketing-theme h6 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--mk-foreground);
+}
+
+.marketing-theme p {
+  font-size: 1.125rem;
+  line-height: 1.7;
+  letter-spacing: -0.01em;
+  color: var(--mk-muted-foreground);
+}
+
+.marketing-theme ::selection {
+  background-color: rgba(255, 107, 53, 0.3);
+  color: #FFFFFF;
+}
+
+/* Marketing Container */
+.marketing-container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .marketing-container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .marketing-container {
+    padding-left: 3rem;
+    padding-right: 3rem;
+    max-width: 1400px;
+  }
+}
+
+/* Glass morphism for marketing navbar */
+.marketing-theme .glass {
+  background: rgba(15, 15, 15, 0.7);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Glow effect */
+.marketing-theme .glow-orange {
+  box-shadow: 0 0 40px rgba(255, 107, 53, 0.3);
+}
+
+/* Gradient text */
+.marketing-theme .gradient-text {
+  background: linear-gradient(90deg, #FF6B35 0%, #FF8F5A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

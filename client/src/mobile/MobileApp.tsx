@@ -1,0 +1,80 @@
+/**
+ * SoWork AI Team — Mobile Web App
+ * 主要入口元件，包含 5 個 Tab 導航和 Onboarding 流程
+ * 
+ * AI Mobile Team 獨立專案 — dev-mobileteam.sowork.ai
+ */
+import { Switch, Route, Redirect, useLocation } from "wouter";
+import { useAuth } from "../_core/hooks/useAuth";
+
+// Mobile Pages
+import MobileContactsPage from "./pages/MobileContactsPage";
+import MobileChatPage from "./pages/MobileChatPage";
+import MobileTasksPage from "./pages/MobileTasksPage";
+import MobileGroupsPage from "./pages/MobileGroupsPage";
+import MobileProfilePage from "./pages/MobileProfilePage";
+import MobileOnboarding from "./pages/MobileOnboarding";
+import MobileChatDetailPage from "./pages/MobileChatDetailPage";
+import MobileGroupDetailPage from "./pages/MobileGroupDetailPage";
+import MobileAgentDetailPage from "./pages/MobileAgentDetailPage";
+import MobileTaskDetailPage from "./pages/MobileTaskDetailPage";
+
+// Mobile Components
+import MobileTabBar from "./components/MobileTabBar";
+import MobileLoginPage from "./pages/MobileLoginPage";
+
+export type MobileTab = "contacts" | "chat" | "tasks" | "groups" | "profile";
+
+export default function MobileApp() {
+  const { user, loading } = useAuth();
+  const [location] = useLocation();
+
+  // 隱藏 TabBar 的路由（子頁面）— location 是相對於 /app 的路徑
+  const hideTabBar =
+    location.startsWith("/chat/") ||
+    location.startsWith("/group/") ||
+    location.startsWith("/agent/") ||
+    location.startsWith("/task/") ||
+    location === "/onboarding" ||
+    location.startsWith("/onboarding");
+
+  if (loading) {
+    return (
+      <div className="mobile-app flex items-center justify-center min-h-screen bg-white">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-gray-500">載入中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <MobileLoginPage />;
+  }
+
+  return (
+    <div className="mobile-app flex flex-col h-screen bg-gray-50 overflow-hidden">
+      {/* 主要內容區 */}
+      <div className="flex-1 overflow-hidden">
+        <Switch>
+          <Route path="/" component={() => <Redirect to="/chat" />} />
+          <Route path="/onboarding" component={MobileOnboarding} />
+          <Route path="/contacts" component={MobileContactsPage} />
+          <Route path="/agent/:agentId" component={MobileAgentDetailPage} />
+          <Route path="/chat" component={MobileChatPage} />
+          <Route path="/chat/:conversationId" component={MobileChatDetailPage} />
+          <Route path="/tasks" component={MobileTasksPage} />
+          <Route path="/task/:taskId" component={MobileTaskDetailPage} />
+          <Route path="/groups" component={MobileGroupsPage} />
+          <Route path="/group/:groupId" component={MobileGroupDetailPage} />
+          <Route path="/profile" component={MobileProfilePage} />
+          <Route component={() => <Redirect to="/chat" />} />
+        </Switch>
+      </div>
+
+      {/* 底部 Tab Bar */}
+      {!hideTabBar && <MobileTabBar />}
+    </div>
+  );
+}
