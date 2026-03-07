@@ -17,7 +17,7 @@ export default function MobileAssistantPage() {
     {
       id: "1",
       role: "assistant",
-      content: "👋 嗨！我是你的幕僚長。有什麼我可以幫你的嗎？\n\n我可以協助你：\n• 規劃行銷活動\n• 分析數據報告\n• 撰寫文案內容\n• 管理任務進度",
+      content: "您好，我是您的幕僚長。\n\n我可以協助您：\n• 組建最佳團隊\n• 派發任務給 AI 同事\n• 追蹤專案進度\n• 提供決策建議\n\n請問今天有什麼需要我協助的？",
       timestamp: new Date(),
     },
   ]);
@@ -51,28 +51,64 @@ export default function MobileAssistantPage() {
     }, 1000);
   };
 
+  // 快速操作按鈕
+  const quickActions = [
+    { label: "組建團隊", icon: "👥" },
+    { label: "派發任務", icon: "📋" },
+    { label: "今日待辦", icon: "📌" },
+    { label: "查看進度", icon: "📊" },
+  ];
+
   return (
     <div className="flex flex-col h-full bg-gray-50">
-      <MobileHeader title="特助" showBack={false} />
+      <MobileHeader title="幕僚長" showBack={false} />
+
+      {/* 快速操作區 */}
+      {messages.length <= 1 && (
+        <div className="flex-shrink-0 px-4 py-3 bg-white border-b border-gray-100">
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            {quickActions.map((action) => (
+              <button
+                key={action.label}
+                onClick={() => setInput(action.label)}
+                className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 rounded-full text-sm font-medium text-gray-700 whitespace-nowrap active:bg-gray-200 transition-colors"
+              >
+                <span>{action.icon}</span>
+                <span>{action.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 對話區域 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+            className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
           >
+            {/* 幕僚長頭像 */}
+            {msg.role === "assistant" && (
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center">
+                {/* 人像剪影 icon */}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
+                </svg>
+              </div>
+            )}
             <div
-              className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+              className={`max-w-[75%] rounded-2xl px-4 py-3 ${
                 msg.role === "user"
                   ? "bg-gray-900 text-white rounded-br-md"
                   : "bg-white text-gray-800 rounded-bl-md shadow-sm border border-gray-100"
               }`}
             >
-              <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+              <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
               <p
-                className={`text-[10px] mt-1 ${
-                  msg.role === "user" ? "text-gray-200" : "text-gray-400"
+                className={`text-[10px] mt-1.5 ${
+                  msg.role === "user" ? "text-gray-300" : "text-gray-400"
                 }`}
               >
                 {msg.timestamp.toLocaleTimeString("zh-TW", {
@@ -85,12 +121,18 @@ export default function MobileAssistantPage() {
         ))}
 
         {isLoading && (
-          <div className="flex justify-start">
+          <div className="flex gap-2 justify-start">
+            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
+              </svg>
+            </div>
             <div className="bg-white rounded-2xl rounded-bl-md px-4 py-3 shadow-sm border border-gray-100">
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-gray-700 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                <div className="w-2 h-2 bg-gray-700 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                <div className="w-2 h-2 bg-gray-700 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
               </div>
             </div>
           </div>
@@ -105,7 +147,7 @@ export default function MobileAssistantPage() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="告訴特助你需要什麼幫助..."
+            placeholder="告訴幕僚長你需要什麼幫助..."
             className="flex-1 px-4 py-2.5 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/20"
           />
           <button
