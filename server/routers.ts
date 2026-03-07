@@ -33,6 +33,7 @@ import {
   Task,
 } from "./chiefOfStaff.js";
 import { crawlWebsite, recommendAgentsForBrand, CrawlResult } from "./webCrawler.js";
+import * as onedrive from "./onedrive.js";
 
 const t = initTRPC.create({
   transformer: superjson,
@@ -727,6 +728,62 @@ const companyRouter = router({
     }),
 });
 
+// OneDrive Router - 知識庫整合
+const onedriveRouter = router({
+  // 獲取授權 URL
+  getAuthUrl: publicProcedure.query(async () => {
+    const url = await onedrive.getAuthUrl();
+    return { url };
+  }),
+
+  // 處理授權回調
+  handleCallback: publicProcedure
+    .input(z.object({ code: z.string(), userId: z.string() }))
+    .mutation(async ({ input }) => {
+      const success = await onedrive.handleCallback(input.code, input.userId);
+      return { success };
+    }),
+
+  // 檢查連接狀態
+  status: publicProcedure
+    .input(z.object({ userId: z.string() }))
+    .query(({ input }) => {
+      return { connected: onedrive.isConnected(input.userId) };
+    }),
+
+  // 列出文件
+  listFiles: publicProcedure
+    .input(z.object({ userId: z.string(), folderId: z.string().optional() }))
+    .query(async ({ input }) => {
+      const files = await onedrive.listFiles(input.userId, input.folderId);
+      return { files };
+    }),
+
+  // 獲取文件內容
+  getFile: publicProcedure
+    .input(z.object({ userId: z.string(), fileId: z.string() }))
+    .query(async ({ input }) => {
+      const result = await onedrive.getFileContent(input.userId, input.fileId);
+      return result;
+    }),
+
+  // 搜索文件
+  searchFiles: publicProcedure
+    .input(z.object({ userId: z.string(), query: z.string() }))
+    .query(async ({ input }) => {
+      const files = await onedrive.searchFiles(input.userId, input.query);
+      return { files };
+    }),
+
+  // 斷開連接
+  disconnect: publicProcedure
+    .input(z.object({ userId: z.string() }))
+    .mutation(({ input }) => {
+      onedrive.disconnect(input.userId);
+      return { success: true };
+    }),
+});
+
 // Main App Router
 export const appRouter = router({
   auth: authRouter,
@@ -737,6 +794,7 @@ export const appRouter = router({
   content: contentRouter,
   chiefOfStaff: chiefOfStaffRouter,
   company: companyRouter,
+  onedrive: onedriveRouter,
   
   // Health check
   health: publicProcedure.query(() => ({
