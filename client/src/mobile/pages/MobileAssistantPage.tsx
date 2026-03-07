@@ -1,6 +1,6 @@
 /**
- * 特助頁面 - AI 助手主介面
- * 這是用戶與 AI 特助對話的主要入口
+ * 幕僚長頁面 - AI 幕僚長主介面
+ * 這是用戶與幕僚長對話的主要入口
  */
 import { useState } from "react";
 import MobileHeader from "../components/MobileHeader";
@@ -17,7 +17,7 @@ export default function MobileAssistantPage() {
     {
       id: "1",
       role: "assistant",
-      content: "👋 嗨！我是你的 AI 特助。有什麼我可以幫你的嗎？\n\n我可以協助你：\n• 規劃行銷活動\n• 分析數據報告\n• 撰寫文案內容\n• 管理任務進度",
+      content: "👋 嗨！我是你的幕僚長。有什麼我可以幫你的嗎？\n\n我可以協助你：\n• 規劃行銷活動\n• 分析數據報告\n• 撰寫文案內容\n• 管理任務進度",
       timestamp: new Date(),
     },
   ]);

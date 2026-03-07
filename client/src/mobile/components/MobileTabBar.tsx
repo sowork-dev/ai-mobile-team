@@ -1,6 +1,6 @@
 /**
  * 底部 5 個 Tab 導航列
- * 設計：聯絡人 → 聊天 → 特助(中間突出) → 任務 → 我的
+ * 設計：聯絡人 → 聊天 → 幕僚長(中間突出) → 任務 → 我的
  * 注意：此元件在 Router base="/app" 下，路徑使用相對路徑
  */
 import { useLocation } from "wouter";
@@ -91,7 +91,7 @@ export default function MobileTabBar() {
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           
-          // 中間的「特助」按鈕特殊樣式
+          // 中間的「幕僚長」按鈕特殊樣式
           if (tab.isCenter) {
             return (
               <button

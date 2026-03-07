@@ -9,7 +9,7 @@ export const locales = {
     tabs: {
       contacts: "聯絡人",
       chat: "聊天",
-      assistant: "特助",
+      assistant: "幕僚長",
       tasks: "任務",
       profile: "我的",
     },
@@ -45,13 +45,13 @@ export const locales = {
       startNew: "開始新對話",
     },
     
-    // Assistant Page
+    // Assistant Page (幕僚長)
     assistant: {
-      title: "AI 特助",
+      title: "幕僚長",
       placeholder: "輸入您的問題...",
       send: "發送",
       thinking: "思考中...",
-      welcome: "您好！我是您的 AI 特助，有什麼可以幫您的？",
+      welcome: "您好！我是您的幕僚長，有什麼可以幫您的？",
     },
     
     // Tasks Page
