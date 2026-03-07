@@ -102,52 +102,64 @@ export default function MobileCompanySettingsPage() {
 
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // 自動抓取品牌和產品
-  const fetchBrandsAndProducts = async () => {
-    if (!formData.companyName.trim()) {
-      toast.error("請先輸入公司名稱");
+  // 從網站抓取品牌和產品
+  const fetchBrandsFromWebsite = async () => {
+    if (!formData.website.trim()) {
+      toast.error("請先輸入公司網站");
+      return;
+    }
+
+    // 驗證 URL 格式
+    try {
+      new URL(formData.website);
+    } catch {
+      toast.error("請輸入有效的網址");
       return;
     }
 
     setIsFetchingBrands(true);
-    toast.info("正在查詢品牌資訊...");
+    toast.info("正在搜尋網站資訊...");
 
     try {
-      // 模擬 AI 查詢（之後可接真正的 API）
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // 模擬 Web 爬取（之後接真正的 API）
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // 根據公司名稱模擬返回品牌資料
-      const companyName = formData.companyName.toLowerCase();
+      // 根據網址模擬返回品牌資料
+      const url = formData.website.toLowerCase();
       let mockBrands: Brand[] = [];
       
-      // 一些知名公司的模擬資料
-      if (companyName.includes("apple") || companyName.includes("蘋果")) {
+      if (url.includes("apple.com")) {
         mockBrands = [
           { name: "iPhone", products: ["iPhone 15 Pro", "iPhone 15", "iPhone SE"] },
-          { name: "Mac", products: ["MacBook Pro", "MacBook Air", "iMac", "Mac mini"] },
+          { name: "Mac", products: ["MacBook Pro", "MacBook Air", "iMac"] },
           { name: "iPad", products: ["iPad Pro", "iPad Air", "iPad mini"] },
           { name: "Apple Watch", products: ["Watch Ultra", "Watch Series 9"] },
         ];
-      } else if (companyName.includes("microsoft") || companyName.includes("微軟")) {
+      } else if (url.includes("microsoft.com")) {
         mockBrands = [
           { name: "Office 365", products: ["Word", "Excel", "PowerPoint", "Teams"] },
-          { name: "Azure", products: ["VM", "App Service", "Functions", "AI Services"] },
-          { name: "Surface", products: ["Surface Pro", "Surface Laptop", "Surface Go"] },
+          { name: "Azure", products: ["VM", "App Service", "Functions"] },
+          { name: "Surface", products: ["Surface Pro", "Surface Laptop"] },
         ];
-      } else if (companyName.includes("sowork")) {
+      } else if (url.includes("sowork")) {
         mockBrands = [
-          { name: "SoWork AI", products: ["AI 員工平台", "幕僚長", "AI 團隊管理"] },
+          { name: "SoWork AI Platform", products: ["AI 員工", "幕僚長", "AI 團隊"] },
+          { name: "SoWork Marketing", products: ["品牌定位", "社群經營", "廣告投放"] },
         ];
       } else {
-        // 通用模擬：為任何公司生成一個品牌
+        // 從 URL 提取域名作為品牌名稱
+        const domain = new URL(formData.website).hostname.replace("www.", "").split(".")[0];
+        const brandName = domain.charAt(0).toUpperCase() + domain.slice(1);
         mockBrands = [
-          { name: formData.companyName.replace(/股份有限公司|有限公司|公司/g, "").trim(), products: ["主要產品", "服務項目"] },
+          { name: brandName, products: ["主要產品", "服務項目"] },
         ];
       }
 
       setFormData(prev => ({ ...prev, brands: mockBrands }));
       setHasChanges(true);
-      toast.success(`找到 ${mockBrands.length} 個品牌！`);
+      
+      // 顯示成功訊息，包含將建立群組的提示
+      toast.success(`找到 ${mockBrands.length} 個品牌！儲存後將自動建立群組`);
     } catch (error) {
       toast.error("抓取失敗，請稍後再試");
     } finally {
@@ -310,18 +322,48 @@ export default function MobileCompanySettingsPage() {
               />
             </div>
 
-            {/* 公司網站 */}
+            {/* 公司網站 + 自動抓取 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 公司網站
               </label>
-              <input
-                type="url"
-                value={formData.website}
-                onChange={(e) => updateField("website", e.target.value)}
-                placeholder="https://www.example.com"
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 transition-colors"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={formData.website}
+                  onChange={(e) => updateField("website", e.target.value)}
+                  placeholder="https://www.example.com"
+                  className="flex-1 px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 transition-colors"
+                />
+                <button
+                  onClick={fetchBrandsFromWebsite}
+                  disabled={isFetchingBrands || !formData.website.trim()}
+                  className="px-4 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-xl disabled:opacity-50 active:scale-95 transition-transform flex items-center gap-1.5 whitespace-nowrap"
+                >
+                  {isFetchingBrands ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                        <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
+                      </svg>
+                      抓取中
+                    </>
+                  ) : (
+                    <>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                      </svg>
+                      抓取
+                    </>
+                  )}
+                </button>
+              </div>
+              <p className="mt-1.5 text-xs text-gray-500 flex items-center gap-1">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" />
+                </svg>
+                輸入網址後點「抓取」，自動建立品牌與產品，並為每個品牌建立群組
+              </p>
             </div>
           </div>
         </div>
@@ -371,34 +413,27 @@ export default function MobileCompanySettingsPage() {
           </div>
         </div>
 
-        {/* 品牌與產品 */}
+        {/* 品牌與產品（每個品牌會自動建立群組） */}
         <div className="bg-white mx-4 mt-4 rounded-2xl border border-gray-100 overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-            <h2 className="font-semibold text-gray-900">
-              {locale === "zh" ? "品牌與產品" : "Brands & Products"}
-            </h2>
-            <button
-              onClick={fetchBrandsAndProducts}
-              disabled={isFetchingBrands || !formData.companyName.trim()}
-              className="text-xs font-medium text-white bg-gray-900 px-3 py-1.5 rounded-full disabled:opacity-50 active:scale-95 transition-transform flex items-center gap-1.5"
-            >
-              {isFetchingBrands ? (
-                <>
-                  <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
-                    <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
-                  </svg>
-                  抓取中...
-                </>
-              ) : (
-                <>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 21l-6-6m2-5a7 7 0 1 1-14 0 7 7 0 0 1 14 0z" />
-                  </svg>
-                  自動抓取
-                </>
+          <div className="px-4 py-3 border-b border-gray-100">
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold text-gray-900">
+                {locale === "zh" ? "品牌與產品" : "Brands & Products"}
+              </h2>
+              {formData.brands.length > 0 && (
+                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                  {formData.brands.length} 個品牌
+                </span>
               )}
-            </button>
+            </div>
+            {formData.brands.length > 0 && (
+              <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 6L9 17l-5-5" />
+                </svg>
+                儲存後將為每個品牌自動建立群組
+              </p>
+            )}
           </div>
 
           <div className="p-4 space-y-4">
