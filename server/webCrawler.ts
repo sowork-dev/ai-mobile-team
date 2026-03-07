@@ -167,6 +167,56 @@ ${content}
 }
 
 /**
+ * 為品牌推薦 AI 員工
+ */
+export async function recommendAgentsForBrand(
+  brandName: string,
+  products: string[],
+  availableAgents: { id: number; name: string; title: string; specialty: string }[]
+): Promise<number[]> {
+  const client = createClient();
+  const model = getModelName();
+
+  const agentList = availableAgents
+    .slice(0, 50) // 限制數量避免 token 過多
+    .map(a => `${a.id}: ${a.name} - ${a.title} (${a.specialty || "無專長說明"})`)
+    .join("\n");
+
+  const prompt = `為品牌「${brandName}」推薦最適合的 AI 員工。
+
+品牌產品：${products.join(", ")}
+
+可選的 AI 員工：
+${agentList}
+
+請選擇 3-5 位最適合這個品牌的 AI 員工，回覆他們的 ID（數字），用逗號分隔。
+只回覆數字，例如：1, 5, 12, 23`;
+
+  try {
+    const response = await client.chat.completions.create({
+      model,
+      messages: [
+        { role: "system", content: "你是一個 AI 團隊配置專家，擅長根據品牌需求推薦最適合的 AI 員工。只回覆 ID 數字，用逗號分隔。" },
+        { role: "user", content: prompt },
+      ],
+      temperature: 0.3,
+      max_tokens: 100,
+    });
+
+    const text = response.choices[0]?.message?.content?.trim() || "";
+    const ids = text.match(/\d+/g)?.map(Number).filter(id => 
+      availableAgents.some(a => a.id === id)
+    ) || [];
+    
+    return ids.slice(0, 5); // 最多 5 位
+  } catch (error) {
+    console.error("推薦 AI 員工錯誤:", error);
+    // 返回前 3 位作為預設
+    return availableAgents.slice(0, 3).map(a => a.id);
+  }
+}
+
+/**
  * 爬取網站並分析品牌產品
  */
 export async function crawlWebsite(url: string): Promise<CrawlResult> {

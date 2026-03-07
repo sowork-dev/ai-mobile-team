@@ -198,6 +198,9 @@ export default function MobileCompanySettingsPage() {
     setHasChanges(true);
   };
 
+  // 建立品牌群組 mutation
+  const createGroupsMutation = trpc.company.createBrandGroups.useMutation();
+
   const handleSave = async () => {
     if (!validate()) {
       toast.error("請填寫必填欄位");
@@ -206,20 +209,38 @@ export default function MobileCompanySettingsPage() {
 
     setIsSaving(true);
     
-    // 模擬 API 儲存
-    await new Promise(resolve => setTimeout(resolve, 600));
-    
-    localStorage.setItem("companySettings", JSON.stringify(formData));
-    setIsSaving(false);
-    setHasChanges(false);
-    setSaveSuccess(true);
-    
-    toast.success("企業資料已儲存！");
-    
-    // 1.5 秒後返回 profile 頁面
-    setTimeout(() => {
-      navigate("/profile");
-    }, 1500);
+    try {
+      // 1. 儲存企業資料
+      localStorage.setItem("companySettings", JSON.stringify(formData));
+      
+      // 2. 如果有品牌，自動建立群組並推薦 AI 員工
+      if (formData.brands.length > 0) {
+        toast.info("正在為品牌建立群組...");
+        
+        const result = await createGroupsMutation.mutateAsync({
+          brands: formData.brands,
+        });
+        
+        if (result.success) {
+          toast.success(`已建立 ${result.groups.length} 個品牌群組，並推薦了 AI 員工！`);
+        }
+      } else {
+        toast.success("企業資料已儲存！");
+      }
+      
+      setHasChanges(false);
+      setSaveSuccess(true);
+      
+      // 1.5 秒後返回 profile 頁面
+      setTimeout(() => {
+        navigate("/profile");
+      }, 1500);
+    } catch (error: any) {
+      console.error("Save error:", error);
+      toast.error("儲存失敗：" + (error.message || "請稍後再試"));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (

@@ -32,7 +32,7 @@ import {
   ChiefOfStaffResponse,
   Task,
 } from "./chiefOfStaff.js";
-import { crawlWebsite, CrawlResult } from "./webCrawler.js";
+import { crawlWebsite, recommendAgentsForBrand, CrawlResult } from "./webCrawler.js";
 
 const t = initTRPC.create({
   transformer: superjson,
@@ -567,7 +567,26 @@ const chiefOfStaffRouter = router({
     }),
 });
 
-// Company Router - 企業設定 + Web 爬取
+// ============ 群組系統 ============
+
+interface BrandGroup {
+  id: string;
+  brandName: string;
+  products: string[];
+  members: {
+    id: number;
+    name: string;
+    title: string;
+    avatar: string | null;
+    isAI: boolean;
+  }[];
+  createdAt: Date;
+}
+
+// 內存存儲群組
+const brandGroups: Map<string, BrandGroup> = new Map();
+
+// Company Router - 企業設定 + Web 爬取 + 群組管理
 const companyRouter = router({
   // Web 爬取：從網站提取品牌和產品
   crawlWebsite: publicProcedure
@@ -576,6 +595,80 @@ const companyRouter = router({
     }))
     .mutation(async ({ input }) => {
       return await crawlWebsite(input.url);
+    }),
+    
+  // 為品牌建立群組並推薦 AI 員工
+  createBrandGroups: publicProcedure
+    .input(z.object({
+      brands: z.array(z.object({
+        name: z.string(),
+        products: z.array(z.string()),
+      })),
+    }))
+    .mutation(async ({ input }) => {
+      const createdGroups: BrandGroup[] = [];
+      
+      // 獲取可用的 AI 員工
+      const agents = await query(
+        `SELECT id, name, title, specialty FROM agents LIMIT 100`
+      );
+      
+      for (const brand of input.brands) {
+        const groupId = `group_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+        
+        // AI 推薦員工
+        const recommendedIds = await recommendAgentsForBrand(
+          brand.name,
+          brand.products,
+          agents as any[]
+        );
+        
+        // 獲取推薦員工的詳細資訊
+        const members: BrandGroup["members"] = [];
+        if (recommendedIds.length > 0) {
+          const memberDetails = await query(
+            `SELECT id, name, title, avatarUrl FROM agents WHERE id IN (${recommendedIds.join(",")})`
+          );
+          for (const m of memberDetails as any[]) {
+            members.push({
+              id: m.id,
+              name: m.name,
+              title: m.title,
+              avatar: m.avatarUrl,
+              isAI: true,
+            });
+          }
+        }
+        
+        const group: BrandGroup = {
+          id: groupId,
+          brandName: brand.name,
+          products: brand.products,
+          members,
+          createdAt: new Date(),
+        };
+        
+        brandGroups.set(groupId, group);
+        createdGroups.push(group);
+      }
+      
+      return {
+        success: true,
+        groups: createdGroups,
+        message: `已為 ${createdGroups.length} 個品牌建立群組，並推薦了 AI 員工`,
+      };
+    }),
+    
+  // 獲取所有品牌群組
+  getBrandGroups: publicProcedure.query(() => {
+    return Array.from(brandGroups.values());
+  }),
+  
+  // 獲取單個群組
+  getBrandGroup: publicProcedure
+    .input(z.object({ groupId: z.string() }))
+    .query(({ input }) => {
+      return brandGroups.get(input.groupId);
     }),
 });
 
