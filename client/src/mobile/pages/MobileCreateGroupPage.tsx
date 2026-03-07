@@ -4,23 +4,32 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
-import { useI18n } from "@/i18n";
 
 export default function MobileCreateGroupPage() {
   const [, navigate] = useLocation();
-  const { locale } = useI18n();
   const [groupName, setGroupName] = useState("");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [search, setSearch] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
   // 獲取所有 AI 員工
-  const { data: agents, isLoading } = trpc.talent.list.useQuery({
-    limit: 100,
-  });
+  const { data: agents = [], isLoading, error } = trpc.talent.list.useQuery(
+    { limit: 100 },
+    { retry: false }
+  );
 
   // 建立群組
   const createGroupMutation = trpc.company.createGroup.useMutation();
+
+  // 如果有錯誤，顯示錯誤信息
+  if (error) {
+    return (
+      <div className="flex flex-col h-full bg-white items-center justify-center p-4">
+        <p className="text-red-500 mb-4">載入失敗: {error.message}</p>
+        <button onClick={() => navigate("/chat")} className="text-[#007AFF]">返回</button>
+      </div>
+    );
+  }
 
   // 過濾員工
   const filteredAgents = (agents || []).filter((agent: any) =>
@@ -62,17 +71,17 @@ export default function MobileCreateGroupPage() {
       <div className="flex-shrink-0 bg-white/95 backdrop-blur-lg border-b border-[#C6C6C8] px-4 py-3">
         <div className="flex items-center justify-between">
           <button onClick={() => navigate("/chat")} className="text-[#007AFF] text-[17px]">
-            {locale === "zh" ? "取消" : "Cancel"}
+            {"取消"}
           </button>
           <h1 className="font-semibold text-[#1C1C1E] text-[17px]">
-            {locale === "zh" ? "建立群組" : "New Group"}
+            {"建立群組"}
           </h1>
           <button
             onClick={handleCreate}
             disabled={!groupName.trim() || selectedIds.length === 0 || isCreating}
             className="text-[#007AFF] text-[17px] font-semibold disabled:text-[#C7C7CC]"
           >
-            {isCreating ? "..." : locale === "zh" ? "建立" : "Create"}
+            {isCreating ? "..." : "建立"}
           </button>
         </div>
       </div>
@@ -83,7 +92,7 @@ export default function MobileCreateGroupPage() {
           type="text"
           value={groupName}
           onChange={(e) => setGroupName(e.target.value)}
-          placeholder={locale === "zh" ? "群組名稱" : "Group Name"}
+          placeholder={"群組名稱"}
           className="w-full px-4 py-3 bg-white rounded-xl text-[17px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30 placeholder:text-[#8E8E93]"
         />
       </div>
@@ -92,7 +101,7 @@ export default function MobileCreateGroupPage() {
       {selectedIds.length > 0 && (
         <div className="px-4 py-3 border-b border-[#C6C6C8]">
           <p className="text-[13px] text-[#8E8E93] mb-2">
-            {locale === "zh" ? `已選擇 ${selectedIds.length} 位成員` : `${selectedIds.length} selected`}
+            {`已選擇 ${selectedIds.length} 位成員`}
           </p>
           <div className="flex gap-2 overflow-x-auto pb-1">
             {selectedIds.map((id) => {
@@ -133,7 +142,7 @@ export default function MobileCreateGroupPage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={locale === "zh" ? "搜尋 AI 員工" : "Search AI employees"}
+            placeholder={"搜尋 AI 員工"}
             className="w-full pl-10 pr-4 py-2.5 bg-white rounded-xl text-[15px] focus:outline-none placeholder:text-[#8E8E93]"
           />
         </div>

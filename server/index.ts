@@ -46,8 +46,12 @@ if (process.env.NODE_ENV === "production") {
   const publicPath = path.join(__dirname, "public");
   app.use(express.static(publicPath));
   
-  // SPA fallback
-  app.get("*", (_req, res) => {
+  // SPA fallback - exclude API routes
+  app.get("*", (req, res, next) => {
+    // Skip API routes
+    if (req.path.startsWith("/trpc") || req.path.startsWith("/api")) {
+      return next();
+    }
     res.sendFile(path.join(publicPath, "index.html"));
   });
 }
