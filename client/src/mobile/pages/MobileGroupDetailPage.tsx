@@ -112,7 +112,7 @@ export default function MobileGroupDetailPage() {
           `這個任務我來負責！預計 **2 小時內**完成初稿，會直接發到群組讓大家審閱。`,
         ],
         "Luna": [
-          `視覺方面，我建議使用品牌主色 **#F97316** 作為重點色，搭配乾淨的白色背景，呈現高質感的視覺風格。`,
+          `視覺方面，我建議使用品牌主色 **#1C1C1E** 作為重點色，搭配乾淨的白色背景，呈現高質感的視覺風格。`,
           `我已經準備了 3 個視覺方向的草圖，稍後會上傳到群組供大家選擇。`,
         ],
       };
@@ -241,7 +241,7 @@ export default function MobileGroupDetailPage() {
         {/* 等待動畫 */}
         {isLoading && respondingAgent && (
           <div className="flex justify-start">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-xs mr-2 flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center text-white font-bold text-xs mr-2 flex-shrink-0">
               {respondingAgent[0]}
             </div>
             <div className="space-y-1">

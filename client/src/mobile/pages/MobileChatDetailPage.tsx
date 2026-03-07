@@ -243,7 +243,7 @@ function DeliverableCard({ deliverable }: { deliverable: DeliverableData }) {
         {deliverable.status === "generating" ? (
           <div className="w-5 h-5 border-2 border-gray-600 border-t-transparent rounded-full animate-spin" />
         ) : (
-          <button className="flex items-center gap-1 text-xs text-orange-500 font-medium px-2.5 py-1.5 bg-orange-50 rounded-lg active:bg-orange-100">
+          <button className="flex items-center gap-1 text-xs text-gray-900 font-medium px-2.5 py-1.5 bg-gray-50 rounded-lg active:bg-gray-100">
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M6 1v7M2 5l4 4 4-4M1 10h10" />
             </svg>
@@ -623,7 +623,7 @@ export default function MobileChatDetailPage() {
           <button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className="w-9 h-9 bg-orange-500 rounded-full flex items-center justify-center disabled:opacity-40 active:scale-95 transition-transform flex-shrink-0 shadow-sm shadow-orange-200"
+            className="w-9 h-9 bg-gray-900 rounded-full flex items-center justify-center disabled:opacity-40 active:scale-95 transition-transform flex-shrink-0 shadow-sm shadow-gray-200"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M14 2L2 7.5 7 8.5M14 2L9 14 7 8.5M14 2L7 8.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>

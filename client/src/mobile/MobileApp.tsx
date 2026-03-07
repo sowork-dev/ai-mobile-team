@@ -44,7 +44,7 @@ export default function MobileApp() {
     return (
       <div className="mobile-app flex items-center justify-center min-h-screen bg-white">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-10 h-10 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
           <p className="text-sm text-gray-500">載入中...</p>
         </div>
       </div>

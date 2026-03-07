@@ -65,14 +65,14 @@ export default function MobileAssistantPage() {
             <div
               className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                 msg.role === "user"
-                  ? "bg-orange-500 text-white rounded-br-md"
+                  ? "bg-gray-900 text-white rounded-br-md"
                   : "bg-white text-gray-800 rounded-bl-md shadow-sm border border-gray-100"
               }`}
             >
               <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
               <p
                 className={`text-[10px] mt-1 ${
-                  msg.role === "user" ? "text-orange-200" : "text-gray-400"
+                  msg.role === "user" ? "text-gray-200" : "text-gray-400"
                 }`}
               >
                 {msg.timestamp.toLocaleTimeString("zh-TW", {
@@ -88,9 +88,9 @@ export default function MobileAssistantPage() {
           <div className="flex justify-start">
             <div className="bg-white rounded-2xl rounded-bl-md px-4 py-3 shadow-sm border border-gray-100">
               <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                <div className="w-2 h-2 bg-gray-700 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <div className="w-2 h-2 bg-gray-700 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <div className="w-2 h-2 bg-gray-700 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
               </div>
             </div>
           </div>
@@ -106,12 +106,12 @@ export default function MobileAssistantPage() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
             placeholder="告訴特助你需要什麼幫助..."
-            className="flex-1 px-4 py-2.5 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+            className="flex-1 px-4 py-2.5 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/20"
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className="w-10 h-10 flex items-center justify-center bg-orange-500 text-white rounded-full disabled:opacity-50 transition-opacity active:opacity-80"
+            className="w-10 h-10 flex items-center justify-center bg-gray-900 text-white rounded-full disabled:opacity-50 transition-opacity active:opacity-80"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="22" y1="2" x2="11" y2="13" />

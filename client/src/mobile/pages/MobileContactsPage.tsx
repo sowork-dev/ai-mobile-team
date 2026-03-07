@@ -14,7 +14,7 @@ type ContactTab = "explore" | "my-team" | "invite";
 
 // 模擬我的團隊資料
 const MY_TEAM = [
-  { id: "vivian-brand", name: "Vivian", title: "品牌策略顧問", avatar: "V", avatarBg: "from-orange-400 to-orange-600", online: true, type: "ai" },
+  { id: "vivian-brand", name: "Vivian", title: "品牌策略顧問", avatar: "V", avatarBg: "from-gray-700 to-gray-800", online: true, type: "ai" },
   { id: "ken-copy", name: "Ken", title: "文案創作專家", avatar: "K", avatarBg: "from-blue-400 to-blue-600", online: true, type: "ai" },
   { id: "luna-design", name: "Luna", title: "視覺設計顧問", avatar: "L", avatarBg: "from-purple-400 to-purple-600", online: false, type: "ai" },
 ];
@@ -24,7 +24,7 @@ const SKILL_COLORS = [
   "bg-blue-50 text-blue-600",
   "bg-purple-50 text-purple-600",
   "bg-green-50 text-green-600",
-  "bg-orange-50 text-orange-600",
+  "bg-gray-50 text-gray-800",
   "bg-pink-50 text-pink-600",
 ];
 
@@ -48,7 +48,7 @@ function AgentCard({ agent, onChat, onAdd }: { agent: any; onChat: () => void; o
       {/* 頭部 */}
       <div className="px-4 pt-4 pb-3 flex items-start gap-3">
         {/* 頭像 */}
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-base flex-shrink-0 shadow-sm">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center text-white font-bold text-base flex-shrink-0 shadow-sm">
           {agent.avatar ? (
             <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover rounded-xl" />
           ) : (
@@ -59,7 +59,7 @@ function AgentCard({ agent, onChat, onAdd }: { agent: any; onChat: () => void; o
           <div className="flex items-center gap-1.5">
             <p className="font-semibold text-gray-900 text-sm">{agent.name}</p>
             {agent.layer && (
-              <span className="text-[10px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full font-medium">
+              <span className="text-[10px] bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded-full font-medium">
                 {layerLabels[agent.layer] || `L${agent.layer}`}
               </span>
             )}
@@ -93,7 +93,7 @@ function AgentCard({ agent, onChat, onAdd }: { agent: any; onChat: () => void; o
       <div className="px-4 pb-4 flex gap-2">
         <button
           onClick={onChat}
-          className="flex-1 py-2 bg-orange-500 text-white rounded-xl text-xs font-semibold active:scale-95 transition-transform shadow-sm shadow-orange-100"
+          className="flex-1 py-2 bg-gray-900 text-white rounded-xl text-xs font-semibold active:scale-95 transition-transform shadow-sm shadow-gray-100"
         >
           開始對話
         </button>
@@ -167,7 +167,7 @@ export default function MobileContactsPage() {
               onClick={() => setActiveTab(tab.id as ContactTab)}
               className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? "border-orange-500 text-orange-500"
+                  ? "border-gray-900 text-gray-900"
                   : "border-transparent text-gray-500"
               }`}
             >
@@ -202,7 +202,7 @@ export default function MobileContactsPage() {
                   onClick={() => setSelectedLayer(layer.id)}
                   className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                     selectedLayer === layer.id
-                      ? "bg-orange-500 text-white"
+                      ? "bg-gray-900 text-white"
                       : "bg-gray-100 text-gray-600"
                   }`}
                 >
@@ -262,7 +262,7 @@ export default function MobileContactsPage() {
                 <div className="flex-1 text-left">
                   <div className="flex items-center gap-1.5">
                     <p className="font-semibold text-gray-900 text-sm">{member.name}</p>
-                    <span className="text-[10px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full font-medium">AI</span>
+                    <span className="text-[10px] bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded-full font-medium">AI</span>
                   </div>
                   <p className="text-xs text-gray-500">{member.title}</p>
                 </div>
@@ -275,16 +275,16 @@ export default function MobileContactsPage() {
             {/* 建立群組按鈕 */}
             <button
               onClick={() => navigate("/groups")}
-              className="w-full flex items-center gap-3 bg-orange-50 border border-orange-200 rounded-2xl px-4 py-3.5 active:bg-orange-100 transition-colors"
+              className="w-full flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3.5 active:bg-gray-100 transition-colors"
             >
-              <div className="w-11 h-11 rounded-full bg-orange-500 flex items-center justify-center">
+              <div className="w-11 h-11 rounded-full bg-gray-900 flex items-center justify-center">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M10 4v12M4 10h12" />
                 </svg>
               </div>
               <div className="flex-1 text-left">
-                <p className="font-semibold text-orange-600 text-sm">建立工作群組</p>
-                <p className="text-xs text-orange-400">將 AI 員工組成專屬團隊</p>
+                <p className="font-semibold text-gray-800 text-sm">建立工作群組</p>
+                <p className="text-xs text-gray-700">將 AI 員工組成專屬團隊</p>
               </div>
             </button>
           </div>
@@ -295,8 +295,8 @@ export default function MobileContactsPage() {
       {activeTab === "invite" && (
         <div className="flex-1 overflow-y-auto p-4">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center">
-            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#F97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#1C1C1E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                 <circle cx="12" cy="7" r="4" />
                 <path d="M22 11v6M25 14h-6" />
@@ -310,7 +310,7 @@ export default function MobileContactsPage() {
                 placeholder="輸入同事的電子郵件"
                 className="flex-1 px-4 py-2.5 bg-gray-100 rounded-xl text-sm focus:outline-none"
               />
-              <button className="px-4 py-2.5 bg-orange-500 text-white rounded-xl text-sm font-semibold active:scale-95 transition-transform">
+              <button className="px-4 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold active:scale-95 transition-transform">
                 邀請
               </button>
             </div>

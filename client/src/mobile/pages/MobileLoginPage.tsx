@@ -98,7 +98,7 @@ export default function MobileLoginPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="請輸入您的姓名"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-gray-50"
               />
             </div>
           )}
@@ -109,7 +109,7 @@ export default function MobileLoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="your@email.com"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-gray-50"
               autoComplete="email"
             />
           </div>
@@ -120,7 +120,7 @@ export default function MobileLoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="請輸入密碼"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-gray-50"
               autoComplete={mode === "login" ? "current-password" : "new-password"}
             />
           </div>

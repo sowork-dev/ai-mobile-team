@@ -14,7 +14,7 @@ const MOCK_CONVERSATIONS = [
     name: "Vivian",
     title: "品牌策略顧問",
     avatar: "V",
-    avatarBg: "from-orange-400 to-orange-600",
+    avatarBg: "from-gray-700 to-gray-800",
     lastMessage: "根據您的品牌定位，我建議本月優先佈局 Instagram...",
     time: "10:32",
     unread: 2,

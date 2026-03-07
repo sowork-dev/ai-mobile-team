@@ -165,7 +165,7 @@ export default function MobileTaskDetailPage() {
         </div>
         <button
           onClick={() => setShowPublish(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 text-white rounded-xl text-xs font-semibold active:scale-95 transition-transform shadow-sm shadow-orange-100"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white rounded-xl text-xs font-semibold active:scale-95 transition-transform shadow-sm shadow-gray-100"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round">
             <path d="M2 9v2a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V9" />
@@ -202,15 +202,15 @@ export default function MobileTaskDetailPage() {
                 key={i}
                 className="flex items-center gap-3 bg-gray-50 rounded-xl px-3 py-2.5"
               >
-                <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#F97316" strokeWidth="1.8" strokeLinecap="round">
+                <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#1C1C1E" strokeWidth="1.8" strokeLinecap="round">
                     <path d="M8 2v8M4 6l4 4 4-4M2 12h12" />
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-gray-900 truncate">{d.title}</p>
                 </div>
-                <button className="text-xs text-orange-500 font-medium px-2.5 py-1.5 bg-orange-50 rounded-lg active:bg-orange-100">
+                <button className="text-xs text-gray-900 font-medium px-2.5 py-1.5 bg-gray-50 rounded-lg active:bg-gray-100">
                   下載
                 </button>
               </div>

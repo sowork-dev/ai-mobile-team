@@ -23,7 +23,7 @@ const MOCK_GROUPS: Group[] = [
     name: "品牌行銷小組",
     description: "品牌定位、社群內容、廣告策略",
     members: [
-      { name: "Vivian", avatar: "V", bg: "from-orange-400 to-orange-600", type: "ai" },
+      { name: "Vivian", avatar: "V", bg: "from-gray-700 to-gray-800", type: "ai" },
       { name: "Ken", avatar: "K", bg: "from-blue-400 to-blue-600", type: "ai" },
       { name: "你", avatar: "我", bg: "from-gray-400 to-gray-600", type: "human" },
     ],
@@ -175,7 +175,7 @@ function CreateGroupModal({ onClose, onCreated }: { onClose: () => void; onCreat
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="例如：品牌行銷小組"
-              className="w-full px-4 py-2.5 bg-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full px-4 py-2.5 bg-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
             />
           </div>
           <div>
@@ -191,7 +191,7 @@ function CreateGroupModal({ onClose, onCreated }: { onClose: () => void; onCreat
                       : "border-gray-200 bg-white"
                   }`}
                 >
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-sm font-bold">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center text-white text-sm font-bold">
                     {(agent.name || "A")[0]}
                   </div>
                   <div className="flex-1 text-left">
@@ -199,7 +199,7 @@ function CreateGroupModal({ onClose, onCreated }: { onClose: () => void; onCreat
                     <p className="text-xs text-gray-500">{agent.title}</p>
                   </div>
                   {selectedAgents.includes(String(agent.id)) && (
-                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#F97316" strokeWidth="2.5" strokeLinecap="round">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#1C1C1E" strokeWidth="2.5" strokeLinecap="round">
                       <path d="M3 9l5 5 7-8" />
                     </svg>
                   )}

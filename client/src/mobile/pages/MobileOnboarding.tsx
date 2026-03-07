@@ -266,7 +266,7 @@ export default function MobileOnboarding() {
       <div className="flex-shrink-0 bg-white border-b border-gray-100 px-4 h-14 flex items-center justify-between">
         <div className="flex items-center gap-3">
           {/* Vivian 頭像 */}
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center text-white text-xs font-bold shadow-sm">
             V
           </div>
           <div>
@@ -287,7 +287,7 @@ export default function MobileOnboarding() {
         {messages.map((msg, index) => (
           <div key={index} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
             {msg.role === "assistant" && (
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-xs font-bold mr-2 flex-shrink-0 mt-0.5">
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center text-white text-xs font-bold mr-2 flex-shrink-0 mt-0.5">
                 V
               </div>
             )}
@@ -357,7 +357,7 @@ export default function MobileOnboarding() {
         {/* 生成中動畫 */}
         {isGenerating && (
           <div className="flex justify-start">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-xs font-bold mr-2 flex-shrink-0">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center text-white text-xs font-bold mr-2 flex-shrink-0">
               V
             </div>
             <div className="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3">
@@ -383,7 +383,7 @@ export default function MobileOnboarding() {
               onChange={(e) => setBrandName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleBrandNameSubmit()}
               placeholder="輸入您的品牌名稱..."
-              className="flex-1 px-4 py-2.5 bg-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="flex-1 px-4 py-2.5 bg-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
               autoFocus
             />
             <button
@@ -416,7 +416,7 @@ function BrandPositioningCardView({ card }: { card: BrandPositioningCard }) {
   return (
     <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
       {/* Card Header */}
-      <div className="bg-gradient-to-r from-orange-500 to-orange-400 px-4 py-3">
+      <div className="bg-gradient-to-r from-gray-900 to-gray-700 px-4 py-3">
         <p className="text-white text-xs font-medium opacity-80">品牌定位卡片</p>
         <p className="text-white font-bold text-base mt-0.5">{card.brandName}</p>
         {card.tagline && (

@@ -110,7 +110,7 @@ export default function MobileProfilePage() {
         {/* 用戶資訊卡 */}
         <div className="bg-white px-5 py-6 border-b border-gray-100">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-2xl shadow-md">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center text-white font-bold text-2xl shadow-md">
               {(user as any)?.name?.[0] || "U"}
             </div>
             <div className="flex-1">
@@ -131,7 +131,7 @@ export default function MobileProfilePage() {
         </div>
 
         {/* 品牌定位卡片預覽 */}
-        <div className="mx-4 mt-4 bg-gradient-to-r from-orange-500 to-orange-400 rounded-2xl p-4 shadow-md shadow-gray-200">
+        <div className="mx-4 mt-4 bg-gradient-to-r from-gray-900 to-gray-700 rounded-2xl p-4 shadow-md shadow-gray-200">
           <div className="flex items-center justify-between mb-2">
             <p className="text-white text-xs font-medium opacity-80">品牌定位</p>
             <button

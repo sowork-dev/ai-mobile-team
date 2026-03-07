@@ -65,7 +65,7 @@ export default function MobileAgentDetailPage() {
         {/* 頭部資訊 */}
         <div className="bg-white px-5 py-6 border-b border-gray-100">
           <div className="flex items-start gap-4">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-3xl shadow-md flex-shrink-0">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center text-white font-bold text-3xl shadow-md flex-shrink-0">
               {agent.avatarUrl ? (
                 <img src={agent.avatarUrl} alt={agent.name} className="w-full h-full object-cover rounded-2xl" />
               ) : (
@@ -81,7 +81,7 @@ export default function MobileAgentDetailPage() {
               {agent.rating && (
                 <div className="flex items-center gap-1 mt-2">
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <svg key={i} width="14" height="14" viewBox="0 0 14 14" fill={i < Math.floor(agent.rating) ? "#F97316" : "#E5E7EB"}>
+                    <svg key={i} width="14" height="14" viewBox="0 0 14 14" fill={i < Math.floor(agent.rating) ? "#1C1C1E" : "#E5E7EB"}>
                       <path d="M7 1l1.5 3.5 3.5.5-2.5 2.5.5 3.5L7 9.5 4 11l.5-3.5L2 5l3.5-.5z"/>
                     </svg>
                   ))}
