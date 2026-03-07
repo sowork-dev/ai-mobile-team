@@ -45,14 +45,33 @@ export interface ChiefOfStaffResponse {
   };
 }
 
-// 創建 OpenAI 客戶端
+// 創建 OpenAI 客戶端（優先使用智譜，無地區限制）
 function createClient(): OpenAI {
+  // 優先使用智譜（無地區限制）
+  if (process.env.ZHIPU_API_KEY) {
+    return new OpenAI({
+      apiKey: process.env.ZHIPU_API_KEY,
+      baseURL: "https://open.bigmodel.cn/api/paas/v4",
+    });
+  }
+  // 其次使用通義千問
+  if (process.env.QIANWEN_API_KEY) {
+    return new OpenAI({
+      apiKey: process.env.QIANWEN_API_KEY,
+      baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    });
+  }
+  // 最後使用 OpenAI（可能有地區限制）
   return new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY || process.env.QIANWEN_API_KEY,
-    baseURL: process.env.QIANWEN_API_KEY 
-      ? "https://dashscope.aliyuncs.com/compatible-mode/v1"
-      : undefined,
+    apiKey: process.env.OPENAI_API_KEY,
   });
+}
+
+// 獲取模型名稱
+function getModelName(): string {
+  if (process.env.ZHIPU_API_KEY) return "glm-4-flash";
+  if (process.env.QIANWEN_API_KEY) return "qwen-plus";
+  return "gpt-4o-mini";
 }
 
 /**
@@ -66,7 +85,7 @@ async function analyzeIntent(message: string): Promise<{
   const client = createClient();
   
   const response = await client.chat.completions.create({
-    model: process.env.QIANWEN_API_KEY ? "qwen-plus" : "gpt-4o-mini",
+    model: getModelName(),
     messages: [
       {
         role: "system",
@@ -153,7 +172,7 @@ async function recommendAgents(
   }));
 
   const response = await client.chat.completions.create({
-    model: process.env.QIANWEN_API_KEY ? "qwen-plus" : "gpt-4o-mini",
+    model: getModelName(),
     messages: [
       {
         role: "system",
@@ -235,7 +254,7 @@ ${context.recommendations.map(r => `- ${r.name}（${r.title}）：${r.reason}`).
   }
 
   const response = await client.chat.completions.create({
-    model: process.env.QIANWEN_API_KEY ? "qwen-plus" : "gpt-4o-mini",
+    model: getModelName(),
     messages: [
       { role: "system", content: systemPrompt + contextInfo },
       { role: "user", content: message }
