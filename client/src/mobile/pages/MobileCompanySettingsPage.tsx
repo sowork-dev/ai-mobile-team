@@ -8,6 +8,11 @@ import { toast } from "sonner";
 import MobileHeader from "../components/MobileHeader";
 import { useI18n } from "@/i18n";
 
+interface Brand {
+  name: string;
+  products: string[];
+}
+
 interface CompanyInfo {
   companyName: string;
   industry: string;
@@ -17,6 +22,7 @@ interface CompanyInfo {
   contactPhone: string;
   website: string;
   description: string;
+  brands: Brand[];
 }
 
 const INDUSTRY_OPTIONS = [
@@ -43,7 +49,10 @@ export default function MobileCompanySettingsPage() {
     contactPhone: "",
     website: "",
     description: "",
+    brands: [],
   });
+  
+  const [isFetchingBrands, setIsFetchingBrands] = useState(false);
 
   const [errors, setErrors] = useState<Partial<Record<keyof CompanyInfo, string>>>({});
 
@@ -92,6 +101,96 @@ export default function MobileCompanySettingsPage() {
   };
 
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // 自動抓取品牌和產品
+  const fetchBrandsAndProducts = async () => {
+    if (!formData.companyName.trim()) {
+      toast.error("請先輸入公司名稱");
+      return;
+    }
+
+    setIsFetchingBrands(true);
+    toast.info("正在查詢品牌資訊...");
+
+    try {
+      // 模擬 AI 查詢（之後可接真正的 API）
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // 根據公司名稱模擬返回品牌資料
+      const companyName = formData.companyName.toLowerCase();
+      let mockBrands: Brand[] = [];
+      
+      // 一些知名公司的模擬資料
+      if (companyName.includes("apple") || companyName.includes("蘋果")) {
+        mockBrands = [
+          { name: "iPhone", products: ["iPhone 15 Pro", "iPhone 15", "iPhone SE"] },
+          { name: "Mac", products: ["MacBook Pro", "MacBook Air", "iMac", "Mac mini"] },
+          { name: "iPad", products: ["iPad Pro", "iPad Air", "iPad mini"] },
+          { name: "Apple Watch", products: ["Watch Ultra", "Watch Series 9"] },
+        ];
+      } else if (companyName.includes("microsoft") || companyName.includes("微軟")) {
+        mockBrands = [
+          { name: "Office 365", products: ["Word", "Excel", "PowerPoint", "Teams"] },
+          { name: "Azure", products: ["VM", "App Service", "Functions", "AI Services"] },
+          { name: "Surface", products: ["Surface Pro", "Surface Laptop", "Surface Go"] },
+        ];
+      } else if (companyName.includes("sowork")) {
+        mockBrands = [
+          { name: "SoWork AI", products: ["AI 員工平台", "幕僚長", "AI 團隊管理"] },
+        ];
+      } else {
+        // 通用模擬：為任何公司生成一個品牌
+        mockBrands = [
+          { name: formData.companyName.replace(/股份有限公司|有限公司|公司/g, "").trim(), products: ["主要產品", "服務項目"] },
+        ];
+      }
+
+      setFormData(prev => ({ ...prev, brands: mockBrands }));
+      setHasChanges(true);
+      toast.success(`找到 ${mockBrands.length} 個品牌！`);
+    } catch (error) {
+      toast.error("抓取失敗，請稍後再試");
+    } finally {
+      setIsFetchingBrands(false);
+    }
+  };
+
+  // 新增品牌
+  const addBrand = () => {
+    setFormData(prev => ({
+      ...prev,
+      brands: [...prev.brands, { name: "", products: [] }]
+    }));
+    setHasChanges(true);
+  };
+
+  // 更新品牌名稱
+  const updateBrandName = (index: number, name: string) => {
+    setFormData(prev => ({
+      ...prev,
+      brands: prev.brands.map((b, i) => i === index ? { ...b, name } : b)
+    }));
+    setHasChanges(true);
+  };
+
+  // 更新產品（逗號分隔）
+  const updateBrandProducts = (index: number, productsStr: string) => {
+    const products = productsStr.split(/[,，]/).map(p => p.trim()).filter(Boolean);
+    setFormData(prev => ({
+      ...prev,
+      brands: prev.brands.map((b, i) => i === index ? { ...b, products } : b)
+    }));
+    setHasChanges(true);
+  };
+
+  // 刪除品牌
+  const removeBrand = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      brands: prev.brands.filter((_, i) => i !== index)
+    }));
+    setHasChanges(true);
+  };
 
   const handleSave = async () => {
     if (!validate()) {
@@ -269,6 +368,103 @@ export default function MobileCompanySettingsPage() {
                 <p className="mt-1 text-xs text-red-500">{errors.contactPhone}</p>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* 品牌與產品 */}
+        <div className="bg-white mx-4 mt-4 rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+            <h2 className="font-semibold text-gray-900">
+              {locale === "zh" ? "品牌與產品" : "Brands & Products"}
+            </h2>
+            <button
+              onClick={fetchBrandsAndProducts}
+              disabled={isFetchingBrands || !formData.companyName.trim()}
+              className="text-xs font-medium text-white bg-gray-900 px-3 py-1.5 rounded-full disabled:opacity-50 active:scale-95 transition-transform flex items-center gap-1.5"
+            >
+              {isFetchingBrands ? (
+                <>
+                  <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                    <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
+                  </svg>
+                  抓取中...
+                </>
+              ) : (
+                <>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 21l-6-6m2-5a7 7 0 1 1-14 0 7 7 0 0 1 14 0z" />
+                  </svg>
+                  自動抓取
+                </>
+              )}
+            </button>
+          </div>
+
+          <div className="p-4 space-y-4">
+            {formData.brands.length === 0 ? (
+              <div className="text-center py-6">
+                <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                    <line x1="7" y1="7" x2="7.01" y2="7"/>
+                  </svg>
+                </div>
+                <p className="text-sm text-gray-500">尚未設定品牌</p>
+                <p className="text-xs text-gray-400 mt-1">點擊「自動抓取」或手動新增</p>
+              </div>
+            ) : (
+              formData.brands.map((brand, index) => (
+                <div key={index} className="bg-gray-50 rounded-xl p-3 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={brand.name}
+                      onChange={(e) => updateBrandName(index, e.target.value)}
+                      placeholder="品牌名稱"
+                      className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
+                    />
+                    <button
+                      onClick={() => removeBrand(index)}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 active:bg-red-100"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                        <path d="M18 6L6 18M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">產品（逗號分隔）</label>
+                    <input
+                      type="text"
+                      value={brand.products.join(", ")}
+                      onChange={(e) => updateBrandProducts(index, e.target.value)}
+                      placeholder="產品A, 產品B, 產品C"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
+                    />
+                  </div>
+                  {brand.products.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {brand.products.map((product, pIndex) => (
+                        <span key={pIndex} className="text-xs bg-white text-gray-600 px-2 py-1 rounded-full border border-gray-200">
+                          {product}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+
+            <button
+              onClick={addBrand}
+              className="w-full py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-sm text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors flex items-center justify-center gap-2"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              新增品牌
+            </button>
           </div>
         </div>
 
