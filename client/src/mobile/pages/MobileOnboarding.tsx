@@ -404,13 +404,23 @@ export default function MobileOnboarding() {
 
 // ── 品牌定位卡片元件 ──────────────────────────────────────────
 function BrandPositioningCardView({ card }: { card: BrandPositioningCard }) {
+  // Apple SF Symbols 風格圖標
+  const brandIcons: Record<string, React.ReactNode> = {
+    tag: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>,
+    building: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22V12h6v10M9 6h.01M15 6h.01M9 10h.01M15 10h.01"/></svg>,
+    users: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+    sparkle: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
+    chat: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
+    target: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
+  };
+
   const fields = [
-    { label: "品牌名稱", value: card.brandName, icon: "🏷" },
-    { label: "產業", value: card.industry, icon: "🏢" },
-    { label: "目標受眾", value: card.targetAudience, icon: "👥" },
-    { label: "差異化優勢", value: card.differentiation, icon: "✨" },
-    { label: "品牌語調", value: card.brandTone, icon: "💬" },
-    { label: "行銷目標", value: card.marketingGoal, icon: "🎯" },
+    { label: "品牌名稱", value: card.brandName, icon: brandIcons.tag },
+    { label: "產業", value: card.industry, icon: brandIcons.building },
+    { label: "目標受眾", value: card.targetAudience, icon: brandIcons.users },
+    { label: "差異化優勢", value: card.differentiation, icon: brandIcons.sparkle },
+    { label: "品牌語調", value: card.brandTone, icon: brandIcons.chat },
+    { label: "行銷目標", value: card.marketingGoal, icon: brandIcons.target },
   ];
 
   return (
@@ -427,7 +437,7 @@ function BrandPositioningCardView({ card }: { card: BrandPositioningCard }) {
       <div className="px-4 py-3 space-y-2.5">
         {fields.slice(1).map((field) => (
           <div key={field.label} className="flex items-start gap-2.5">
-            <span className="text-base flex-shrink-0 mt-0.5">{field.icon}</span>
+            <span className="flex-shrink-0 mt-0.5">{field.icon}</span>
             <div>
               <p className="text-xs text-gray-400 font-medium">{field.label}</p>
               <p className="text-sm text-gray-800 font-medium">{field.value}</p>

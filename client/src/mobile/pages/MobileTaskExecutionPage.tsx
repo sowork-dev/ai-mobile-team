@@ -809,18 +809,40 @@ export default function MobileTaskExecutionPage() {
             </button>
 
             <div className="grid grid-cols-2 gap-3 mb-4">
-              {template.outputFormats.map((format) => (
-                <button
-                  key={format}
-                  onClick={() => handleExport(format)}
-                  className="flex flex-col items-center gap-2 p-4 bg-gray-50 rounded-xl border border-gray-100 active:bg-gray-100"
-                >
-                  <span className="text-2xl">
-                    {format === "pdf" ? "📕" : format === "ppt" ? "📊" : format === "doc" ? "📝" : "📈"}
-                  </span>
-                  <span className="font-semibold text-gray-900">{format.toUpperCase()}</span>
-                </button>
-              ))}
+              {template.outputFormats.map((format) => {
+                const formatIcons: Record<string, React.ReactNode> = {
+                  pdf: (
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3C3C43" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
+                    </svg>
+                  ),
+                  ppt: (
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3C3C43" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" />
+                    </svg>
+                  ),
+                  doc: (
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3C3C43" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" />
+                    </svg>
+                  ),
+                  xls: (
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3C3C43" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 3v18h18" /><path d="M7 16l4-4 4 4 6-6" />
+                    </svg>
+                  ),
+                };
+                return (
+                  <button
+                    key={format}
+                    onClick={() => handleExport(format)}
+                    className="flex flex-col items-center gap-2 p-4 bg-gray-50 rounded-xl border border-gray-100 active:bg-gray-100"
+                  >
+                    {formatIcons[format] || formatIcons.doc}
+                    <span className="font-semibold text-gray-900">{format.toUpperCase()}</span>
+                  </button>
+                );
+              })}
             </div>
             
             <button

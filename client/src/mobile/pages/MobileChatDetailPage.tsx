@@ -221,10 +221,22 @@ function MessageToolbar({
 
 // ── 交付物卡片 ────────────────────────────────────────────────
 function DeliverableCard({ deliverable }: { deliverable: DeliverableData }) {
-  const typeIcons = {
-    presentation: "📊",
-    pdf: "📄",
-    markdown: "📝",
+  const typeIcons: Record<string, React.ReactNode> = {
+    presentation: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" />
+      </svg>
+    ),
+    pdf: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
+      </svg>
+    ),
+    markdown: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" />
+      </svg>
+    ),
   };
   const typeLabels = {
     presentation: "簡報 PPT",
@@ -235,7 +247,7 @@ function DeliverableCard({ deliverable }: { deliverable: DeliverableData }) {
   return (
     <div className="mt-2 bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
       <div className="flex items-center gap-3 px-3 py-2.5 border-b border-gray-100">
-        <span className="text-xl">{typeIcons[deliverable.type]}</span>
+        <div className="flex-shrink-0">{typeIcons[deliverable.type]}</div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-gray-900 truncate">{deliverable.title}</p>
           <p className="text-xs text-gray-500">{typeLabels[deliverable.type]}</p>
