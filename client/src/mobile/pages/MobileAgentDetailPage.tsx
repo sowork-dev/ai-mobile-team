@@ -1,9 +1,11 @@
 /**
  * AI 員工詳情頁面
  */
+import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import AIOnboardingModal from "../components/AIOnboardingModal";
 
 const SKILL_COLORS = [
   "bg-gray-100 text-gray-700",
@@ -16,6 +18,7 @@ const SKILL_COLORS = [
 export default function MobileAgentDetailPage() {
   const { agentId } = useParams<{ agentId: string }>();
   const [, navigate] = useLocation();
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // 從 agents 列表找到對應的 agent
   const { data: agentsData = [] } = trpc.cmo.listAgents.useQuery({});
@@ -23,11 +26,34 @@ export default function MobileAgentDetailPage() {
     (a: any) => String(a.id) === agentId || a.slug === agentId
   );
 
+  // 檢查是否首次使用此 AI
+  useEffect(() => {
+    if (agent) {
+      const seenAgents = JSON.parse(localStorage.getItem("seenAgents") || "[]");
+      if (!seenAgents.includes(agent.id)) {
+        setShowOnboarding(true);
+      }
+    }
+  }, [agent]);
+
+  const handleOnboardingClose = () => {
+    if (agent) {
+      const seenAgents = JSON.parse(localStorage.getItem("seenAgents") || "[]");
+      localStorage.setItem("seenAgents", JSON.stringify([...seenAgents, agent.id]));
+    }
+    setShowOnboarding(false);
+  };
+
+  const handleStartChat = () => {
+    handleOnboardingClose();
+    navigate(`/chat/${agent?.slug || agent?.id}`);
+  };
+
   if (!agent) {
     return (
       <div className="flex flex-col h-full bg-white items-center justify-center">
-        <p className="text-gray-400 text-sm">找不到此 AI 員工</p>
-        <button onClick={() => navigate("/contacts")} className="mt-3 text-gray-900 text-sm font-medium">
+        <p className="text-[#8E8E93] text-sm">找不到此 AI 員工</p>
+        <button onClick={() => navigate("/contacts")} className="mt-3 text-[#007AFF] text-sm font-medium">
           返回聯絡人
         </button>
       </div>
@@ -165,6 +191,24 @@ export default function MobileAgentDetailPage() {
           </button>
         </div>
       </div>
+
+      {/* AI 入職說明彈窗 */}
+      <AIOnboardingModal
+        agent={{
+          id: agent.id,
+          name: agent.name,
+          englishName: agent.englishName,
+          title: agent.title,
+          avatar: agent.avatarUrl,
+          bio: agent.bio,
+          methodology: agent.methodology,
+          specialty: agent.specialty,
+          skills: skills,
+        }}
+        isOpen={showOnboarding}
+        onClose={handleOnboardingClose}
+        onStartChat={handleStartChat}
+      />
     </div>
   );
 }
