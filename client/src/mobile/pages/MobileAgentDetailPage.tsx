@@ -20,10 +20,11 @@ export default function MobileAgentDetailPage() {
   const [, navigate] = useLocation();
   const [showOnboarding, setShowOnboarding] = useState(false);
 
-  // 從 agents 列表找到對應的 agent
-  const { data: agentsData = [] } = trpc.cmo.listAgents.useQuery({});
-  const agent = (agentsData as any[]).find(
-    (a: any) => String(a.id) === agentId || a.slug === agentId
+  // 從 talent API 獲取 agent 詳情
+  const isNumericId = /^\d+$/.test(agentId || "");
+  const { data: agent, isLoading } = trpc.talent.get.useQuery(
+    isNumericId ? { id: parseInt(agentId!) } : { slug: agentId },
+    { enabled: !!agentId }
   );
 
   // 檢查是否首次使用此 AI
@@ -49,6 +50,15 @@ export default function MobileAgentDetailPage() {
     navigate(`/chat/${agent?.slug || agent?.id}`);
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-full bg-white items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#1C1C1E] border-t-transparent rounded-full animate-spin" />
+        <p className="text-[#8E8E93] text-sm mt-3">載入中...</p>
+      </div>
+    );
+  }
+
   if (!agent) {
     return (
       <div className="flex flex-col h-full bg-white items-center justify-center">
@@ -60,10 +70,11 @@ export default function MobileAgentDetailPage() {
     );
   }
 
-  const skills = Array.isArray(agent.skills)
-    ? agent.skills
-    : typeof agent.skills === "string"
-    ? agent.skills.split(",")
+  // talent.get 返回 expertise/industries 陣列
+  const skills = Array.isArray(agent.expertise)
+    ? agent.expertise
+    : typeof agent.expertise === "string"
+    ? agent.expertise.split(",")
     : [];
 
   const industries = Array.isArray(agent.industries)
@@ -91,9 +102,9 @@ export default function MobileAgentDetailPage() {
         {/* 頭部資訊 */}
         <div className="bg-white px-5 py-6 border-b border-gray-100">
           <div className="flex items-start gap-4">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center text-white font-bold text-3xl shadow-md flex-shrink-0">
-              {agent.avatarUrl ? (
-                <img src={agent.avatarUrl} alt={agent.name} className="w-full h-full object-cover rounded-2xl" />
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center text-white font-bold text-3xl shadow-md flex-shrink-0 overflow-hidden">
+              {agent.avatar ? (
+                <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover" />
               ) : (
                 (agent.name || "A")[0]
               )}
@@ -103,7 +114,7 @@ export default function MobileAgentDetailPage() {
               {agent.englishName && (
                 <p className="text-sm text-gray-400">{agent.englishName}</p>
               )}
-              <p className="text-sm text-gray-600 mt-1">{agent.title}</p>
+              <p className="text-sm text-gray-600 mt-1">{agent.role}</p>
               {agent.rating && (
                 <div className="flex items-center gap-1 mt-2">
                   {Array.from({ length: 5 }).map((_, i) => (
@@ -198,8 +209,8 @@ export default function MobileAgentDetailPage() {
           id: agent.id,
           name: agent.name,
           englishName: agent.englishName,
-          title: agent.title,
-          avatar: agent.avatarUrl,
+          title: agent.role,
+          avatar: agent.avatar,
           bio: agent.bio,
           methodology: agent.methodology,
           specialty: agent.specialty,

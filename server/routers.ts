@@ -163,14 +163,27 @@ const talentRouter = router({
       };
     }),
     
-  // 獲取單個人才詳情
+  // 獲取單個人才詳情（支援 id 或 slug）
   get: publicProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ 
+      id: z.number().optional(),
+      slug: z.string().optional(),
+    }))
     .query(async ({ input }) => {
-      const [talent] = await query(
-        `SELECT * FROM agents WHERE id = ? AND isAvailable = 1`,
-        [input.id]
-      );
+      let talent;
+      if (input.id) {
+        [talent] = await query(
+          `SELECT * FROM agents WHERE id = ? AND isAvailable = 1`,
+          [input.id]
+        );
+      } else if (input.slug) {
+        [talent] = await query(
+          `SELECT * FROM agents WHERE slug = ? AND isAvailable = 1`,
+          [input.slug]
+        );
+      } else {
+        return null;
+      }
       
       if (!talent) return null;
       
