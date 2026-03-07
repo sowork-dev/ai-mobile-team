@@ -341,6 +341,40 @@ export async function chat(
   }
 }
 
+// ============ 任務系統 ============
+
+export interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: "pending" | "in_progress" | "review" | "completed";
+  currentStage: number;
+  totalStages: number;
+  assignedAgents: {
+    id: number;
+    name: string;
+    title: string;
+    avatar: string | null;
+    role: "primary" | "support";
+  }[];
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy: string;
+  stages: {
+    name: string;
+    status: "pending" | "in_progress" | "completed";
+    completedAt?: Date;
+  }[];
+  outputs?: {
+    type: "document" | "report" | "analysis";
+    title: string;
+    url?: string;
+  }[];
+}
+
+// 內存存儲（之後可換成資料庫）
+const tasks: Map<string, Task> = new Map();
+
 /**
  * 確認團隊並建立任務
  */
@@ -351,21 +385,160 @@ export async function confirmTeam(
 ): Promise<{
   success: boolean;
   taskId?: string;
+  task?: Task;
   message: string;
 }> {
-  // TODO: 實際建立任務到資料庫
   const taskId = `task_${Date.now()}`;
   
-  // 獲取被選中的 AI 員工名稱
+  // 獲取被選中的 AI 員工
   const agents = await query(
-    `SELECT name FROM agents WHERE id IN (${agentIds.map(() => "?").join(",")})`,
+    `SELECT id, name, title, avatarUrl FROM agents WHERE id IN (${agentIds.map(() => "?").join(",")})`,
     agentIds
   );
-  const agentNames = agents.map((a: any) => a.name);
+  
+  const assignedAgents = agents.map((a: any, i: number) => ({
+    id: a.id,
+    name: a.name,
+    title: a.title,
+    avatar: a.avatarUrl,
+    role: i === 0 ? "primary" : "support" as const,
+  }));
 
+  // 默認 5 個階段
+  const defaultStages = [
+    { name: "任務啟動", status: "completed" as const, completedAt: new Date() },
+    { name: "資料收集", status: "in_progress" as const },
+    { name: "分析處理", status: "pending" as const },
+    { name: "產出報告", status: "pending" as const },
+    { name: "審核交付", status: "pending" as const },
+  ];
+
+  const task: Task = {
+    id: taskId,
+    title: taskTitle || "新任務",
+    description: taskDescription,
+    status: "in_progress",
+    currentStage: 2,
+    totalStages: 5,
+    assignedAgents,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    createdBy: "dev-user-001",
+    stages: defaultStages,
+  };
+
+  // 保存任務
+  tasks.set(taskId, task);
+
+  const agentNames = assignedAgents.map(a => a.name);
+  
   return {
     success: true,
     taskId,
-    message: `已成功組建團隊！${agentNames.join("、")} 將負責「${taskTitle}」任務。`,
+    task,
+    message: `已成功建立任務「${task.title}」！\n\n團隊成員：${agentNames.join("、")}\n\n${assignedAgents[0]?.name} 已開始執行，預計很快會有進度更新。`,
   };
+}
+
+/**
+ * 獲取所有任務
+ */
+export function getTasks(filter?: {
+  status?: "all" | "active" | "completed";
+}): Task[] {
+  const allTasks = Array.from(tasks.values());
+  
+  if (!filter || filter.status === "all") {
+    return allTasks.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+  
+  if (filter.status === "active") {
+    return allTasks
+      .filter(t => t.status === "pending" || t.status === "in_progress" || t.status === "review")
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+  
+  if (filter.status === "completed") {
+    return allTasks
+      .filter(t => t.status === "completed")
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+  
+  return allTasks;
+}
+
+/**
+ * 獲取單個任務
+ */
+export function getTask(taskId: string): Task | undefined {
+  return tasks.get(taskId);
+}
+
+/**
+ * 更新任務狀態
+ */
+export function updateTaskStatus(
+  taskId: string,
+  update: {
+    status?: Task["status"];
+    currentStage?: number;
+    stageStatus?: { index: number; status: "pending" | "in_progress" | "completed" };
+  }
+): Task | undefined {
+  const task = tasks.get(taskId);
+  if (!task) return undefined;
+
+  if (update.status) {
+    task.status = update.status;
+  }
+  
+  if (update.currentStage) {
+    task.currentStage = update.currentStage;
+  }
+  
+  if (update.stageStatus) {
+    const { index, status } = update.stageStatus;
+    if (task.stages[index]) {
+      task.stages[index].status = status;
+      if (status === "completed") {
+        task.stages[index].completedAt = new Date();
+      }
+    }
+  }
+  
+  task.updatedAt = new Date();
+  tasks.set(taskId, task);
+  
+  return task;
+}
+
+/**
+ * 模擬任務進度（用於演示）
+ */
+export function simulateTaskProgress(taskId: string): void {
+  const task = tasks.get(taskId);
+  if (!task || task.status === "completed") return;
+
+  // 每次調用推進一個階段
+  if (task.currentStage < task.totalStages) {
+    // 完成當前階段
+    if (task.stages[task.currentStage - 1]) {
+      task.stages[task.currentStage - 1].status = "completed";
+      task.stages[task.currentStage - 1].completedAt = new Date();
+    }
+    
+    // 開始下一階段
+    task.currentStage++;
+    if (task.stages[task.currentStage - 1]) {
+      task.stages[task.currentStage - 1].status = "in_progress";
+    }
+    
+    // 檢查是否完成
+    if (task.currentStage >= task.totalStages) {
+      task.status = "review";
+    }
+    
+    task.updatedAt = new Date();
+    tasks.set(taskId, task);
+  }
 }

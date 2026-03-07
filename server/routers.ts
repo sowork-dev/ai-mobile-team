@@ -25,7 +25,12 @@ import {
 import {
   chat as chiefOfStaffChat,
   confirmTeam,
+  getTasks,
+  getTask,
+  updateTaskStatus,
+  simulateTaskProgress,
   ChiefOfStaffResponse,
+  Task,
 } from "./chiefOfStaff.js";
 
 const t = initTRPC.create({
@@ -490,7 +495,7 @@ const contentRouter = router({
     }),
 });
 
-// Chief of Staff Router - 幕僚長 AI 對話
+// Chief of Staff Router - 幕僚長 AI 對話 + 任務管理
 const chiefOfStaffRouter = router({
   // 對話
   chat: publicProcedure
@@ -506,7 +511,7 @@ const chiefOfStaffRouter = router({
       return response;
     }),
     
-  // 確認組隊
+  // 確認組隊並建立任務
   confirmTeam: publicProcedure
     .input(z.object({
       agentIds: z.array(z.number()),
@@ -520,6 +525,44 @@ const chiefOfStaffRouter = router({
         input.taskDescription
       );
       return result;
+    }),
+    
+  // 獲取任務列表
+  tasks: publicProcedure
+    .input(z.object({
+      status: z.enum(["all", "active", "completed"]).optional(),
+    }).optional())
+    .query(({ input }) => {
+      return getTasks(input);
+    }),
+    
+  // 獲取單個任務
+  task: publicProcedure
+    .input(z.object({ taskId: z.string() }))
+    .query(({ input }) => {
+      return getTask(input.taskId);
+    }),
+    
+  // 更新任務狀態
+  updateTask: publicProcedure
+    .input(z.object({
+      taskId: z.string(),
+      status: z.enum(["pending", "in_progress", "review", "completed"]).optional(),
+      currentStage: z.number().optional(),
+    }))
+    .mutation(({ input }) => {
+      return updateTaskStatus(input.taskId, {
+        status: input.status,
+        currentStage: input.currentStage,
+      });
+    }),
+    
+  // 模擬任務進度（演示用）
+  simulateProgress: publicProcedure
+    .input(z.object({ taskId: z.string() }))
+    .mutation(({ input }) => {
+      simulateTaskProgress(input.taskId);
+      return getTask(input.taskId);
     }),
 });
 

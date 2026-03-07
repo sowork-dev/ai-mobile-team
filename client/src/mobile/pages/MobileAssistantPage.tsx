@@ -124,27 +124,48 @@ export default function MobileAssistantPage() {
     if (action.action === "confirm_team" && selectedAgents.length > 0) {
       setIsLoading(true);
       try {
+        // 從最近的用戶消息提取任務描述
+        const userMessages = messages.filter(m => m.role === "user");
+        const lastUserMessage = userMessages[userMessages.length - 1]?.content || "";
+        
         const result = await confirmTeamMutation.mutateAsync({
           agentIds: selectedAgents,
-          taskTitle: "新任務",
-          taskDescription: messages[messages.length - 2]?.content || "",
+          taskTitle: lastUserMessage.slice(0, 30) || "新任務",
+          taskDescription: lastUserMessage,
         });
         
+        // 顯示成功消息，並添加跳轉按鈕
         const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
           content: result.message,
           timestamp: new Date(),
+          suggestedActions: [
+            { label: "查看任務詳情", action: "view_task", params: { taskId: result.taskId } },
+            { label: "繼續對話", action: "continue" },
+          ],
         };
         setMessages((prev) => [...prev, assistantMessage]);
         setSelectedAgents([]);
       } catch (error) {
         console.error("Confirm team error:", error);
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: "抱歉，建立任務時發生錯誤。請稍後再試。",
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
       } finally {
         setIsLoading(false);
       }
+    } else if (action.action === "view_task" && action.params?.taskId) {
+      // 跳轉到任務頁面
+      window.location.href = `/app/tasks/${action.params.taskId}`;
     } else if (action.action === "change_team") {
       handleSend("請推薦其他人選");
+    } else if (action.action === "continue") {
+      // 不做任何事，讓用戶繼續輸入
     } else {
       handleSend(action.label);
     }

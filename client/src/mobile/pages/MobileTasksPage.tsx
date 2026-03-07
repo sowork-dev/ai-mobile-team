@@ -25,47 +25,7 @@ interface Task {
   preview?: string;
 }
 
-const MOCK_TASKS: Task[] = [
-  {
-    id: "1",
-    title: "新人入職 - 王小明",
-    templateId: "employee-onboarding",
-    status: "in_progress",
-    currentStage: 3,
-    totalStages: 5,
-    agentName: "Rita Chu",
-    agentAvatar: "R",
-    agentBg: "from-gray-700 to-gray-900",
-    createdAt: "今天 10:32",
-    preview: "帳號已建立，正在準備系統培訓教材...",
-  },
-  {
-    id: "2",
-    title: "Q4 預算編制",
-    templateId: "budget-planning",
-    status: "review",
-    currentStage: 4,
-    totalStages: 5,
-    agentName: "Jason Allen",
-    agentAvatar: "J",
-    agentBg: "from-gray-600 to-gray-800",
-    createdAt: "昨天 15:20",
-    preview: "預算草案已完成，等待財務長審核...",
-  },
-  {
-    id: "3",
-    title: "系統異常 - 登入服務",
-    templateId: "system-incident",
-    status: "completed",
-    currentStage: 5,
-    totalStages: 5,
-    agentName: "IT Support AI",
-    agentAvatar: "IT",
-    agentBg: "from-gray-500 to-gray-700",
-    createdAt: "週一 09:15",
-    preview: "問題已修復，根因分析報告已歸檔...",
-  },
-];
+// 不再使用 MOCK_TASKS，改用 API 獲取真實任務
 
 const STATUS_CONFIG: Record<TaskStatus, { label: string; labelEn: string; color: string; dot: string }> = {
   pending: { label: "待處理", labelEn: "Pending", color: "text-gray-500", dot: "bg-gray-400" },
@@ -79,12 +39,35 @@ export default function MobileTasksPage() {
   const { locale, t } = useI18n();
   const [showTemplates, setShowTemplates] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<TaskTemplate | null>(null);
+  const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
+  
+  // 獲取任務列表（從幕僚長 API）
+  const { data: realTasks, isLoading: tasksLoading, refetch: refetchTasks } = trpc.chiefOfStaff.tasks.useQuery(
+    { status: filter },
+    { refetchInterval: 10000 } // 每 10 秒刷新一次
+  );
   
   // 獲取選中模板的 AI 員工配對
   const { data: agentMapping } = trpc.task.getAgentMapping.useQuery(
     { taskType: selectedTemplate?.id || "" },
     { enabled: !!selectedTemplate }
   );
+  
+  // 格式化時間
+  const formatTime = (date: Date | string) => {
+    const d = new Date(date);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return locale === "zh" ? "剛剛" : "Just now";
+    if (diffMins < 60) return locale === "zh" ? `${diffMins} 分鐘前` : `${diffMins}m ago`;
+    if (diffHours < 24) return locale === "zh" ? `${diffHours} 小時前` : `${diffHours}h ago`;
+    if (diffDays < 7) return locale === "zh" ? `${diffDays} 天前` : `${diffDays}d ago`;
+    return d.toLocaleDateString("zh-TW");
+  };
 
   // Apple SF Symbols 風格任務圖標 - 根據模板類型返回 SVG
   const TaskIcons: Record<string, React.ReactNode> = {
@@ -174,9 +157,28 @@ export default function MobileTasksPage() {
         </button>
       </div>
 
+      {/* 篩選按鈕 */}
+      <div className="flex-shrink-0 px-4 pb-3 flex gap-2">
+        {(["all", "active", "completed"] as const).map((status) => (
+          <button
+            key={status}
+            onClick={() => setFilter(status)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              filter === status
+                ? "bg-gray-900 text-white"
+                : "bg-gray-100 text-gray-600"
+            }`}
+          >
+            {status === "all" && (locale === "zh" ? "全部" : "All")}
+            {status === "active" && (locale === "zh" ? "進行中" : "Active")}
+            {status === "completed" && (locale === "zh" ? "已完成" : "Completed")}
+          </button>
+        ))}
+      </div>
+
       {/* 任務列表 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {MOCK_TASKS.length === 0 ? (
+        {!realTasks || realTasks.length === 0 ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
               <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round">
@@ -189,19 +191,33 @@ export default function MobileTasksPage() {
               {locale === "zh" ? "點擊上方按鈕建立第一個任務" : "Click the button above to create your first task"}
             </p>
           </div>
+        ) : tasksLoading ? (
+          <div className="text-center py-12">
+            <div className="w-8 h-8 mx-auto mb-4 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin" />
+            <p className="text-gray-500 text-sm">載入中...</p>
+          </div>
         ) : (
-          MOCK_TASKS.map((task) => {
-            const statusCfg = STATUS_CONFIG[task.status];
+          (realTasks || []).map((task: any) => {
+            const statusCfg = STATUS_CONFIG[task.status as TaskStatus] || STATUS_CONFIG.pending;
             const progress = (task.currentStage / task.totalStages) * 100;
+            const primaryAgent = task.assignedAgents?.[0];
+            
             return (
               <button
                 key={task.id}
                 onClick={() => navigate(`/task/${task.id}`)}
                 className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-left active:bg-gray-50 transition-colors"
               >
-                {/* 頂部：圖示 + 狀態 */}
+                {/* 頂部：狀態 */}
                 <div className="flex items-center justify-between mb-2.5">
-                  <div className="flex-shrink-0">{getTemplateIcon(task.templateId)}</div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-rose-500 flex items-center justify-center">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                      </svg>
+                    </div>
+                    <span className="text-xs text-gray-500">{formatTime(task.createdAt)}</span>
+                  </div>
                   <div className="flex items-center gap-1.5">
                     <div className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
                     <span className={`text-xs font-medium ${statusCfg.color}`}>
@@ -213,9 +229,9 @@ export default function MobileTasksPage() {
                 {/* 標題 */}
                 <p className="font-semibold text-gray-900 text-sm mb-1.5 line-clamp-2">{task.title}</p>
 
-                {/* 預覽 */}
-                {task.preview && (
-                  <p className="text-xs text-gray-500 line-clamp-2 mb-3">{task.preview}</p>
+                {/* 描述 */}
+                {task.description && (
+                  <p className="text-xs text-gray-500 line-clamp-2 mb-3">{task.description}</p>
                 )}
 
                 {/* 進度條 */}
@@ -228,23 +244,35 @@ export default function MobileTasksPage() {
                   </div>
                   <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-gray-900 rounded-full transition-all"
+                      className="h-full bg-gradient-to-r from-orange-500 to-rose-500 rounded-full transition-all"
                       style={{ width: `${progress}%` }}
                     />
                   </div>
                 </div>
 
-                {/* 底部：AI 員工 + 時間 */}
+                {/* 底部：AI 員工列表 */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div
-                      className={`w-6 h-6 rounded-full bg-gradient-to-br ${task.agentBg} flex items-center justify-center text-white text-[10px] font-bold`}
-                    >
-                      {task.agentAvatar}
+                    {/* 顯示所有分配的 AI 員工（最多 3 個） */}
+                    <div className="flex -space-x-2">
+                      {(task.assignedAgents || []).slice(0, 3).map((agent: any, i: number) => (
+                        <div
+                          key={agent.id}
+                          className="w-6 h-6 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white text-[10px] font-bold ring-2 ring-white"
+                          title={agent.name}
+                        >
+                          {agent.name?.charAt(0) || "?"}
+                        </div>
+                      ))}
                     </div>
-                    <span className="text-xs text-gray-500">{task.agentName}</span>
+                    <span className="text-xs text-gray-500">
+                      {primaryAgent?.name || "未分配"}
+                      {(task.assignedAgents?.length || 0) > 1 && ` +${task.assignedAgents.length - 1}`}
+                    </span>
                   </div>
-                  <span className="text-xs text-gray-400">{task.createdAt}</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 18l6-6-6-6" />
+                  </svg>
                 </div>
               </button>
             );
