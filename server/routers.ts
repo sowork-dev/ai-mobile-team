@@ -22,6 +22,11 @@ import {
   getRecommendedModel,
   AIModel,
 } from "./aiContentGenerator.js";
+import {
+  chat as chiefOfStaffChat,
+  confirmTeam,
+  ChiefOfStaffResponse,
+} from "./chiefOfStaff.js";
 
 const t = initTRPC.create({
   transformer: superjson,
@@ -485,6 +490,39 @@ const contentRouter = router({
     }),
 });
 
+// Chief of Staff Router - 幕僚長 AI 對話
+const chiefOfStaffRouter = router({
+  // 對話
+  chat: publicProcedure
+    .input(z.object({
+      message: z.string().min(1),
+      history: z.array(z.object({
+        role: z.enum(["user", "assistant"]),
+        content: z.string(),
+      })).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const response = await chiefOfStaffChat(input.message, input.history);
+      return response;
+    }),
+    
+  // 確認組隊
+  confirmTeam: publicProcedure
+    .input(z.object({
+      agentIds: z.array(z.number()),
+      taskTitle: z.string(),
+      taskDescription: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      const result = await confirmTeam(
+        input.agentIds,
+        input.taskTitle,
+        input.taskDescription
+      );
+      return result;
+    }),
+});
+
 // Main App Router
 export const appRouter = router({
   auth: authRouter,
@@ -493,6 +531,7 @@ export const appRouter = router({
   ai: aiRouter,
   notification: notificationRouter,
   content: contentRouter,
+  chiefOfStaff: chiefOfStaffRouter,
   
   // Health check
   health: publicProcedure.query(() => ({
