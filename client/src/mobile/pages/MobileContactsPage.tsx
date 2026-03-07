@@ -28,7 +28,7 @@ const SKILL_COLORS = [
   "bg-gray-100 text-gray-700",
 ];
 
-function AgentCard({ agent, onChat, onAdd }: { agent: any; onChat: () => void; onAdd: () => void }) {
+function AgentCard({ agent, onChat, onAdd, onCardClick }: { agent: any; onChat: () => void; onAdd: () => void; onCardClick: () => void }) {
   // expertise 可能是陣列或需要解析
   const skills = Array.isArray(agent.expertise)
     ? agent.expertise.slice(0, 3)
@@ -44,7 +44,10 @@ function AgentCard({ agent, onChat, onAdd }: { agent: any; onChat: () => void; o
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div 
+      className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden cursor-pointer active:bg-gray-50 transition-colors"
+      onClick={onCardClick}
+    >
       {/* 頭部 */}
       <div className="px-4 pt-4 pb-3 flex items-start gap-3">
         {/* 頭像 */}
@@ -92,14 +95,14 @@ function AgentCard({ agent, onChat, onAdd }: { agent: any; onChat: () => void; o
       {/* 操作按鈕 */}
       <div className="px-4 pb-4 flex gap-2">
         <button
-          onClick={onChat}
-          className="flex-1 py-2 bg-gray-900 text-white rounded-xl text-xs font-semibold active:scale-95 transition-transform shadow-sm shadow-gray-100"
+          onClick={(e) => { e.stopPropagation(); onChat(); }}
+          className="flex-1 py-2 bg-gray-900 text-white rounded-xl text-xs font-semibold active:scale-95 transition-transform shadow-sm shadow-gray-100 cursor-pointer"
         >
           開始對話
         </button>
         <button
-          onClick={onAdd}
-          className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-xl text-xs font-semibold active:scale-95 transition-transform"
+          onClick={(e) => { e.stopPropagation(); onAdd(); }}
+          className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-xl text-xs font-semibold active:scale-95 transition-transform cursor-pointer"
         >
           加入團隊
         </button>
@@ -227,6 +230,7 @@ export default function MobileContactsPage() {
                 <AgentCard
                   key={agent.id}
                   agent={agent}
+                  onCardClick={() => navigate(`/agent/${agent.slug || agent.id}`)}
                   onChat={() => navigate(`/chat/${agent.slug || agent.id}`)}
                   onAdd={() => {
                     // TODO: 加入我的團隊
