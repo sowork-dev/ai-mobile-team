@@ -7,6 +7,7 @@ import { useLocation } from "wouter";
 import { toast } from "sonner";
 import MobileHeader from "../components/MobileHeader";
 import { useI18n } from "@/i18n";
+import { trpc } from "@/lib/trpc";
 
 interface Brand {
   name: string;
@@ -102,7 +103,10 @@ export default function MobileCompanySettingsPage() {
 
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // 從網站抓取品牌和產品
+  // Web 爬取 mutation
+  const crawlMutation = trpc.company.crawlWebsite.useMutation();
+
+  // 從網站抓取品牌和產品（真正的 Web 爬取）
   const fetchBrandsFromWebsite = async () => {
     if (!formData.website.trim()) {
       toast.error("請先輸入公司網站");
@@ -110,58 +114,48 @@ export default function MobileCompanySettingsPage() {
     }
 
     // 驗證 URL 格式
+    let url = formData.website.trim();
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      url = "https://" + url;
+    }
+    
     try {
-      new URL(formData.website);
+      new URL(url);
     } catch {
       toast.error("請輸入有效的網址");
       return;
     }
 
     setIsFetchingBrands(true);
-    toast.info("正在搜尋網站資訊...");
+    toast.info("正在分析網站內容...");
 
     try {
-      // 模擬 Web 爬取（之後接真正的 API）
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // 呼叫真正的 Web 爬取 API
+      const result = await crawlMutation.mutateAsync({ url });
       
-      // 根據網址模擬返回品牌資料
-      const url = formData.website.toLowerCase();
-      let mockBrands: Brand[] = [];
-      
-      if (url.includes("apple.com")) {
-        mockBrands = [
-          { name: "iPhone", products: ["iPhone 15 Pro", "iPhone 15", "iPhone SE"] },
-          { name: "Mac", products: ["MacBook Pro", "MacBook Air", "iMac"] },
-          { name: "iPad", products: ["iPad Pro", "iPad Air", "iPad mini"] },
-          { name: "Apple Watch", products: ["Watch Ultra", "Watch Series 9"] },
-        ];
-      } else if (url.includes("microsoft.com")) {
-        mockBrands = [
-          { name: "Office 365", products: ["Word", "Excel", "PowerPoint", "Teams"] },
-          { name: "Azure", products: ["VM", "App Service", "Functions"] },
-          { name: "Surface", products: ["Surface Pro", "Surface Laptop"] },
-        ];
-      } else if (url.includes("sowork")) {
-        mockBrands = [
-          { name: "SoWork AI Platform", products: ["AI 員工", "幕僚長", "AI 團隊"] },
-          { name: "SoWork Marketing", products: ["品牌定位", "社群經營", "廣告投放"] },
-        ];
-      } else {
-        // 從 URL 提取域名作為品牌名稱
-        const domain = new URL(formData.website).hostname.replace("www.", "").split(".")[0];
-        const brandName = domain.charAt(0).toUpperCase() + domain.slice(1);
-        mockBrands = [
-          { name: brandName, products: ["主要產品", "服務項目"] },
-        ];
+      if (!result.success) {
+        toast.error(result.error || "分析失敗");
+        return;
       }
 
-      setFormData(prev => ({ ...prev, brands: mockBrands }));
-      setHasChanges(true);
-      
-      // 顯示成功訊息，包含將建立群組的提示
-      toast.success(`找到 ${mockBrands.length} 個品牌！儲存後將自動建立群組`);
-    } catch (error) {
-      toast.error("抓取失敗，請稍後再試");
+      // 更新品牌資料
+      if (result.brands && result.brands.length > 0) {
+        setFormData(prev => ({ 
+          ...prev, 
+          brands: result.brands,
+          // 如果有公司名稱且目前是空的，自動填入
+          companyName: prev.companyName || result.companyName || "",
+          industry: prev.industry || result.industry || "",
+          description: prev.description || result.description || "",
+        }));
+        setHasChanges(true);
+        toast.success(`找到 ${result.brands.length} 個品牌！儲存後將自動建立群組`);
+      } else {
+        toast.warning("未找到品牌資訊，請手動新增");
+      }
+    } catch (error: any) {
+      console.error("Crawl error:", error);
+      toast.error(error.message || "抓取失敗，請稍後再試");
     } finally {
       setIsFetchingBrands(false);
     }

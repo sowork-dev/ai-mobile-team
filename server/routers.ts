@@ -32,6 +32,7 @@ import {
   ChiefOfStaffResponse,
   Task,
 } from "./chiefOfStaff.js";
+import { crawlWebsite, CrawlResult } from "./webCrawler.js";
 
 const t = initTRPC.create({
   transformer: superjson,
@@ -566,6 +567,18 @@ const chiefOfStaffRouter = router({
     }),
 });
 
+// Company Router - 企業設定 + Web 爬取
+const companyRouter = router({
+  // Web 爬取：從網站提取品牌和產品
+  crawlWebsite: publicProcedure
+    .input(z.object({
+      url: z.string().min(1),
+    }))
+    .mutation(async ({ input }) => {
+      return await crawlWebsite(input.url);
+    }),
+});
+
 // Main App Router
 export const appRouter = router({
   auth: authRouter,
@@ -575,6 +588,7 @@ export const appRouter = router({
   notification: notificationRouter,
   content: contentRouter,
   chiefOfStaff: chiefOfStaffRouter,
+  company: companyRouter,
   
   // Health check
   health: publicProcedure.query(() => ({
