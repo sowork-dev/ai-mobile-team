@@ -670,6 +670,48 @@ const companyRouter = router({
     .query(({ input }) => {
       return brandGroups.get(input.groupId);
     }),
+    
+  // 手動建立群組
+  createGroup: publicProcedure
+    .input(z.object({
+      name: z.string().min(1),
+      memberIds: z.array(z.number()),
+    }))
+    .mutation(async ({ input }) => {
+      const groupId = `group_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      
+      // 獲取成員詳細資訊
+      const members: BrandGroup["members"] = [];
+      if (input.memberIds.length > 0) {
+        const memberDetails = await query(
+          `SELECT id, name, title, avatarUrl FROM agents WHERE id IN (${input.memberIds.join(",")})`
+        );
+        for (const m of memberDetails as any[]) {
+          members.push({
+            id: m.id,
+            name: m.name,
+            title: m.title,
+            avatar: m.avatarUrl,
+            isAI: true,
+          });
+        }
+      }
+      
+      const group: BrandGroup = {
+        id: groupId,
+        brandName: input.name,
+        products: [],
+        members,
+        createdAt: new Date(),
+      };
+      
+      brandGroups.set(groupId, group);
+      
+      return {
+        success: true,
+        group,
+      };
+    }),
 });
 
 // Main App Router

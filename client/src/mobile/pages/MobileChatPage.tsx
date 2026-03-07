@@ -40,7 +40,7 @@ export default function MobileChatPage() {
         title={locale === "zh" ? "聊天" : "Chats"}
         rightAction={
           <button
-            onClick={() => navigate("/contacts")}
+            onClick={() => navigate("/chat/new")}
             className="w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1C1C1E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

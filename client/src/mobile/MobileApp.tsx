@@ -21,6 +21,7 @@ import MobileTaskDetailPage from "./pages/MobileTaskDetailPage";
 import MobileTaskExecutionPage from "./pages/MobileTaskExecutionPage";
 import MobileCompanySettingsPage from "./pages/MobileCompanySettingsPage";
 import MobileGroupChatPage from "./pages/MobileGroupChatPage";
+import MobileCreateGroupPage from "./pages/MobileCreateGroupPage";
 
 // Mobile Components
 import MobileTabBar from "./components/MobileTabBar";
@@ -68,6 +69,7 @@ export default function MobileApp() {
           <Route path="/contacts" component={MobileContactsPage} />
           <Route path="/agent/:agentId" component={MobileAgentDetailPage} />
           <Route path="/chat" component={MobileChatPage} />
+          <Route path="/chat/new" component={MobileCreateGroupPage} />
           <Route path="/chat/group/:groupId" component={MobileGroupChatPage} />
           <Route path="/chat/:conversationId" component={MobileChatDetailPage} />
           <Route path="/assistant" component={MobileAssistantPage} />
