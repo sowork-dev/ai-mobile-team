@@ -14,7 +14,7 @@ const MOCK_TASK_DETAIL = {
   status: "completed",
   agentName: "Ken",
   agentAvatar: "K",
-  agentBg: "from-blue-400 to-blue-600",
+  agentBg: "from-gray-600 to-gray-800",
   createdAt: "2024-10-01 10:32",
   content: `# 10 月份社群貼文計畫
 
@@ -65,8 +65,8 @@ const PUBLISH_OPTIONS = [
         <path d="M7 10h6M10 7v6" />
       </svg>
     ),
-    color: "text-purple-600",
-    bg: "bg-purple-50",
+    color: "text-gray-700",
+    bg: "bg-gray-50",
   },
   {
     id: "invideo",
@@ -78,8 +78,8 @@ const PUBLISH_OPTIONS = [
         <rect x="2" y="3" width="16" height="14" rx="2" />
       </svg>
     ),
-    color: "text-blue-600",
-    bg: "bg-blue-50",
+    color: "text-gray-700",
+    bg: "bg-gray-50",
   },
   {
     id: "facebook",
@@ -91,8 +91,8 @@ const PUBLISH_OPTIONS = [
         <path d="M12 8h-2a1 1 0 0 0-1 1v2H7l.5 2.5H9V18h2.5v-4.5H14L13.5 11H12V9a1 1 0 0 1 1-1h1V8z" />
       </svg>
     ),
-    color: "text-blue-700",
-    bg: "bg-blue-50",
+    color: "text-gray-800",
+    bg: "bg-gray-50",
   },
   {
     id: "instagram",
@@ -105,8 +105,8 @@ const PUBLISH_OPTIONS = [
         <circle cx="14.5" cy="5.5" r="0.5" fill="currentColor" />
       </svg>
     ),
-    color: "text-pink-600",
-    bg: "bg-pink-50",
+    color: "text-gray-700",
+    bg: "bg-gray-50",
   },
   {
     id: "schedule",
@@ -118,8 +118,8 @@ const PUBLISH_OPTIONS = [
         <path d="M10 5v5l3 3" />
       </svg>
     ),
-    color: "text-green-600",
-    bg: "bg-green-50",
+    color: "text-gray-700",
+    bg: "bg-gray-50",
   },
   {
     id: "forward",
@@ -190,8 +190,8 @@ export default function MobileTaskDetailPage() {
               <p className="text-xs text-gray-400">{task.createdAt}</p>
             </div>
             <div className="ml-auto flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-green-500" />
-              <span className="text-xs text-green-600 font-medium">已完成</span>
+              <div className="w-2 h-2 rounded-full bg-gray-500" />
+              <span className="text-xs text-gray-700 font-medium">已完成</span>
             </div>
           </div>
 

@@ -12,20 +12,20 @@ import MobileHeader from "../components/MobileHeader";
 
 type ContactTab = "explore" | "my-team" | "invite";
 
-// 模擬我的團隊資料
+// 模擬我的團隊資料 - Apple 單色風格
 const MY_TEAM = [
-  { id: "vivian-brand", name: "Vivian", title: "品牌策略顧問", avatar: "V", avatarBg: "from-gray-700 to-gray-800", online: true, type: "ai" },
-  { id: "ken-copy", name: "Ken", title: "文案創作專家", avatar: "K", avatarBg: "from-blue-400 to-blue-600", online: true, type: "ai" },
-  { id: "luna-design", name: "Luna", title: "視覺設計顧問", avatar: "L", avatarBg: "from-purple-400 to-purple-600", online: false, type: "ai" },
+  { id: "vivian-brand", name: "Vivian", title: "品牌策略顧問", avatar: "V", avatarBg: "from-gray-700 to-gray-900", online: true, type: "ai" },
+  { id: "ken-copy", name: "Ken", title: "文案創作專家", avatar: "K", avatarBg: "from-gray-600 to-gray-800", online: true, type: "ai" },
+  { id: "luna-design", name: "Luna", title: "視覺設計顧問", avatar: "L", avatarBg: "from-gray-500 to-gray-700", online: false, type: "ai" },
 ];
 
-// 技能標籤顏色
+// 技能標籤顏色 - Apple 單色風格
 const SKILL_COLORS = [
-  "bg-blue-50 text-blue-600",
-  "bg-purple-50 text-purple-600",
-  "bg-green-50 text-green-600",
-  "bg-gray-50 text-gray-800",
-  "bg-pink-50 text-pink-600",
+  "bg-gray-100 text-gray-700",
+  "bg-gray-100 text-gray-700",
+  "bg-gray-100 text-gray-700",
+  "bg-gray-100 text-gray-700",
+  "bg-gray-100 text-gray-700",
 ];
 
 function AgentCard({ agent, onChat, onAdd }: { agent: any; onChat: () => void; onAdd: () => void }) {
@@ -256,7 +256,7 @@ export default function MobileContactsPage() {
                     {member.avatar}
                   </div>
                   {member.online && (
-                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
+                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-gray-700 rounded-full border-2 border-white" />
                   )}
                 </div>
                 <div className="flex-1 text-left">

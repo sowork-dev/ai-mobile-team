@@ -24,7 +24,7 @@ const MOCK_GROUPS: Group[] = [
     description: "品牌定位、社群內容、廣告策略",
     members: [
       { name: "Vivian", avatar: "V", bg: "from-gray-700 to-gray-800", type: "ai" },
-      { name: "Ken", avatar: "K", bg: "from-blue-400 to-blue-600", type: "ai" },
+      { name: "Ken", avatar: "K", bg: "from-gray-600 to-gray-800", type: "ai" },
       { name: "你", avatar: "我", bg: "from-gray-400 to-gray-600", type: "human" },
     ],
     lastMessage: "Vivian: 本月社群計畫已完成，請查看",
@@ -37,8 +37,8 @@ const MOCK_GROUPS: Group[] = [
     name: "內容創作組",
     description: "文案、視覺、影片製作",
     members: [
-      { name: "Ken", avatar: "K", bg: "from-blue-400 to-blue-600", type: "ai" },
-      { name: "Luna", avatar: "L", bg: "from-purple-400 to-purple-600", type: "ai" },
+      { name: "Ken", avatar: "K", bg: "from-gray-600 to-gray-800", type: "ai" },
+      { name: "Luna", avatar: "L", bg: "from-gray-500 to-gray-700", type: "ai" },
       { name: "你", avatar: "我", bg: "from-gray-400 to-gray-600", type: "human" },
     ],
     lastMessage: "Luna: 新品視覺稿已上傳，共 8 張",

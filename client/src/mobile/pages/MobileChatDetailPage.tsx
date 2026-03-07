@@ -483,7 +483,7 @@ export default function MobileChatDetailPage() {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-gray-900">{agentName}</p>
-          <p className="text-xs text-green-500">線上</p>
+          <p className="text-xs text-gray-700">線上</p>
         </div>
         <button className="w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#6B7280" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">

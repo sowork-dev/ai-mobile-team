@@ -95,8 +95,8 @@ export default function MobileProfilePage() {
           label: "升級方案",
           desc: "解鎖更多 AI 員工和功能",
           action: () => toast.info("升級方案即將上線"),
-          color: "text-yellow-500",
-          bg: "bg-yellow-50",
+          color: "text-gray-700",
+          bg: "bg-gray-50",
         },
       ],
     },
@@ -188,7 +188,7 @@ export default function MobileProfilePage() {
         <div className="px-4 mt-4 mb-8">
           <button
             onClick={handleLogout}
-            className="w-full py-3.5 bg-white border border-gray-200 rounded-2xl text-sm font-semibold text-red-500 active:bg-red-50 transition-colors shadow-sm"
+            className="w-full py-3.5 bg-white border border-gray-200 rounded-2xl text-sm font-semibold text-gray-700 active:bg-gray-100 transition-colors shadow-sm"
           >
             登出
           </button>
