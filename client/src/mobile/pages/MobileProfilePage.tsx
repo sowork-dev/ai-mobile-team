@@ -25,17 +25,18 @@ export default function MobileProfilePage() {
 
   const menuItems = [
     {
-      section: "品牌",
+      section: "企業",
       items: [
         {
           icon: (
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 2l1.5 3 3.5.5-2.5 2.5.5 3.5L9 10l-3 1.5.5-3.5L4 5.5l3.5-.5z"/>
+              <rect x="2" y="3" width="14" height="13" rx="1.5" />
+              <path d="M6 7h6M6 10h4M6 3V1M12 3V1" />
             </svg>
           ),
-          label: "品牌定位設定",
-          desc: "重新進行品牌定位對話",
-          action: () => navigate("/onboarding"),
+          label: "企業設定",
+          desc: "公司基本資料設定",
+          action: () => navigate("/company-settings"),
           color: "text-gray-900",
           bg: "bg-gray-50",
         },
@@ -130,26 +131,43 @@ export default function MobileProfilePage() {
           </div>
         </div>
 
-        {/* 品牌定位卡片預覽 */}
-        <div className="mx-4 mt-4 bg-gradient-to-r from-gray-900 to-gray-700 rounded-2xl p-4 shadow-md shadow-gray-200">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-white text-xs font-medium opacity-80">品牌定位</p>
-            <button
-              onClick={() => navigate("/onboarding")}
-              className="text-white text-xs font-medium bg-white/20 px-2.5 py-1 rounded-full active:bg-white/30"
-            >
-              重新設定
-            </button>
-          </div>
-          <p className="text-white font-bold text-base mb-1">尚未設定品牌定位</p>
-          <p className="text-gray-300 text-xs">完成品牌定位，讓 AI 員工更了解您的品牌</p>
-          <button
-            onClick={() => navigate("/onboarding")}
-            className="mt-3 w-full py-2 bg-white text-gray-900 rounded-xl text-sm font-semibold active:scale-95 transition-transform"
-          >
-            立即設定
-          </button>
-        </div>
+        {/* 企業設定狀態卡片 */}
+        {(() => {
+          const saved = localStorage.getItem("companySettings");
+          const companyData = saved ? JSON.parse(saved) : null;
+          const isComplete = companyData?.companyName && companyData?.industry && companyData?.companySize;
+          
+          return (
+            <div className="mx-4 mt-4 bg-gradient-to-r from-gray-900 to-gray-700 rounded-2xl p-4 shadow-md shadow-gray-200">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-white text-xs font-medium opacity-80">企業設定</p>
+                <button
+                  onClick={() => navigate("/company-settings")}
+                  className="text-white text-xs font-medium bg-white/20 px-2.5 py-1 rounded-full active:bg-white/30"
+                >
+                  {isComplete ? "編輯" : "設定"}
+                </button>
+              </div>
+              {isComplete ? (
+                <>
+                  <p className="text-white font-bold text-base mb-1">{companyData.companyName}</p>
+                  <p className="text-gray-300 text-xs">{companyData.industry} · {companyData.companySize}</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-white font-bold text-base mb-1">尚未設定企業資料</p>
+                  <p className="text-gray-300 text-xs">完成企業設定，開始使用 AI 團隊</p>
+                  <button
+                    onClick={() => navigate("/company-settings")}
+                    className="mt-3 w-full py-2 bg-white text-gray-900 rounded-xl text-sm font-semibold active:scale-95 transition-transform"
+                  >
+                    立即設定
+                  </button>
+                </>
+              )}
+            </div>
+          );
+        })()}
 
         {/* 選單項目 */}
         <div className="mt-4 space-y-4 px-4">
