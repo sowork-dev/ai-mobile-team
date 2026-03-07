@@ -86,9 +86,62 @@ export default function MobileTasksPage() {
     { enabled: !!selectedTemplate }
   );
 
-  const getTemplateIcon = (templateId: string) => {
-    const template = taskTemplates.find(t => t.id === templateId);
-    return template?.icon || "📋";
+  // Apple SF Symbols 風格任務圖標 - 根據模板類型返回 SVG
+  const TaskIcons: Record<string, React.ReactNode> = {
+    "employee-onboarding": (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="7" r="4" /><path d="M5 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    ),
+    "performance-review": (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M18 20V10M12 20V4M6 20v-6" />
+      </svg>
+    ),
+    "expense-report": (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" /><path d="M12 6v12M9 10h6a2 2 0 0 1 0 4H9" />
+      </svg>
+    ),
+    "budget-planning": (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 3v18h18" /><path d="M7 16l4-4 4 4 6-6" />
+      </svg>
+    ),
+    "project-kickoff": (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+      </svg>
+    ),
+    "meeting-minutes": (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
+      </svg>
+    ),
+    "vendor-contract": (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    ),
+    "system-incident": (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+      </svg>
+    ),
+    "custom-task": (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+      </svg>
+    ),
+    default: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+      </svg>
+    ),
+  };
+
+  const getTemplateIcon = (templateId: string): React.ReactNode => {
+    return TaskIcons[templateId] || TaskIcons.default;
   };
 
   const handleSelectTemplate = (template: TaskTemplate) => {
@@ -148,7 +201,7 @@ export default function MobileTasksPage() {
               >
                 {/* 頂部：圖示 + 狀態 */}
                 <div className="flex items-center justify-between mb-2.5">
-                  <span className="text-xl">{getTemplateIcon(task.templateId)}</span>
+                  <div className="flex-shrink-0">{getTemplateIcon(task.templateId)}</div>
                   <div className="flex items-center gap-1.5">
                     <div className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
                     <span className={`text-xs font-medium ${statusCfg.color}`}>
@@ -226,7 +279,9 @@ export default function MobileTasksPage() {
               <div className="p-4">
                 {/* Template Header */}
                 <div className="text-center mb-6">
-                  <span className="text-4xl mb-3 block">{selectedTemplate.icon}</span>
+                  <div className="w-12 h-12 mx-auto mb-3 flex items-center justify-center bg-gray-100 rounded-2xl">
+                    {getTemplateIcon(selectedTemplate.id)}
+                  </div>
                   <h3 className="font-bold text-lg text-gray-900">
                     {locale === "zh" ? selectedTemplate.name : selectedTemplate.nameEn}
                   </h3>
@@ -234,11 +289,17 @@ export default function MobileTasksPage() {
                     {locale === "zh" ? selectedTemplate.description : selectedTemplate.descriptionEn}
                   </p>
                   <div className="flex items-center justify-center gap-3 mt-3">
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                      ⏱ {selectedTemplate.estimatedTime}
+                    <span className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1.5 rounded-full flex items-center gap-1.5">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
+                      </svg>
+                      {selectedTemplate.estimatedTime}
                     </span>
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                      📄 {selectedTemplate.outputFormats.map(f => f.toUpperCase()).join(", ")}
+                    <span className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1.5 rounded-full flex items-center gap-1.5">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" />
+                      </svg>
+                      {selectedTemplate.outputFormats.map(f => f.toUpperCase()).join(", ")}
                     </span>
                   </div>
                 </div>
@@ -246,9 +307,14 @@ export default function MobileTasksPage() {
                 {/* AI 員工配對 */}
                 {agentMapping && (
                   <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-4 mb-6 border border-gray-200">
-                    <h4 className="font-semibold text-gray-900 text-sm mb-3">
-                      {locale === "zh" ? "🤖 AI 員工已就緒" : "🤖 AI Agent Ready"}
-                    </h4>
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3C3C43" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" /><circle cx="12" cy="5" r="3" />
+                      </svg>
+                      <h4 className="font-semibold text-gray-900 text-sm">
+                        {locale === "zh" ? "AI 員工已就緒" : "AI Agent Ready"}
+                      </h4>
+                    </div>
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center text-white font-bold overflow-hidden">
                         {agentMapping.primary?.avatar ? (
@@ -265,9 +331,12 @@ export default function MobileTasksPage() {
                       </div>
                     </div>
                     {agentMapping.humanApprover && (
-                      <div className="mt-3 pt-3 border-t border-gray-200">
+                      <div className="mt-3 pt-3 border-t border-gray-200 flex items-center gap-2">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="7" r="4" /><path d="M5 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2" />
+                        </svg>
                         <p className="text-xs text-gray-600">
-                          <span className="text-gray-700 font-medium">👤 {locale === "zh" ? "需要審批" : "Approval required"}: </span>
+                          <span className="text-gray-700 font-medium">{locale === "zh" ? "需要審批" : "Approval required"}: </span>
                           {agentMapping.humanApprover}
                         </p>
                       </div>
@@ -331,7 +400,9 @@ export default function MobileTasksPage() {
                     onClick={() => handleSelectTemplate(template)}
                     className="bg-white rounded-2xl border border-gray-100 p-4 text-left active:bg-gray-50 transition-colors"
                   >
-                    <span className="text-3xl mb-2 block">{template.icon}</span>
+                    <div className="w-10 h-10 mb-2 bg-gray-100 rounded-xl flex items-center justify-center">
+                      {getTemplateIcon(template.id)}
+                    </div>
                     <p className="font-semibold text-gray-900 text-sm">
                       {locale === "zh" ? template.name : template.nameEn}
                     </p>

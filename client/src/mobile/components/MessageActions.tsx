@@ -10,27 +10,86 @@ interface ActionItem {
   id: string;
   label: string;
   labelEn: string;
-  icon: string;
+  icon: React.ReactNode;
   category: "task" | "document" | "calendar" | "other";
 }
 
-// 所有可用功能
+// Apple SF Symbols 風格 SVG 圖標
+const Icons = {
+  task: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+    </svg>
+  ),
+  calendar: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
+    </svg>
+  ),
+  reminder: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
+    </svg>
+  ),
+  document: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
+    </svg>
+  ),
+  presentation: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" />
+    </svg>
+  ),
+  chart: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 20V10M12 20V4M6 20v-6" />
+    </svg>
+  ),
+  user: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="7" r="4" /><path d="M5 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2" />
+    </svg>
+  ),
+  ticket: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 9a3 3 0 0 1 3 3v1a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1a3 3 0 1 1 0-6V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v1a3 3 0 0 1-3 3z" />
+    </svg>
+  ),
+  megaphone: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 8a6 6 0 0 0-6-6v12a6 6 0 0 0 6-6z" /><path d="M2 8a6 6 0 0 0 6 6v4" />
+    </svg>
+  ),
+  money: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" /><path d="M12 6v12M9 10h6a2 2 0 0 1 0 4H9" />
+    </svg>
+  ),
+  note: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" />
+    </svg>
+  ),
+};
+
+// 所有可用功能 - 使用 SVG 圖標
 const ALL_ACTIONS: ActionItem[] = [
-  { id: "create-task", label: "建立任務", labelEn: "Create Task", icon: "📋", category: "task" },
-  { id: "add-calendar", label: "加行事曆", labelEn: "Add to Calendar", icon: "📅", category: "calendar" },
-  { id: "set-reminder", label: "設提醒", labelEn: "Set Reminder", icon: "⏰", category: "calendar" },
-  { id: "generate-contract", label: "生成合約", labelEn: "Generate Contract", icon: "📄", category: "document" },
-  { id: "onboarding-task", label: "入職任務", labelEn: "Onboarding Task", icon: "👋", category: "task" },
-  { id: "generate-report", label: "生成報表", labelEn: "Generate Report", icon: "📊", category: "document" },
-  { id: "create-expense", label: "建立報銷單", labelEn: "Create Expense", icon: "💰", category: "task" },
-  { id: "create-presentation", label: "建立簡報", labelEn: "Create Presentation", icon: "📽️", category: "document" },
-  { id: "schedule-meeting", label: "排程會議", labelEn: "Schedule Meeting", icon: "🗓️", category: "calendar" },
-  { id: "create-ticket", label: "建立工單", labelEn: "Create Ticket", icon: "🎫", category: "task" },
-  { id: "tech-doc", label: "技術文件", labelEn: "Tech Document", icon: "📝", category: "document" },
-  { id: "pdf-report", label: "PDF 報告", labelEn: "PDF Report", icon: "📕", category: "document" },
-  { id: "spreadsheet", label: "試算表", labelEn: "Spreadsheet", icon: "📈", category: "document" },
-  { id: "markdown", label: "摘要筆記", labelEn: "Summary Notes", icon: "📝", category: "document" },
-  { id: "notify-team", label: "通知相關人", labelEn: "Notify Team", icon: "📢", category: "other" },
+  { id: "create-task", label: "建立任務", labelEn: "Create Task", icon: Icons.task, category: "task" },
+  { id: "add-calendar", label: "加行事曆", labelEn: "Add to Calendar", icon: Icons.calendar, category: "calendar" },
+  { id: "set-reminder", label: "設提醒", labelEn: "Set Reminder", icon: Icons.reminder, category: "calendar" },
+  { id: "generate-contract", label: "生成合約", labelEn: "Generate Contract", icon: Icons.document, category: "document" },
+  { id: "onboarding-task", label: "入職任務", labelEn: "Onboarding Task", icon: Icons.user, category: "task" },
+  { id: "generate-report", label: "生成報表", labelEn: "Generate Report", icon: Icons.chart, category: "document" },
+  { id: "create-expense", label: "建立報銷單", labelEn: "Create Expense", icon: Icons.money, category: "task" },
+  { id: "create-presentation", label: "建立簡報", labelEn: "Create Presentation", icon: Icons.presentation, category: "document" },
+  { id: "schedule-meeting", label: "排程會議", labelEn: "Schedule Meeting", icon: Icons.calendar, category: "calendar" },
+  { id: "create-ticket", label: "建立工單", labelEn: "Create Ticket", icon: Icons.ticket, category: "task" },
+  { id: "tech-doc", label: "技術文件", labelEn: "Tech Document", icon: Icons.document, category: "document" },
+  { id: "pdf-report", label: "PDF 報告", labelEn: "PDF Report", icon: Icons.document, category: "document" },
+  { id: "spreadsheet", label: "試算表", labelEn: "Spreadsheet", icon: Icons.chart, category: "document" },
+  { id: "markdown", label: "摘要筆記", labelEn: "Summary Notes", icon: Icons.note, category: "document" },
+  { id: "notify-team", label: "通知相關人", labelEn: "Notify Team", icon: Icons.megaphone, category: "other" },
 ];
 
 // 各職位的常用功能（2個）
@@ -98,9 +157,9 @@ export default function MessageActions({ agentRole, messageId, onAction, message
         <button
           key={action.id}
           onClick={() => handleAction(action.id)}
-          className="flex items-center gap-1 px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs text-gray-700 transition-colors"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs text-[#3C3C43] transition-colors"
         >
-          <span>{action.icon}</span>
+          <span className="text-[#8E8E93]">{action.icon}</span>
           <span>{locale === "zh" ? action.label : action.labelEn}</span>
         </button>
       ))}
@@ -109,9 +168,11 @@ export default function MessageActions({ agentRole, messageId, onAction, message
       <div className="relative">
         <button
           onClick={() => setShowMore(!showMore)}
-          className="flex items-center gap-0.5 px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs text-gray-500 transition-colors"
+          className="flex items-center gap-1 px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs text-[#8E8E93] transition-colors"
         >
-          <span>＋</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
           <span>{locale === "zh" ? "更多" : "More"}</span>
         </button>
 
@@ -130,13 +191,13 @@ export default function MessageActions({ agentRole, messageId, onAction, message
                     <button
                       key={action.id}
                       onClick={() => handleAction(action.id)}
-                      className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left"
+                      className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-gray-50 text-left"
                     >
-                      <span>{action.icon}</span>
-                      <span className="text-sm text-gray-700">
+                      <span className="text-[#8E8E93]">{action.icon}</span>
+                      <span className="text-sm text-[#3C3C43]">
                         {locale === "zh" ? action.label : action.labelEn}
                       </span>
-                      <span className="ml-auto text-xs text-gray-400">
+                      <span className="ml-auto text-xs text-[#8E8E93]">
                         {usageStats[action.id]}次
                       </span>
                     </button>
@@ -154,10 +215,10 @@ export default function MessageActions({ agentRole, messageId, onAction, message
                   <button
                     key={action.id}
                     onClick={() => handleAction(action.id)}
-                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left"
+                    className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-gray-50 text-left"
                   >
-                    <span>{action.icon}</span>
-                    <span className="text-sm text-gray-700">
+                    <span className="text-[#8E8E93]">{action.icon}</span>
+                    <span className="text-sm text-[#3C3C43]">
                       {locale === "zh" ? action.label : action.labelEn}
                     </span>
                   </button>

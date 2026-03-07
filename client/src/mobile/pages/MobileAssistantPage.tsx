@@ -43,7 +43,7 @@ export default function MobileAssistantPage() {
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "收到！讓我來幫你處理這個請求...\n\n（AI 功能開發中 🚧）",
+        content: "收到！讓我來幫你處理這個請求...\n\n（AI 功能開發中）",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, assistantMessage]);
@@ -51,12 +51,40 @@ export default function MobileAssistantPage() {
     }, 1000);
   };
 
-  // 快速操作按鈕
+  // 快速操作按鈕 - Apple SF Symbols 風格 SVG 圖標
   const quickActions = [
-    { label: "組建團隊", icon: "👥" },
-    { label: "派發任務", icon: "📋" },
-    { label: "今日待辦", icon: "📌" },
-    { label: "查看進度", icon: "📊" },
+    { 
+      label: "組建團隊", 
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      )
+    },
+    { 
+      label: "派發任務", 
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+        </svg>
+      )
+    },
+    { 
+      label: "今日待辦", 
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /><path d="M9 16l2 2 4-4" />
+        </svg>
+      )
+    },
+    { 
+      label: "查看進度", 
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M18 20V10M12 20V4M6 20v-6" />
+        </svg>
+      )
+    },
   ];
 
   return (
@@ -71,9 +99,9 @@ export default function MobileAssistantPage() {
               <button
                 key={action.label}
                 onClick={() => setInput(action.label)}
-                className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 rounded-full text-sm font-medium text-gray-700 whitespace-nowrap active:bg-gray-200 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full text-sm font-medium text-[#3C3C43] whitespace-nowrap active:bg-gray-200 transition-colors"
               >
-                <span>{action.icon}</span>
+                <span className="text-[#8E8E93]">{action.icon}</span>
                 <span>{action.label}</span>
               </button>
             ))}
