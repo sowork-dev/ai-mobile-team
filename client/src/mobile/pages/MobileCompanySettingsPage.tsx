@@ -91,6 +91,8 @@ export default function MobileCompanySettingsPage() {
     return Object.keys(newErrors).length === 0;
   };
 
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
   const handleSave = async () => {
     if (!validate()) {
       toast.error("請填寫必填欄位");
@@ -100,13 +102,19 @@ export default function MobileCompanySettingsPage() {
     setIsSaving(true);
     
     // 模擬 API 儲存
-    await new Promise(resolve => setTimeout(resolve, 800));
+    await new Promise(resolve => setTimeout(resolve, 600));
     
     localStorage.setItem("companySettings", JSON.stringify(formData));
     setIsSaving(false);
     setHasChanges(false);
+    setSaveSuccess(true);
     
-    toast.success("企業資料已儲存");
+    toast.success("企業資料已儲存！");
+    
+    // 1.5 秒後返回 profile 頁面
+    setTimeout(() => {
+      navigate("/profile");
+    }, 1500);
   };
 
   return (
@@ -115,15 +123,6 @@ export default function MobileCompanySettingsPage() {
         title={locale === "zh" ? "企業設定" : "Company Settings"} 
         showBack 
         onBack={() => navigate("/profile")}
-        rightAction={
-          <button
-            onClick={handleSave}
-            disabled={isSaving || !hasChanges}
-            className={`text-sm font-semibold ${hasChanges ? "text-gray-900" : "text-gray-400"}`}
-          >
-            {isSaving ? "儲存中..." : "儲存"}
-          </button>
-        }
       />
 
       <div className="flex-1 overflow-y-auto">
@@ -300,10 +299,21 @@ export default function MobileCompanySettingsPage() {
       <div className="flex-shrink-0 bg-white border-t border-gray-100 px-4 py-4">
         <button
           onClick={handleSave}
-          disabled={isSaving}
-          className="w-full py-3.5 bg-gray-900 text-white rounded-xl font-semibold active:scale-[0.98] transition-transform disabled:opacity-50"
+          disabled={isSaving || saveSuccess}
+          className={`w-full py-3.5 rounded-xl font-semibold active:scale-[0.98] transition-all disabled:opacity-70 ${
+            saveSuccess 
+              ? "bg-green-600 text-white" 
+              : "bg-gray-900 text-white"
+          }`}
         >
-          {isSaving ? (
+          {saveSuccess ? (
+            <span className="flex items-center justify-center gap-2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6L9 17l-5-5" />
+              </svg>
+              儲存成功！
+            </span>
+          ) : isSaving ? (
             <span className="flex items-center justify-center gap-2">
               <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
