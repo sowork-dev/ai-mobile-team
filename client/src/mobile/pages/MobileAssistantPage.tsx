@@ -39,6 +39,12 @@ interface Message {
 
 export default function MobileAssistantPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // 今日 AI 工作摘要資料
+  const { data: completedTasks } = trpc.chiefOfStaff.tasks.useQuery({ status: "completed" });
+  const completedCount = completedTasks?.length ?? 0;
+  const timeSavedHours = completedCount * 2;
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -257,6 +263,37 @@ export default function MobileAssistantPage() {
           </div>
         </div>
       </div>
+
+      {/* 今日 AI 工作摘要 — ROI Widget */}
+      {messages.length <= 1 && (
+        <div className="flex-shrink-0 mx-4 mt-4 mb-1 bg-gradient-to-r from-[#1C1C1E] to-[#3A3A3C] rounded-2xl p-4">
+          <p className="text-[11px] text-white/50 mb-2 tracking-wide uppercase">今日 AI 工作摘要</p>
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <p className="text-2xl font-bold text-white">{completedCount}</p>
+              <p className="text-[12px] text-white/60 mt-0.5">任務已完成</p>
+            </div>
+            <div className="w-px h-10 bg-white/20" />
+            <div className="flex-1">
+              <p className="text-2xl font-bold text-[#34C759]">{timeSavedHours}h</p>
+              <p className="text-[12px] text-white/60 mt-0.5">節省時間</p>
+            </div>
+            <div className="w-px h-10 bg-white/20" />
+            <div className="flex-1 text-right">
+              <div className="flex items-center justify-end gap-1">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#30D158" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <p className="text-[12px] text-[#30D158] font-medium">Slack</p>
+              </div>
+              <p className="text-[11px] text-white/40 mt-0.5">不再需要</p>
+            </div>
+          </div>
+          {completedCount === 0 && (
+            <p className="text-[11px] text-white/40 mt-2">派發第一個任務，開始計算你節省的時間</p>
+          )}
+        </div>
+      )}
 
       {/* 快速操作區 - Apple 風格（單色、簡潔） */}
       {messages.length <= 1 && (
