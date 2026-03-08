@@ -34,12 +34,37 @@ const STATUS_CONFIG: Record<TaskStatus, { label: string; labelEn: string; color:
   completed: { label: "已完成", labelEn: "Completed", color: "text-gray-900", dot: "bg-gray-900" },
 };
 
+// 角色定義
+type UserRole = "all" | "hr" | "finance" | "pm" | "it" | "operations";
+const ROLE_CONFIG: Record<UserRole, { label: string; labelEn: string; icon: string }> = {
+  all: { label: "全部", labelEn: "All", icon: "👥" },
+  hr: { label: "人資", labelEn: "HR", icon: "👤" },
+  finance: { label: "財務", labelEn: "Finance", icon: "💰" },
+  pm: { label: "專案", labelEn: "PM", icon: "📊" },
+  it: { label: "IT", labelEn: "IT", icon: "💻" },
+  operations: { label: "營運", labelEn: "Ops", icon: "⚙️" },
+};
+
+// 任務類型與角色對應
+const TASK_ROLE_MAPPING: Record<string, UserRole[]> = {
+  "employee-onboarding": ["hr"],
+  "performance-review": ["hr"],
+  "expense-report": ["finance"],
+  "budget-planning": ["finance"],
+  "project-kickoff": ["pm"],
+  "meeting-minutes": ["pm"],
+  "vendor-contract": ["operations"],
+  "system-incident": ["it"],
+  "custom-task": ["all"],
+};
+
 export default function MobileTasksPage() {
   const [, navigate] = useLocation();
   const { locale, t } = useI18n();
   const [showTemplates, setShowTemplates] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<TaskTemplate | null>(null);
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
+  const [roleFilter, setRoleFilter] = useState<UserRole>("all");
   
   // 獲取任務列表（從幕僚長 API）
   const { data: realTasks, isLoading: tasksLoading, refetch: refetchTasks } = trpc.chiefOfStaff.tasks.useQuery(
@@ -157,7 +182,31 @@ export default function MobileTasksPage() {
         </button>
       </div>
 
-      {/* 篩選按鈕 */}
+      {/* 角色篩選 */}
+      <div className="flex-shrink-0 px-4 pb-2">
+        <p className="text-xs text-gray-500 mb-2">{locale === "zh" ? "依角色篩選" : "Filter by Role"}</p>
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {(Object.keys(ROLE_CONFIG) as UserRole[]).map((role) => {
+            const cfg = ROLE_CONFIG[role];
+            return (
+              <button
+                key={role}
+                onClick={() => setRoleFilter(role)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
+                  roleFilter === role
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-600"
+                }`}
+              >
+                <span>{cfg.icon}</span>
+                <span>{locale === "zh" ? cfg.label : cfg.labelEn}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 狀態篩選 */}
       <div className="flex-shrink-0 px-4 pb-3 flex gap-2">
         {(["all", "active", "completed"] as const).map((status) => (
           <button
@@ -197,7 +246,14 @@ export default function MobileTasksPage() {
             <p className="text-gray-500 text-sm">載入中...</p>
           </div>
         ) : (
-          (realTasks || []).map((task: any) => {
+          (realTasks || [])
+            .filter((task: any) => {
+              // 角色篩選
+              if (roleFilter === "all") return true;
+              const taskRoles = TASK_ROLE_MAPPING[task.templateId] || ["all"];
+              return taskRoles.includes(roleFilter) || taskRoles.includes("all");
+            })
+            .map((task: any) => {
             const statusCfg = STATUS_CONFIG[task.status as TaskStatus] || STATUS_CONFIG.pending;
             const progress = (task.currentStage / task.totalStages) * 100;
             const primaryAgent = task.assignedAgents?.[0];
