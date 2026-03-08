@@ -59,8 +59,8 @@ export default function MobileApp() {
     );
   }
 
-  // 檢查是否使用演示模式
-  const useDemoMode = typeof window !== "undefined" && localStorage.getItem("useDemoData") === "true";
+  // 檢查是否使用演示模式（以 demoPersonaId 為準）
+  const useDemoMode = typeof window !== "undefined" && !!localStorage.getItem("demoPersonaId");
   
   // 演示頁面路由
   if (location === "/demo") {

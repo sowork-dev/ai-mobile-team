@@ -1,6 +1,6 @@
 /**
  * Mobile 登入頁面
- * 支援 Email/密碼、Google OAuth 和 Demo 身份選擇登入
+ * 雙入口：帳號登入 / 免帳號 Demo 體驗
  */
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
@@ -9,43 +9,38 @@ import { toast } from "sonner";
 const DEMO_PERSONAS = [
   {
     id: "groupm-digital",
-    email: "groupm@demo.sowork.ai",
     icon: "🏢",
     company: "GroupM Digital",
     industry: "廣告集團",
-    pain: "全球品牌 24hr 即時響應，創意人員嚴重不足",
+    size: "2,500 人",
   },
   {
     id: "loreal-apac",
-    email: "loreal@demo.sowork.ai",
     icon: "💄",
     company: "L'Oréal Asia Pacific",
     industry: "美妝集團",
-    pain: "12 個亞太市場在地化，速度跟不上社群節奏",
+    size: "800 人",
   },
   {
     id: "bcg-taipei",
-    email: "bcg@demo.sowork.ai",
     icon: "📊",
     company: "BCG Taipei",
     industry: "管理顧問",
-    pain: "提案品質高但時間壓力大，初級顧問產出不穩定",
+    size: "150 人",
   },
   {
     id: "hillhouse-capital",
-    email: "hillhouse@demo.sowork.ai",
     icon: "💰",
     company: "Hillhouse Capital",
     industry: "私募基金",
-    pain: "50+ 投資組合公司需行銷支援，Platform Team 只有 10 人",
+    size: "200 人",
   },
   {
     id: "microsoft-taiwan",
-    email: "microsoft@demo.sowork.ai",
     icon: "🚀",
     company: "Microsoft Taiwan",
     industry: "科技",
-    pain: "多條產品線都需行銷內容，資源嚴重分散",
+    size: "500 人",
   },
 ];
 
@@ -54,7 +49,6 @@ export default function MobileLoginPage() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [demoLoadingId, setDemoLoadingId] = useState<string | null>(null);
   const [mode, setMode] = useState<"login" | "register">("login");
   const [name, setName] = useState("");
 
@@ -85,17 +79,11 @@ export default function MobileLoginPage() {
     window.location.href = "/api/auth/google?redirect=/app";
   };
 
-  const handleDemoLogin = async (persona: typeof DEMO_PERSONAS[0]) => {
-    setDemoLoadingId(persona.id);
-    try {
-      localStorage.setItem("demoPersonaId", persona.id);
-      localStorage.setItem("useDemoData", "true");
-      await loginMutation.mutateAsync({ email: persona.email, password: "demo123" });
-      window.location.reload();
-    } catch {
-      // 即使 login API 未完整實作，demo 模式仍可進入
-      window.location.reload();
-    }
+  const handleDemoSelect = (persona: (typeof DEMO_PERSONAS)[0]) => {
+    localStorage.setItem("demoPersonaId", persona.id);
+    localStorage.setItem("demoCompanyName", persona.company);
+    localStorage.setItem("demoCompanySize", persona.size);
+    window.location.href = "/app";
   };
 
   return (
@@ -113,8 +101,9 @@ export default function MobileLoginPage() {
           <p className="text-sm text-gray-500 mt-1">你的 AI 行銷團隊</p>
         </div>
 
-        {/* Google 登入按鈕 */}
-        <div className="w-full max-w-sm mb-4">
+        {/* 入口 1：帳號登入 */}
+        <div className="w-full max-w-sm">
+          {/* Google 登入按鈕 */}
           <button
             type="button"
             onClick={handleGoogleLogin}
@@ -133,126 +122,106 @@ export default function MobileLoginPage() {
             )}
             使用 Google 帳號登入
           </button>
+
+          {/* Email/密碼表單 */}
+          <form onSubmit={handleSubmit} className="mt-3 space-y-3">
+            {mode === "register" && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">姓名</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="請輸入您的姓名"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-gray-50"
+                />
+              </div>
+            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">電子郵件</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-gray-50"
+                autoComplete="email"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">密碼</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="請輸入密碼"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-gray-50"
+                autoComplete={mode === "login" ? "current-password" : "new-password"}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-3.5 bg-gray-900 text-white rounded-xl font-semibold text-sm transition-all active:scale-95 disabled:opacity-50 shadow-md"
+            >
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  處理中...
+                </span>
+              ) : mode === "login" ? "登入" : "建立帳號"}
+            </button>
+          </form>
+
+          {/* Toggle login/register */}
+          <div className="mt-4 text-center">
+            {mode === "login" ? (
+              <p className="text-sm text-gray-500">
+                還沒有帳號？{" "}
+                <button onClick={() => setMode("register")} className="text-gray-900 font-semibold">
+                  立即註冊
+                </button>
+              </p>
+            ) : (
+              <p className="text-sm text-gray-500">
+                已有帳號？{" "}
+                <button onClick={() => setMode("login")} className="text-gray-900 font-semibold">
+                  返回登入
+                </button>
+              </p>
+            )}
+          </div>
         </div>
 
-        {/* Demo 身份選擇 */}
-        <div className="w-full max-w-sm mb-4">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="flex-1 h-px bg-gray-200" />
-            <span className="text-xs text-gray-400 font-medium">或體驗 Demo 身份</span>
-            <div className="flex-1 h-px bg-gray-200" />
-          </div>
-
-          <div className="space-y-2">
-            {DEMO_PERSONAS.map((persona) => (
-              <button
-                key={persona.id}
-                type="button"
-                onClick={() => handleDemoLogin(persona)}
-                disabled={demoLoadingId !== null}
-                className="w-full flex items-center gap-3 px-3.5 py-3 bg-gray-50 border border-gray-100 rounded-xl text-left hover:bg-gray-100 active:scale-[0.98] transition-all disabled:opacity-50"
-              >
-                <span className="text-xl flex-shrink-0">{persona.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-gray-900 truncate">{persona.company}</span>
-                    <span className="text-[10px] font-medium text-gray-500 bg-gray-200 rounded-full px-1.5 py-0.5 flex-shrink-0">{persona.industry}</span>
-                  </div>
-                  <p className="text-xs text-gray-400 mt-0.5 truncate">{persona.pain}</p>
-                </div>
-                {demoLoadingId === persona.id ? (
-                  <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
-                ) : (
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0 text-gray-300">
-                    <path d="M5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Email 登入分隔 */}
-        <div className="w-full max-w-sm flex items-center gap-3 mb-4">
+        {/* 分隔線 */}
+        <div className="w-full max-w-sm flex items-center gap-3 my-6">
           <div className="flex-1 h-px bg-gray-200" />
           <span className="text-xs text-gray-400 font-medium">或</span>
           <div className="flex-1 h-px bg-gray-200" />
         </div>
 
-        {/* Email/密碼表單 */}
-        <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
-          {mode === "register" && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">姓名</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="請輸入您的姓名"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-gray-50"
-              />
-            </div>
-          )}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">電子郵件</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="your@email.com"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-gray-50"
-              autoComplete="email"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">密碼</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="請輸入密碼"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-gray-50"
-              autoComplete={mode === "login" ? "current-password" : "new-password"}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full py-3.5 bg-gray-900 text-white rounded-xl font-semibold text-sm transition-all active:scale-95 disabled:opacity-50 shadow-md"
-          >
-            {isLoading ? (
-              <span className="flex items-center justify-center gap-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                處理中...
-              </span>
-            ) : mode === "login" ? "登入" : "建立帳號"}
-          </button>
-        </form>
-
-        {/* Toggle mode */}
-        <div className="mt-6 text-center">
-          {mode === "login" ? (
-            <p className="text-sm text-gray-500">
-              還沒有帳號？{" "}
+        {/* 入口 2：免帳號 Demo 體驗 */}
+        <div className="w-full max-w-sm">
+          <p className="text-xs font-medium text-gray-400 text-center mb-3">選擇公司身份，免帳號體驗</p>
+          <div className="space-y-2">
+            {DEMO_PERSONAS.map((persona) => (
               <button
-                onClick={() => setMode("register")}
-                className="text-gray-900 font-semibold"
+                key={persona.id}
+                type="button"
+                onClick={() => handleDemoSelect(persona)}
+                className="w-full flex items-center gap-3 px-3.5 py-3 bg-gray-50 border border-gray-100 rounded-xl text-left hover:bg-gray-100 active:scale-[0.98] transition-all"
               >
-                立即註冊
+                <span className="text-xl flex-shrink-0">{persona.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900">{persona.company}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{persona.industry} · {persona.size}</p>
+                </div>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0 text-gray-300">
+                  <path d="M5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </button>
-            </p>
-          ) : (
-            <p className="text-sm text-gray-500">
-              已有帳號？{" "}
-              <button
-                onClick={() => setMode("login")}
-                className="text-gray-900 font-semibold"
-              >
-                返回登入
-              </button>
-            </p>
-          )}
+            ))}
+          </div>
         </div>
       </div>
 
