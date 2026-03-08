@@ -307,6 +307,142 @@ function BrandTemplateSection({ locale }: { locale: string }) {
   );
 }
 
+// ── 日曆整合區塊 ────────────────────────────────────────────────
+
+function CalendarIntegrationSection({ locale }: { locale: string }) {
+  const [googleConnected, setGoogleConnected] = useState(false);
+  const [googleEmail, setGoogleEmail] = useState("");
+  const [microsoftConnected, setMicrosoftConnected] = useState(false);
+  const [microsoftEmail, setMicrosoftEmail] = useState("");
+
+  // 監聽 OAuth popup 回調
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === "calendar-connected") {
+        if (e.data.provider === "google") {
+          setGoogleConnected(true);
+          setGoogleEmail(e.data.email || "user@gmail.com");
+        } else if (e.data.provider === "microsoft") {
+          setMicrosoftConnected(true);
+          setMicrosoftEmail(e.data.email || "user@company.com");
+        }
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, []);
+
+  const connectGoogle = async () => {
+    const resp = await fetch("/api/calendar/auth/google");
+    const { url } = await resp.json();
+    window.open(url, "_blank", "width=600,height=700");
+  };
+
+  const connectMicrosoft = async () => {
+    const resp = await fetch("/api/calendar/auth/microsoft");
+    const { url } = await resp.json();
+    window.open(url, "_blank", "width=600,height=700");
+  };
+
+  return (
+    <div className="bg-white mx-4 mt-4 rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="px-4 py-3 border-b border-gray-100">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 bg-emerald-500 rounded-md flex items-center justify-center flex-shrink-0">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+          </div>
+          <h2 className="font-semibold text-gray-900">
+            {locale === "zh" ? "日曆整合" : "Calendar Integration"}
+          </h2>
+        </div>
+        <p className="text-xs text-gray-400 mt-1 ml-8">
+          {locale === "zh" ? "連接後，幕僚長可自動查詢空檔並建立會議" : "Let your Chief of Staff check availability and create meetings automatically"}
+        </p>
+      </div>
+      <div className="p-4 space-y-3">
+        {/* Google Calendar */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-white border border-gray-200 rounded-lg flex items-center justify-center">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-900">Google Calendar</p>
+              {googleConnected && <p className="text-xs text-gray-400">{googleEmail}</p>}
+            </div>
+          </div>
+          {googleConnected ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                {locale === "zh" ? "已連接" : "Connected"}
+              </span>
+              <button onClick={() => setGoogleConnected(false)} className="text-xs text-gray-400 hover:text-red-500 transition-colors">
+                {locale === "zh" ? "斷開" : "Disconnect"}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={connectGoogle}
+              className="px-3 py-1.5 bg-[#4285F4] text-white text-xs font-semibold rounded-lg hover:bg-[#3367d6] active:scale-95 transition-all"
+            >
+              {locale === "zh" ? "連接" : "Connect"}
+            </button>
+          )}
+        </div>
+
+        <div className="h-px bg-gray-100" />
+
+        {/* Outlook Calendar */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-[#0078D4] rounded-lg flex items-center justify-center">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <rect x="1" y="1" width="10" height="10" fill="#F25022"/>
+                <rect x="13" y="1" width="10" height="10" fill="#7FBA00"/>
+                <rect x="1" y="13" width="10" height="10" fill="#00A4EF"/>
+                <rect x="13" y="13" width="10" height="10" fill="#FFB900"/>
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-900">Outlook Calendar</p>
+              {microsoftConnected && <p className="text-xs text-gray-400">{microsoftEmail}</p>}
+            </div>
+          </div>
+          {microsoftConnected ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                {locale === "zh" ? "已連接" : "Connected"}
+              </span>
+              <button onClick={() => setMicrosoftConnected(false)} className="text-xs text-gray-400 hover:text-red-500 transition-colors">
+                {locale === "zh" ? "斷開" : "Disconnect"}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={connectMicrosoft}
+              className="px-3 py-1.5 bg-[#0078D4] text-white text-xs font-semibold rounded-lg hover:bg-[#106EBE] active:scale-95 transition-all"
+            >
+              {locale === "zh" ? "連接" : "Connect"}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function MobileCompanySettingsPage() {
   const [, navigate] = useLocation();
   const { locale, t } = useI18n();
@@ -979,6 +1115,9 @@ export default function MobileCompanySettingsPage() {
         {/* 品牌模板設定 */}
         <BrandTemplateSection locale={locale} />
 
+        {/* 日曆整合 */}
+        <CalendarIntegrationSection locale={locale} />
+
         {/* 資料安全與隱私保護 */}
         <div className="bg-blue-50 mx-4 mt-4 rounded-2xl border border-blue-100 overflow-hidden">
           <div className="px-4 py-3 border-b border-blue-100">
@@ -1022,6 +1161,15 @@ export default function MobileCompanySettingsPage() {
                   : "For enterprise compliance reports, contact "}
                 <span className="font-medium">enterprise@sowork.ai</span>
               </p>
+              <button
+                onClick={() => { window.location.href = "/app/security"; }}
+                className="mt-2 flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-900 transition-colors"
+              >
+                {locale === "zh" ? "查看完整安全白皮書" : "View Full Security Whitepaper"}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </button>
             </div>
           </div>
         </div>

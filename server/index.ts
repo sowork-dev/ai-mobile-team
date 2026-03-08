@@ -14,6 +14,16 @@ import { generatePPTX, generateDOCX, generateXLSX, generatePDF, extractPptxPrima
 import { getFormatForRole } from "./formatMapping.js";
 import { validateWebhookSignature, parseWebhookEvents, parseSchedulingPostback } from "./lineIntegration.js";
 import { recordParticipantReplyByLineId, findSessionByLineUserId } from "./schedulingSession.js";
+import {
+  GoogleCalendarService,
+  OutlookCalendarService,
+  GmailService,
+  OutlookMailService,
+  findCommonSlots,
+  createMeetingEvent,
+  DEMO_UNREAD_EMAILS,
+} from "./calendarIntegration.js";
+import { getMicrosoftAuthUrl, handleMicrosoftCallback } from "./authMicrosoft.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -248,6 +258,160 @@ app.get("/api/template/status", (req, res) => {
     }
   } else {
     res.json({ exists: false });
+  }
+});
+
+// ── Calendar API ─────────────────────────────────────────────────
+
+/** Google Calendar OAuth URL */
+app.get("/api/calendar/auth/google", (req, res) => {
+  const redirectUri = `${req.protocol}://${req.get("host")}/api/calendar/callback/google`;
+  const url = GoogleCalendarService.getAuthUrl(redirectUri);
+  res.json({ url });
+});
+
+/** Microsoft Calendar OAuth URL */
+app.get("/api/calendar/auth/microsoft", (req, res) => {
+  const redirectUri = `${req.protocol}://${req.get("host")}/api/calendar/callback/microsoft`;
+  const url = OutlookCalendarService.getAuthUrl(redirectUri);
+  res.json({ url });
+});
+
+/** Google OAuth callback */
+app.get("/api/calendar/callback/google", async (req, res) => {
+  const { code } = req.query;
+  if (!code || typeof code !== "string") return res.status(400).send("Missing code");
+  const redirectUri = `${req.protocol}://${req.get("host")}/api/calendar/callback/google`;
+  try {
+    const result = await GoogleCalendarService.exchangeCode(code, redirectUri);
+    // Demo：直接關閉視窗並通知父頁面
+    res.send(`<html><body><script>
+      window.opener?.postMessage({ type: 'calendar-connected', provider: 'google', email: '${result.email}' }, '*');
+      window.close();
+    </script><p>Google Calendar 已連接！此視窗即將關閉...</p></body></html>`);
+  } catch (err) {
+    res.status(500).send("連接失敗：" + (err as Error).message);
+  }
+});
+
+/** Microsoft Calendar OAuth callback */
+app.get("/api/calendar/callback/microsoft", async (req, res) => {
+  const { code } = req.query;
+  if (!code || typeof code !== "string") return res.status(400).send("Missing code");
+  const redirectUri = `${req.protocol}://${req.get("host")}/api/calendar/callback/microsoft`;
+  try {
+    const result = await OutlookCalendarService.exchangeCode(code, redirectUri);
+    res.send(`<html><body><script>
+      window.opener?.postMessage({ type: 'calendar-connected', provider: 'microsoft', email: '${result.email}' }, '*');
+      window.close();
+    </script><p>Outlook Calendar 已連接！此視窗即將關閉...</p></body></html>`);
+  } catch (err) {
+    res.status(500).send("連接失敗：" + (err as Error).message);
+  }
+});
+
+/** 取得用戶未來 N 天行程 */
+app.get("/api/calendar/events", async (req, res) => {
+  const days = parseInt(String(req.query.days ?? "7"), 10);
+  const provider = String(req.query.provider ?? "google");
+  try {
+    const svc = provider === "microsoft" ? new OutlookCalendarService() : new GoogleCalendarService();
+    const events = await svc.listEvents(days);
+    res.json({ events });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+/** 建立會議事件 */
+app.post("/api/calendar/meeting", async (req, res) => {
+  const { title, start, end, attendees, platform = "google" } = req.body ?? {};
+  if (!title || !start || !end) return res.status(400).json({ error: "Missing required fields" });
+  try {
+    const event = await createMeetingEvent("demo-user", { title, start, end, attendees: attendees ?? [] }, platform);
+    res.json({ event });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+/** 找共同空檔 */
+app.get("/api/calendar/availability", async (req, res) => {
+  const date = String(req.query.date ?? new Date().toISOString().split("T")[0]);
+  const participants = (req.query["participants[]"] ?? req.query.participants ?? []) as string[];
+  const participantList = Array.isArray(participants) ? participants : [participants];
+  const endDate = new Date(new Date(date).getTime() + 7 * 24 * 3600 * 1000).toISOString().split("T")[0];
+  const slots = findCommonSlots("demo-user", participantList, { start: date, end: endDate });
+  res.json({ slots });
+});
+
+// ── Microsoft Auth (SSO) ─────────────────────────────────────────
+
+/** Microsoft 365 登入 — 跳轉 */
+app.get("/api/auth/microsoft", (req, res) => {
+  const redirectUri = `${req.protocol}://${req.get("host")}/api/auth/microsoft/callback`;
+  const state = String(req.query.redirect ?? "/app");
+  const url = getMicrosoftAuthUrl(redirectUri, state);
+  res.redirect(url);
+});
+
+/** Microsoft 365 登入 callback */
+app.get("/api/auth/microsoft/callback", async (req, res) => {
+  const { code, state } = req.query;
+  const redirectTo = (typeof state === "string" && state.startsWith("/")) ? state : "/app";
+  if (!code || typeof code !== "string") return res.redirect(`${redirectTo}?error=missing_code`);
+  const redirectUri = `${req.protocol}://${req.get("host")}/api/auth/microsoft/callback`;
+  try {
+    const result = await handleMicrosoftCallback(code, redirectUri);
+    // Demo 模式：直接設定 session 並跳轉（生產環境需儲存到 DB + 發 JWT）
+    res.send(`<html><body><script>
+      localStorage.setItem('msUser', '${JSON.stringify({ email: result.user.email, name: result.user.displayName })}');
+      window.location.href = '${redirectTo}';
+    </script></body></html>`);
+  } catch (err) {
+    console.error("Microsoft auth callback error:", err);
+    res.redirect(`${redirectTo}?error=auth_failed`);
+  }
+});
+
+// ── Email API ─────────────────────────────────────────────────────
+
+/** 取得未讀重要 email 摘要 */
+app.get("/api/email/unread", async (req, res) => {
+  const limit = parseInt(String(req.query.limit ?? "5"), 10);
+  const provider = String(req.query.provider ?? "google");
+  try {
+    const svc = provider === "microsoft" ? new OutlookMailService() : new GmailService();
+    const emails = await svc.listUnreadImportant(limit);
+    res.json({ emails });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+/** 起草回覆 */
+app.post("/api/email/draft", async (req, res) => {
+  const { emailId, instruction, provider = "google" } = req.body ?? {};
+  if (!emailId || !instruction) return res.status(400).json({ error: "Missing emailId or instruction" });
+  try {
+    const svc = provider === "microsoft" ? new OutlookMailService() : new GmailService();
+    const draft = await svc.draftReply(emailId, instruction);
+    res.json({ draft });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+/** 送出回覆 */
+app.post("/api/email/send-reply", async (req, res) => {
+  const { emailId, replyBody, provider = "google" } = req.body ?? {};
+  if (!emailId || !replyBody) return res.status(400).json({ error: "Missing emailId or replyBody" });
+  try {
+    const svc = provider === "microsoft" ? new OutlookMailService() : new GmailService();
+    const success = await svc.sendReply(emailId, replyBody);
+    res.json({ success });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
   }
 });
 

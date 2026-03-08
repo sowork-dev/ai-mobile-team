@@ -50,6 +50,9 @@ export interface DemoData {
   brandGroups: DemoBrandGroup[];
   tasks: DemoTask[];
   assistantContext: DemoAssistantContext;
+  calendarConnected?: boolean;
+  calendarProvider?: "google" | "microsoft";
+  emailConnected?: boolean;
 }
 
 const m = (mins: number) => new Date(Date.now() - mins * 60 * 1000);
@@ -58,6 +61,9 @@ const d = (days: number) => new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
 const DEMO_DATA_MAP: Record<string, DemoData> = {
   "groupm-digital": {
+    calendarConnected: true,
+    calendarProvider: "google",
+    emailConnected: true,
     agentTeam: [
       { id: "alex", name: "Alex", title: "創意總監 AI", avatar: "🎯", status: "online" },
       { id: "maya", name: "Maya", title: "文案撰寫師 AI", avatar: "✍️", status: "executing" },
@@ -134,7 +140,7 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
     ],
     assistantContext: {
       welcomeMessage:
-        "您好，我是 GroupM Digital 的幕僚長。\n\n您的 AI 創意團隊今天持續運作中：\n• Alex 正在主導 Q4 Pitch 的策略框架（進行到第 2 階段）\n• Maya 完成了 P&G 8 個語言廣告文案，等待您審批\n• Ryan 剛完成競品監測，發現 Adidas 大量增加短影音投放\n• Lena 正在趕製 Unilever 全球提案初稿\n\n📅 剛完成：已透過 LINE 詢問 Nike 客戶 3 人的本週會議時間，共同空檔為週四 14:00，等您確認後我來發邀請。\n\n最需要您關注：Q4 Pitch 已到策略方向確認關卡，需要您拍板後才能繼續推進。",
+        "您好，我是 GroupM Digital 的幕僚長。\n\n您的 AI 創意團隊今天持續運作中：\n• Alex 正在主導 Q4 Pitch 的策略框架（進行到第 2 階段）\n• Maya 完成了 P&G 8 個語言廣告文案，等待您審批\n• Ryan 剛完成競品監測，發現 Adidas 大量增加短影音投放\n• Lena 正在趕製 Unilever 全球提案初稿\n\n📅 Google Calendar 已連接，下週有 3 個會議待確認時間：Nike APAC 週例會（週一 10:00）、Unilever 提案簡報（週二 14:00）、Q4 Pitch 策略會議（週三 9:30）。\n\n📧 郵件彙報：您有 3 封未讀重要郵件，其中 Nike 客戶詢問提案時間需要回覆，我已準備好草稿。\n\n最需要您關注：Q4 Pitch 已到策略方向確認關卡，需要您拍板後才能繼續推進。",
       quickActions: [
         { label: "Q4 Pitch 進度", prompt: "Q4 全球品牌活動 Pitch 目前進度如何？需要我做什麼？" },
         { label: "幫我約 Nike 開會", prompt: "幫我約 Nike 客戶 Annie、James、Leo 本週開線上會議" },
@@ -144,6 +150,11 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
       completedToday: 3,
       timeSavedHours: 18,
       recentConversations: [
+        {
+          time: "2 分鐘前",
+          role: "assistant",
+          message: "📧 郵件彙報：您有 3 封未讀重要郵件：\n1. Nike 客戶 Annie 詢問提案時間（需回覆）\n2. 法務部 Unilever 合約需要簽名（本週五前）\n3. P&G 廣告文案反饋（日文版需調整）\n需要我幫您起草回覆嗎？",
+        },
         {
           time: "5 分鐘前",
           role: "assistant",
@@ -157,7 +168,7 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
         {
           time: "29 分鐘前",
           role: "assistant",
-          message: "正在透過 LINE 詢問三位的本週空檔，已收到 Annie 回覆週四 14:00 可以，等 James 和 Leo 確認後立即通知您。",
+          message: "已查詢您的 Google Calendar 空檔。本週共同空檔：週三 14:00-16:00、週四 10:00-12:00。已透過 LINE 傳送給三位，等待回覆。Annie 已確認週四 10:00，Google Meet 連結已建立：meet.google.com/abc-defg-hij",
         },
         {
           time: "1 小時前",
@@ -169,6 +180,9 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
   },
 
   "loreal-apac": {
+    calendarConnected: true,
+    calendarProvider: "google",
+    emailConnected: true,
     agentTeam: [
       { id: "belle", name: "Belle", title: "美妝行銷顧問 AI", avatar: "💄", status: "online" },
       { id: "zara", name: "Zara", title: "內容在地化專家 AI", avatar: "🌏", status: "executing" },
@@ -256,6 +270,11 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
       timeSavedHours: 26,
       recentConversations: [
         {
+          time: "8 分鐘前",
+          role: "assistant",
+          message: "📧 郵件彙報：您有 2 封重要未讀郵件：\n1. Lancôme 亞太區總部詢問台灣市場 Q4 計畫進度\n2. KOL 合作代理商提供秋季合作提案\n需要我幫您起草回覆嗎？",
+        },
+        {
           time: "12 分鐘前",
           role: "assistant",
           message: "台灣雙十一 45 則社群排程已全部完成，涵蓋 10/9 至 11/11，包含 IG Stories 與 Reels，請您確認後即可正式上線。",
@@ -268,7 +287,7 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
         {
           time: "36 分鐘前",
           role: "assistant",
-          message: "已透過 LINE 聯繫雙方，共同空檔為週五 12:30，並已在信義區預訂日式料理餐廳（inline.app），等您確認即可送出邀請。",
+          message: "已查詢您的 Google Calendar 空檔。共同空檔：週五 12:30，已在信義區預訂日式料理餐廳（inline.app）。Google Calendar 邀請已建立，等您確認後送出。",
         },
         {
           time: "2 小時前",
@@ -280,6 +299,9 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
   },
 
   "bcg-taipei": {
+    calendarConnected: true,
+    calendarProvider: "google",
+    emailConnected: true,
     agentTeam: [
       { id: "rex", name: "Rex", title: "研究分析師 AI", avatar: "🔍", status: "executing" },
       { id: "nina", name: "Nina", title: "商業策略顧問 AI", avatar: "♟️", status: "online" },
@@ -367,6 +389,11 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
       timeSavedHours: 22,
       recentConversations: [
         {
+          time: "5 分鐘前",
+          role: "assistant",
+          message: "📧 郵件彙報：您有 2 封重要未讀郵件：\n1. 零售客戶 Alpha CFO 詢問下週策略回顧時間\n2. BCG 全球總部傳來新版 Pitch 範本\n需要我幫您起草回覆嗎？",
+        },
+        {
           time: "8 分鐘前",
           role: "assistant",
           message: "零售客戶 Alpha 的競爭力分析 Pitch 第二稿已完成（30頁），我標記了第 12、18、24 頁需要您確認的 3 個策略方向，請審閱後告知。",
@@ -379,7 +406,7 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
         {
           time: "41 分鐘前",
           role: "assistant",
-          message: "已發送會議邀請，CEO 確認週一 15:00 可行，CFO 週一下午有衝突，我已提議備選週三 10:00，等待回覆。",
+          message: "已查詢您的 Google Calendar。本週共同空檔：週三 10:00-12:00、週四 15:00-16:30。已透過 LINE 傳給 CEO 和 CFO，CEO 已確認週三 10:00，Google Meet 連結已建立。",
         },
         {
           time: "3 小時前",
@@ -391,6 +418,9 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
   },
 
   "hillhouse-capital": {
+    calendarConnected: true,
+    calendarProvider: "microsoft",
+    emailConnected: true,
     agentTeam: [
       { id: "morgan", name: "Morgan", title: "市場分析師 AI", avatar: "📉", status: "executing" },
       { id: "tara", name: "Tara", title: "GTM 策略師 AI", avatar: "🚀", status: "online" },
@@ -478,6 +508,11 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
       timeSavedHours: 34,
       recentConversations: [
         {
+          time: "10 分鐘前",
+          role: "assistant",
+          message: "📧 Outlook 郵件彙報：您有 3 封重要未讀郵件：\n1. LP-A 詢問 Q3 Portfolio 某公司的退出時間表\n2. B2B SaaS 投資標的 CEO 提供最新財務數據\n3. 法律顧問傳來新投資標的盡調文件\n需要我幫您起草回覆嗎？",
+        },
+        {
           time: "15 分鐘前",
           role: "assistant",
           message: "Q3 LP 投資報告（28頁）已就緒，財務數據 Excel 也已按 LP 格式匯出，包含 Portfolio 各公司 P&L 摘要，請確認後可立即發送給 12 位 LP。",
@@ -490,7 +525,7 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
         {
           time: "46 分鐘前",
           role: "assistant",
-          message: "正在聯繫三位主要 LP，已確認 LP-A 週一 09:00 可行，LP-B 和 LP-C 等待回覆，會議連結已準備好，確認後立即發送。",
+          message: "已查詢您的 Outlook Calendar 空檔。與三位 LP 共同空檔：週一 09:00（LP-A 已確認）。Teams 會議連結已建立，等 LP-B 和 LP-C 回覆後立即發送邀請。",
         },
         {
           time: "2 小時前",
@@ -502,6 +537,9 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
   },
 
   "microsoft-taiwan": {
+    calendarConnected: true,
+    calendarProvider: "microsoft",
+    emailConnected: true,
     agentTeam: [
       { id: "evan", name: "Evan", title: "產品行銷經理 AI", avatar: "🎯", status: "executing" },
       { id: "chloe", name: "Chloe", title: "內容策略師 AI", avatar: "📝", status: "online" },
@@ -592,17 +630,22 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
         {
           time: "3 分鐘前",
           role: "assistant",
+          message: "📧 Outlook 郵件彙報：您有 2 封重要未讀郵件：\n1. iThome 記者確認 Ignite 媒體說明時間（需回覆）\n2. AWS 客戶傳來競品比較問題清單（Tyler 已收到副本）\n需要我幫您起草回覆嗎？",
+        },
+        {
+          time: "8 分鐘前",
+          role: "assistant",
           message: "Azure 10月行銷內容包已完成：5個客戶案例、3個功能介紹、2個促銷訊息，已按格式整理好，可直接交給各渠道使用。",
         },
         {
           time: "25 分鐘前",
           role: "user",
-          message: "整理剛剛和 AWS 客戶的通話重點",
+          message: "幫我約科技媒體記者下週媒體說明",
         },
         {
           time: "26 分鐘前",
           role: "assistant",
-          message: "通話摘要已完成：客戶對 Azure Copilot 感興趣但有成本疑慮，我已建立 3 個後續任務並分配給 Tyler，包含準備 ROI 計算器和客戶案例。",
+          message: "已查詢您的 Outlook Calendar。共同空檔：週二 14:00-16:00。Teams 會議連結已建立。iThome 和 TechNews 記者已收到邀請，等待確認。",
         },
         {
           time: "1 小時前",

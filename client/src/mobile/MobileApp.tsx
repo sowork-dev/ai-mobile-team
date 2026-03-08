@@ -25,6 +25,7 @@ import MobileCompanySettingsPage from "./pages/MobileCompanySettingsPage";
 import MobileGroupChatPage from "./pages/MobileGroupChatPage";
 import MobileCreateGroupPage from "./pages/MobileCreateGroupPage";
 import MobileContentCalendarPage from "./pages/MobileContentCalendarPage";
+import MobileSecurityPage from "./pages/MobileSecurityPage";
 
 // Mobile Components
 import MobileTabBar from "./components/MobileTabBar";
@@ -46,7 +47,8 @@ export default function MobileApp() {
     location.startsWith("/onboarding") ||
     location === "/task/new" ||
     location === "/company-settings" ||
-    location === "/calendar";
+    location === "/calendar" ||
+    location === "/security";
 
   if (loading) {
     return (
@@ -98,6 +100,7 @@ export default function MobileApp() {
           <Route path="/profile" component={MobileProfilePage} />
           <Route path="/company-settings" component={MobileCompanySettingsPage} />
           <Route path="/calendar" component={MobileContentCalendarPage} />
+          <Route path="/security" component={MobileSecurityPage} />
           <Route component={() => <Redirect to="/chat" />} />
         </Switch>
       </div>

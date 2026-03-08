@@ -80,9 +80,16 @@ export default function MobileLoginPage({ showOnlyCompanySelector = false }: Mob
     }
   };
 
+  const [isMicrosoftLoading, setIsMicrosoftLoading] = useState(false);
+
   const handleGoogleLogin = () => {
     setIsGoogleLoading(true);
     window.location.href = "/api/auth/google?redirect=/app";
+  };
+
+  const handleMicrosoftLogin = () => {
+    setIsMicrosoftLoading(true);
+    window.location.href = "/api/auth/microsoft?redirect=/app";
   };
 
   const handleDemoSelect = (persona: (typeof DEMO_PERSONAS)[0]) => {
@@ -160,6 +167,26 @@ export default function MobileLoginPage({ showOnlyCompanySelector = false }: Mob
               </svg>
             )}
             {t("login.googleLogin")}
+          </button>
+
+          {/* Microsoft 登入按鈕 */}
+          <button
+            type="button"
+            onClick={handleMicrosoftLogin}
+            disabled={isMicrosoftLoading}
+            className="w-full flex items-center justify-center gap-3 py-3.5 mt-3 bg-white border border-gray-200 rounded-xl font-medium text-sm text-gray-700 shadow-sm hover:bg-gray-50 active:scale-95 transition-all disabled:opacity-50"
+          >
+            {isMicrosoftLoading ? (
+              <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <rect x="1" y="1" width="10" height="10" fill="#F25022"/>
+                <rect x="13" y="1" width="10" height="10" fill="#7FBA00"/>
+                <rect x="1" y="13" width="10" height="10" fill="#00A4EF"/>
+                <rect x="13" y="13" width="10" height="10" fill="#FFB900"/>
+              </svg>
+            )}
+            使用 Microsoft 帳號登入
           </button>
 
           {/* Email/密碼表單 */}

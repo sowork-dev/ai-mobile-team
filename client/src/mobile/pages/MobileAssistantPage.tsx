@@ -92,6 +92,104 @@ export default function MobileAssistantPage() {
     return null;
   };
 
+  // 判斷是否為日曆排程意圖
+  const getCalendarIntent = (prompt: string): "schedule" | "email_check" | "email_reply" | null => {
+    const p = prompt;
+    if (/幫我約|開會|見面|開個會|安排會議|schedule|meeting|appointment/.test(p)) return "schedule";
+    if (/郵件|email|mail|未讀|重要信件/.test(p)) return "email_check";
+    if (/回覆|reply|回信|幫我回/.test(p)) return "email_reply";
+    return null;
+  };
+
+  const handleDemoCalendarOrEmail = async (prompt: string): Promise<boolean> => {
+    if (!demoPersonaId) return false;
+    const intent = getCalendarIntent(prompt);
+    if (!intent) return false;
+
+    const calendarProvider = demoAssistant?.calendarProvider ?? "google";
+    const meetPlatform = calendarProvider === "microsoft" ? "Teams" : "Google Meet";
+    const meetUrl = calendarProvider === "microsoft"
+      ? "https://teams.microsoft.com/l/meetup-join/demo123"
+      : "https://meet.google.com/abc-defg-hij";
+
+    const userMsg: Message = { id: Date.now().toString(), role: "user", content: prompt, timestamp: new Date() };
+    setMessages(prev => [...prev, userMsg]);
+    setInput("");
+    setIsLoading(true);
+
+    if (intent === "schedule") {
+      // Step 1: 查詢空檔
+      const checkingMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: locale === "zh"
+          ? `正在查詢您的行事曆空檔...`
+          : "Checking your calendar availability...",
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, checkingMsg]);
+
+      await new Promise(r => setTimeout(r, 1200));
+
+      const slotsMsg: Message = {
+        id: (Date.now() + 2).toString(),
+        role: "assistant",
+        content: locale === "zh"
+          ? `本週共同空檔：\n• 週三 14:00–16:00 ✓\n• 週四 10:00–12:00 ✓\n\n要預約哪個時間？（回覆「週三」或「週四」）`
+          : `Common availability this week:\n• Wednesday 14:00–16:00 ✓\n• Thursday 10:00–12:00 ✓\n\nWhich time works? (Reply "Wed" or "Thu")`,
+        timestamp: new Date(),
+        suggestedActions: [
+          { label: locale === "zh" ? "預約週三 14:00" : "Book Wed 14:00", action: "book_wednesday" },
+          { label: locale === "zh" ? "預約週四 10:00" : "Book Thu 10:00", action: "book_thursday" },
+        ],
+      };
+      setMessages(prev => [...prev, slotsMsg]);
+    } else if (intent === "email_check") {
+      const checkingMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: locale === "zh"
+          ? "正在讀取您的重要未讀郵件..."
+          : "Reading your important unread emails...",
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, checkingMsg]);
+
+      await new Promise(r => setTimeout(r, 1000));
+
+      const emailMsg: Message = {
+        id: (Date.now() + 2).toString(),
+        role: "assistant",
+        content: locale === "zh"
+          ? `您有 3 封未讀重要郵件：\n\n📧 1. Nike 客戶 Annie Chen\n主旨：「Re: Q4 策略提案時間確認」\n摘要：詢問本週或下週初進行詳細簡報...\n\n📧 2. 法務部\n主旨：「Unilever 合約需要您的簽名」\n摘要：請於本週五前完成電子簽名...\n\n📧 3. P&G 品牌團隊\n主旨：「Q4 廣告文案反饋」\n摘要：日文版本語氣需調整...\n\n需要我幫您起草哪封的回覆？`
+          : `You have 3 important unread emails:\n\n📧 1. Annie Chen (Nike)\nRe: Q4 strategy proposal timing\nSummary: Requesting a detailed presentation this week or early next week...\n\n📧 2. Legal Team\nUnilever contract needs your signature\nSummary: Please complete e-signature by Friday...\n\n📧 3. P&G Brand Team\nQ4 ad copy feedback\nSummary: Japanese version tone adjustment needed...\n\nWould you like me to draft a reply?`,
+        timestamp: new Date(),
+        suggestedActions: [
+          { label: locale === "zh" ? "回覆 Nike Annie" : "Reply to Annie", action: "draft_nike_reply" },
+          { label: locale === "zh" ? "稍後處理" : "Handle later", action: "continue" },
+        ],
+      };
+      setMessages(prev => [...prev, emailMsg]);
+    } else if (intent === "email_reply") {
+      const draftMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: locale === "zh"
+          ? `已為您起草回覆：\n\n---\nAnnie，\n\n感謝您的來信。很高興您對 Q4 提案感興趣！建議安排本週四上午 10:00 進行詳細簡報，共 90 分鐘，請確認 James 和 Leo 是否方便。\n\n${meetPlatform} 連結：${meetUrl}\n\n期待與您的團隊交流。\n\n此致\n---\n\n確認後送出？`
+          : `Draft reply:\n\n---\nAnnie,\n\nThank you for your message! I'd suggest Thursday 10:00 AM for the detailed presentation (90 mins). Please confirm with James and Leo.\n\n${meetPlatform} link: ${meetUrl}\n\nLooking forward to it.\n\nBest regards\n---\n\nSend this reply?`,
+        timestamp: new Date(),
+        suggestedActions: [
+          { label: locale === "zh" ? "確認送出" : "Confirm & Send", action: "send_email" },
+          { label: locale === "zh" ? "修改後送出" : "Edit first", action: "continue" },
+        ],
+      };
+      setMessages(prev => [...prev, draftMsg]);
+    }
+
+    setIsLoading(false);
+    return true;
+  };
+
   const handleDemoDownload = async (prompt: string, label: string) => {
     const downloadType = getDownloadType(prompt);
     if (!downloadType || !demoPersonaId) return false;
@@ -186,6 +284,17 @@ export default function MobileAssistantPage() {
   const handleSend = async (text?: string) => {
     const messageText = text || input.trim();
     if (!messageText || isLoading) return;
+
+    // Demo 模式：先嘗試下載意圖，再嘗試日曆/Email 意圖
+    if (demoPersonaId) {
+      const downloadType = getDownloadType(messageText);
+      if (downloadType) {
+        await handleDemoDownload(messageText, messageText);
+        return;
+      }
+      const calHandled = await handleDemoCalendarOrEmail(messageText);
+      if (calHandled) return;
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -282,6 +391,52 @@ export default function MobileAssistantPage() {
       handleSend(locale === "zh" ? "請推薦其他人選" : "Please recommend other candidates");
     } else if (action.action === "new_call_summary") {
       handleSend(locale === "zh" ? "我剛打完電話，幫我整理通話重點" : "I just finished a call, help me summarize the key points");
+    } else if (action.action === "book_wednesday" || action.action === "book_thursday") {
+      const isWed = action.action === "book_wednesday";
+      const calendarProvider = demoAssistant?.calendarProvider ?? "google";
+      const meetPlatform = calendarProvider === "microsoft" ? "Teams" : "Google Meet";
+      const meetUrl = calendarProvider === "microsoft"
+        ? "https://teams.microsoft.com/l/meetup-join/demo456"
+        : `https://meet.google.com/${Math.random().toString(36).slice(2, 5)}-${Math.random().toString(36).slice(2, 6)}-${Math.random().toString(36).slice(2, 5)}`;
+      const timeStr = isWed
+        ? (locale === "zh" ? "週三 14:00–16:00" : "Wednesday 14:00–16:00")
+        : (locale === "zh" ? "週四 10:00–12:00" : "Thursday 10:00–12:00");
+      const confirmMsg: Message = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: locale === "zh"
+          ? `✅ 已建立 ${meetPlatform} 會議！\n\n時間：${timeStr}\n${meetPlatform} 連結：${meetUrl}\n\n是否透過 LINE 通知所有參與者？`
+          : `✅ ${meetPlatform} meeting created!\n\nTime: ${timeStr}\n${meetPlatform} link: ${meetUrl}\n\nShould I notify all participants via LINE?`,
+        timestamp: new Date(),
+        suggestedActions: [
+          { label: locale === "zh" ? "傳 LINE 通知" : "Send LINE notice", action: "send_line_notice" },
+          { label: locale === "zh" ? "不用了" : "No thanks", action: "continue" },
+        ],
+      };
+      setMessages(prev => [...prev, confirmMsg]);
+    } else if (action.action === "send_line_notice" || action.action === "draft_nike_reply") {
+      const doneMsg: Message = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: action.action === "send_line_notice"
+          ? (locale === "zh" ? "✅ LINE 通知已傳送給所有參與者！他們將收到會議時間與連結。" : "✅ LINE notifications sent to all participants!")
+          : (locale === "zh" ? "已準備好回覆草稿，需要我幫您調整措辭或直接送出？" : "Draft reply ready. Shall I adjust the wording or send directly?"),
+        timestamp: new Date(),
+        suggestedActions: action.action === "draft_nike_reply"
+          ? [{ label: locale === "zh" ? "直接送出" : "Send now", action: "send_email" }]
+          : undefined,
+      };
+      setMessages(prev => [...prev, doneMsg]);
+    } else if (action.action === "send_email") {
+      const sentMsg: Message = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: locale === "zh"
+          ? "✅ 回覆已成功送出！對方收到後我會通知您。"
+          : "✅ Reply sent successfully! I'll notify you when they respond.",
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, sentMsg]);
     } else if (action.action === "continue") {
       // 不做任何事，讓用戶繼續輸入
     } else {
@@ -413,6 +568,8 @@ export default function MobileAssistantPage() {
                 key={action.label}
                 onClick={async () => {
                   if (demoPersonaId) {
+                    const calHandled = await handleDemoCalendarOrEmail(action.prompt);
+                    if (calHandled) return;
                     const handled = await handleDemoDownload(action.prompt, action.label);
                     if (!handled) handleSend(action.prompt);
                   } else {
