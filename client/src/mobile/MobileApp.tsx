@@ -8,6 +8,7 @@ import { Switch, Route, Redirect, useLocation } from "wouter";
 import { useAuth } from "../_core/hooks/useAuth";
 
 // Mobile Pages
+import MobileDemoPage from "./pages/MobileDemoPage";
 import MobileContactsPage from "./pages/MobileContactsPage";
 import MobileChatPage from "./pages/MobileChatPage";
 import MobileAssistantPage from "./pages/MobileAssistantPage";
@@ -55,8 +56,14 @@ export default function MobileApp() {
     );
   }
 
+  // 免登入演示頁面
+  if (location === "/demo") {
+    return <MobileDemoPage />;
+  }
+
   if (!user) {
-    return <MobileLoginPage />;
+    // 未登入時顯示演示頁面而不是登入頁
+    return <MobileDemoPage />;
   }
 
   return (
