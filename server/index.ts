@@ -5,11 +5,12 @@
 import express from "express";
 import cors from "cors";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import * as trpcExpress from "@trpc/server/adapters/express";
 import { appRouter } from "./routers.js";
 import * as onedrive from "./onedrive.js";
-import { generatePPTX, generateDOCX, generateXLSX, generatePDF } from "./exportGenerators.js";
+import { generatePPTX, generateDOCX, generateXLSX, generatePDF, extractPptxPrimaryColor, type PptTheme } from "./exportGenerators.js";
 import { getFormatForRole } from "./formatMapping.js";
 import { validateWebhookSignature, parseWebhookEvents, parseSchedulingPostback } from "./lineIntegration.js";
 import { recordParticipantReplyByLineId, findSessionByLineUserId } from "./schedulingSession.js";
@@ -144,11 +145,23 @@ app.post("/api/export/pptx", async (req, res) => {
     companyName = "SoWork AI",
     format = "pptx",
     userRole = "",
+    theme = "bcg",
+    userId = "dev-user-001",
   } = req.body || {};
 
   try {
     const formatConfig = getFormatForRole(userRole);
     const maxSlides = formatConfig.pptSlides ?? 11;
+
+    // 檢查是否有品牌自定義主色
+    let customPrimary: string | undefined;
+    const metaPath = path.join(process.cwd(), "uploads", "templates", String(userId), "meta.json");
+    if (fs.existsSync(metaPath)) {
+      try {
+        const meta = JSON.parse(fs.readFileSync(metaPath, "utf-8"));
+        if (meta.primaryColor) customPrimary = meta.primaryColor;
+      } catch { /* ignore */ }
+    }
 
     if (format === "pdf") {
       const buffer = await generatePDF(title, content, companyName);
@@ -175,7 +188,11 @@ app.post("/api/export/pptx", async (req, res) => {
       res.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${filename}`);
       res.send(buffer);
     } else {
-      const buffer = await generatePPTX(title, content, companyName, { maxSlides });
+      const buffer = await generatePPTX(title, content, companyName, {
+        maxSlides,
+        theme: theme as PptTheme,
+        customPrimary,
+      });
       const filename = encodeURIComponent(`${title}.pptx`);
       res.setHeader(
         "Content-Type",
@@ -187,6 +204,50 @@ app.post("/api/export/pptx", async (req, res) => {
   } catch (err) {
     console.error("Export error:", err);
     res.status(500).json({ error: "文件生成失敗", detail: (err as Error).message });
+  }
+});
+
+// ── 品牌模板上傳 ───────────────────────────────────────────────
+app.post("/api/template/upload", express.json({ limit: "20mb" }), async (req, res) => {
+  const { base64, userId = "dev-user-001" } = req.body || {};
+  if (!base64) return res.status(400).json({ error: "Missing base64 content" });
+
+  try {
+    const dir = path.join(process.cwd(), "uploads", "templates", String(userId));
+    fs.mkdirSync(dir, { recursive: true });
+
+    const buffer = Buffer.from(base64, "base64");
+    fs.writeFileSync(path.join(dir, "template.pptx"), buffer);
+
+    // 提取主色
+    const primaryColor = await extractPptxPrimaryColor(buffer);
+
+    // 儲存 metadata
+    fs.writeFileSync(
+      path.join(dir, "meta.json"),
+      JSON.stringify({ primaryColor, uploadedAt: new Date().toISOString() })
+    );
+
+    res.json({ success: true, primaryColor });
+  } catch (err) {
+    console.error("Template upload error:", err);
+    res.status(500).json({ error: "上傳失敗", detail: (err as Error).message });
+  }
+});
+
+// ── 品牌模板狀態查詢 ───────────────────────────────────────────
+app.get("/api/template/status", (req, res) => {
+  const userId = String(req.query.userId || "dev-user-001");
+  const metaPath = path.join(process.cwd(), "uploads", "templates", userId, "meta.json");
+  if (fs.existsSync(metaPath)) {
+    try {
+      const meta = JSON.parse(fs.readFileSync(metaPath, "utf-8"));
+      res.json({ exists: true, ...meta });
+    } catch {
+      res.json({ exists: false });
+    }
+  } else {
+    res.json({ exists: false });
   }
 });
 

@@ -9,6 +9,7 @@ import ReactMarkdown from "react-markdown";
 import { useI18n } from "@/i18n";
 
 type ExportFormat = "pptx" | "docx" | "xlsx" | "pdf";
+type PptTheme = "bcg" | "minimal" | "tech" | "warm";
 
 const FORMAT_OPTIONS: { id: ExportFormat; label: string }[] = [
   { id: "pdf", label: "PDF 報告 (.pdf)" },
@@ -17,16 +18,24 @@ const FORMAT_OPTIONS: { id: ExportFormat; label: string }[] = [
   { id: "xlsx", label: "Excel 表格" },
 ];
 
+const THEME_OPTIONS: { id: PptTheme; label: string; dot: string }[] = [
+  { id: "bcg", label: "深藍金（顧問）", dot: "#1B2B4B" },
+  { id: "minimal", label: "簡潔白（現代）", dot: "#2563EB" },
+  { id: "tech", label: "科技藍（數據）", dot: "#00A3E0" },
+  { id: "warm", label: "暖色系（溫暖）", dot: "#E07B39" },
+];
+
 async function downloadFile(
   title: string,
   content: string,
   companyName: string,
-  format: ExportFormat
+  format: ExportFormat,
+  theme: PptTheme = "bcg"
 ) {
   const res = await fetch("/api/export/pptx", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title, content, companyName, format }),
+    body: JSON.stringify({ title, content, companyName, format, theme }),
   });
   if (!res.ok) throw new Error("下載失敗");
   const blob = await res.blob();
@@ -91,14 +100,32 @@ export default function MobileTaskDetailPage() {
   const { t } = useI18n();
   const [showPublish, setShowPublish] = useState(false);
   const [formatPickerIdx, setFormatPickerIdx] = useState<number | null>(null);
+  const [themePickerIdx, setThemePickerIdx] = useState<number | null>(null);
+  const [pendingFormat, setPendingFormat] = useState<ExportFormat | null>(null);
   const [downloadingIdx, setDownloadingIdx] = useState<number | null>(null);
   const task = MOCK_TASK_DETAIL;
 
-  const handleDownload = async (idx: number, format: ExportFormat) => {
-    setDownloadingIdx(idx);
+  const closeAllPickers = () => {
     setFormatPickerIdx(null);
+    setThemePickerIdx(null);
+    setPendingFormat(null);
+  };
+
+  const handleFormatSelect = (idx: number, format: ExportFormat) => {
+    if (format === "pptx") {
+      setFormatPickerIdx(null);
+      setThemePickerIdx(idx);
+      setPendingFormat("pptx");
+    } else {
+      handleDownload(idx, format);
+    }
+  };
+
+  const handleDownload = async (idx: number, format: ExportFormat, theme: PptTheme = "bcg") => {
+    setDownloadingIdx(idx);
+    closeAllPickers();
     try {
-      await downloadFile(task.title, task.content, task.agentName, format);
+      await downloadFile(task.title, task.content, task.agentName, format, theme);
       toast.success("下載完成！");
     } catch {
       toast.error("下載失敗，請重試");
@@ -257,7 +284,10 @@ export default function MobileTaskDetailPage() {
                   </div>
                   <button
                     disabled={downloadingIdx === i}
-                    onClick={() => setFormatPickerIdx(formatPickerIdx === i ? null : i)}
+                    onClick={() => {
+                      closeAllPickers();
+                      if (formatPickerIdx !== i) setFormatPickerIdx(i);
+                    }}
                     className="flex items-center gap-1 text-xs text-gray-900 font-medium px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg active:bg-gray-50 disabled:opacity-50"
                   >
                     {downloadingIdx === i ? (
@@ -272,16 +302,53 @@ export default function MobileTaskDetailPage() {
                     )}
                   </button>
                 </div>
-                {/* 格式選擇下拉 */}
+
+                {/* 第一層：格式選擇 */}
                 {formatPickerIdx === i && (
-                  <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden min-w-[130px]">
+                  <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden min-w-[155px]">
+                    <p className="px-4 pt-2.5 pb-1 text-[10px] text-gray-400 uppercase tracking-wide font-medium">選擇格式</p>
                     {FORMAT_OPTIONS.map((fmt) => (
                       <button
                         key={fmt.id}
-                        onClick={() => handleDownload(i, fmt.id)}
-                        className="w-full text-left px-4 py-2.5 text-xs text-gray-800 active:bg-gray-50 hover:bg-gray-50 font-medium"
+                        onClick={() => handleFormatSelect(i, fmt.id)}
+                        className="w-full text-left px-4 py-2.5 text-xs text-gray-800 active:bg-gray-50 hover:bg-gray-50 font-medium flex items-center justify-between"
                       >
                         {fmt.label}
+                        {fmt.id === "pptx" && (
+                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#9CA3AF" strokeWidth="1.8" strokeLinecap="round">
+                            <path d="M4 2l4 3-4 3" />
+                          </svg>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* 第二層：PPT 主題選擇 */}
+                {themePickerIdx === i && pendingFormat === "pptx" && (
+                  <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden min-w-[175px]">
+                    <div className="flex items-center gap-2 px-4 pt-2.5 pb-1 border-b border-gray-100">
+                      <button
+                        onClick={() => { setThemePickerIdx(null); setFormatPickerIdx(i); }}
+                        className="text-gray-400 active:text-gray-600"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                          <path d="M8 2L4 6l4 4" />
+                        </svg>
+                      </button>
+                      <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">PPT 主題</p>
+                    </div>
+                    {THEME_OPTIONS.map((th) => (
+                      <button
+                        key={th.id}
+                        onClick={() => handleDownload(i, "pptx", th.id)}
+                        className="w-full text-left px-4 py-2.5 text-xs text-gray-800 active:bg-gray-50 hover:bg-gray-50 font-medium flex items-center gap-2.5"
+                      >
+                        <span
+                          className="w-3 h-3 rounded-full flex-shrink-0 border border-white shadow-sm"
+                          style={{ backgroundColor: th.dot }}
+                        />
+                        {th.label}
                       </button>
                     ))}
                   </div>

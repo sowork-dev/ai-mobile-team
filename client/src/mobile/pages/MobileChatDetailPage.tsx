@@ -21,12 +21,22 @@ interface Message {
   isStreaming?: boolean;
 }
 
+type PptTheme = "bcg" | "minimal" | "tech" | "warm";
+
+const THEME_OPTIONS: { id: PptTheme; label: string; dot: string }[] = [
+  { id: "bcg", label: "深藍金（顧問）", dot: "#1B2B4B" },
+  { id: "minimal", label: "簡潔白（現代）", dot: "#2563EB" },
+  { id: "tech", label: "科技藍（數據）", dot: "#00A3E0" },
+  { id: "warm", label: "暖色系（溫暖）", dot: "#E07B39" },
+];
+
 interface DeliverableData {
   type: "presentation" | "pdf-report" | "pdf" | "markdown" | "excel";
   title: string;
   url?: string;
   status: "generating" | "ready";
   sourceContent?: string;
+  theme?: PptTheme;
 }
 
 // ── 輸出格式選單（聊天版）────────────────────────────────────
@@ -145,10 +155,11 @@ function MessageToolbar({
 }: {
   message: Message;
   onSaveAsTask: () => void;
-  onOutputFormat: (format: string, sourceContent: string) => void;
+  onOutputFormat: (format: string, sourceContent: string, theme?: PptTheme) => void;
   onClose: () => void;
 }) {
   const [showFormats, setShowFormats] = useState(false);
+  const [showThemes, setShowThemes] = useState(false);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content);
@@ -214,6 +225,31 @@ function MessageToolbar({
             </svg>
           </button>
         </div>
+      ) : showThemes ? (
+        <div className="py-1">
+          <button
+            onClick={() => setShowThemes(false)}
+            className="w-full flex items-center gap-2 px-4 py-2 text-xs text-gray-500 active:bg-gray-50 border-b border-gray-100"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+              <path d="M9 3L5 7l4 4" />
+            </svg>
+            PPT 主題
+          </button>
+          {THEME_OPTIONS.map((th) => (
+            <button
+              key={th.id}
+              onClick={() => { onOutputFormat("presentation", message.content, th.id); onClose(); }}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 active:bg-gray-50"
+            >
+              <span
+                className="w-3.5 h-3.5 rounded-full flex-shrink-0 border border-white shadow-sm"
+                style={{ backgroundColor: th.dot }}
+              />
+              {th.label}
+            </button>
+          ))}
+        </div>
       ) : (
         <div className="py-1">
           <button
@@ -228,11 +264,23 @@ function MessageToolbar({
           {OUTPUT_FORMATS.map((fmt) => (
             <button
               key={fmt.id}
-              onClick={() => { onOutputFormat(fmt.id, message.content); onClose(); }}
+              onClick={() => {
+                if (fmt.id === "presentation") {
+                  setShowThemes(true);
+                } else {
+                  onOutputFormat(fmt.id, message.content);
+                  onClose();
+                }
+              }}
               className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 active:bg-gray-50"
             >
               <span className="text-gray-500">{fmt.icon}</span>
-              {fmt.label}
+              <span className="flex-1 text-left">{fmt.label}</span>
+              {fmt.id === "presentation" && (
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#9CA3AF" strokeWidth="1.8" strokeLinecap="round">
+                  <path d="M4 2l4 3-4 3" />
+                </svg>
+              )}
             </button>
           ))}
         </div>
@@ -252,6 +300,7 @@ function DeliverableCard({
   userRole?: string;
 }) {
   const [downloading, setDownloading] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState<PptTheme>(deliverable.theme ?? "bcg");
 
   const getApiFormat = () => {
     if (deliverable.type === "presentation") return "pptx";
@@ -276,6 +325,7 @@ function DeliverableCard({
           companyName: agentName,
           format,
           userRole,
+          theme: deliverable.type === "presentation" ? selectedTheme : undefined,
         }),
       });
       if (!res.ok) throw new Error("下載失敗");
@@ -330,7 +380,7 @@ function DeliverableCard({
 
   return (
     <div className="mt-2 bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-      <div className="flex items-center gap-3 px-3 py-2.5 border-b border-gray-100">
+      <div className="flex items-center gap-3 px-3 py-2.5">
         <div className="flex-shrink-0">{typeIcons[deliverable.type]}</div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-gray-900 truncate">{deliverable.title}</p>
@@ -355,6 +405,23 @@ function DeliverableCard({
           </button>
         )}
       </div>
+      {/* PPT 主題選擇行 */}
+      {deliverable.type === "presentation" && deliverable.status === "ready" && (
+        <div className="flex items-center gap-1.5 px-3 pb-2.5 border-t border-gray-100 pt-2">
+          <span className="text-[10px] text-gray-400 mr-1">主題：</span>
+          {THEME_OPTIONS.map((th) => (
+            <button
+              key={th.id}
+              title={th.label}
+              onClick={() => setSelectedTheme(th.id)}
+              className={`w-5 h-5 rounded-full border-2 transition-transform active:scale-90 ${
+                selectedTheme === th.id ? "border-gray-800 scale-110" : "border-transparent"
+              }`}
+              style={{ backgroundColor: th.dot }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -524,7 +591,7 @@ export default function MobileChatDetailPage() {
     setActiveToolbar(null);
   };
 
-  const handleOutputFormat = (format: string, sourceContent = "") => {
+  const handleOutputFormat = (format: string, sourceContent = "", theme?: PptTheme) => {
     const labels: Record<string, string> = {
       "pdf-report": "PDF 報告",
       presentation: "簡報 PPT",
@@ -539,6 +606,7 @@ export default function MobileChatDetailPage() {
       title: `${getAgentName(conversationId)} 的分析報告`,
       status: "generating",
       sourceContent,
+      theme,
     };
     const delivMsg: Message = {
       id: Date.now().toString(),
@@ -660,7 +728,7 @@ export default function MobileChatDetailPage() {
                   <MessageToolbar
                     message={msg}
                     onSaveAsTask={() => handleSaveAsTask(msg)}
-                    onOutputFormat={(fmt, src) => handleOutputFormat(fmt, src)}
+                    onOutputFormat={(fmt, src, theme) => handleOutputFormat(fmt, src, theme)}
                     onClose={() => setActiveToolbar(null)}
                   />
                 )}

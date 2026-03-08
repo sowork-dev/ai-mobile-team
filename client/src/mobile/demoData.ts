@@ -31,11 +31,18 @@ export interface DemoTask {
   createdAt: Date;
 }
 
+export interface RecentConversation {
+  time: string;
+  role: "user" | "assistant";
+  message: string;
+}
+
 export interface DemoAssistantContext {
   welcomeMessage: string;
   quickActions: { label: string; prompt: string }[];
   completedToday: number;
   timeSavedHours: number;
+  recentConversations?: RecentConversation[];
 }
 
 export interface DemoData {
@@ -136,6 +143,28 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
       ],
       completedToday: 3,
       timeSavedHours: 18,
+      recentConversations: [
+        {
+          time: "5 分鐘前",
+          role: "assistant",
+          message: "Nike APAC 競品監測完成：Adidas 本週短影音投放量增加 38%，建議調整 Nike W43 策略，我已標記 2 個需要您確認的決策點。",
+        },
+        {
+          time: "28 分鐘前",
+          role: "user",
+          message: "幫我約 Nike 客戶 Annie、James、Leo 本週開會",
+        },
+        {
+          time: "29 分鐘前",
+          role: "assistant",
+          message: "正在透過 LINE 詢問三位的本週空檔，已收到 Annie 回覆週四 14:00 可以，等 James 和 Leo 確認後立即通知您。",
+        },
+        {
+          time: "1 小時前",
+          role: "user",
+          message: "P&G Q4 文案審批進度？",
+        },
+      ],
     },
   },
 
@@ -225,6 +254,28 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
       ],
       completedToday: 3,
       timeSavedHours: 26,
+      recentConversations: [
+        {
+          time: "12 分鐘前",
+          role: "assistant",
+          message: "台灣雙十一 45 則社群排程已全部完成，涵蓋 10/9 至 11/11，包含 IG Stories 與 Reels，請您確認後即可正式上線。",
+        },
+        {
+          time: "35 分鐘前",
+          role: "user",
+          message: "幫我約品牌長和行銷總監週五午餐",
+        },
+        {
+          time: "36 分鐘前",
+          role: "assistant",
+          message: "已透過 LINE 聯繫雙方，共同空檔為週五 12:30，並已在信義區預訂日式料理餐廳（inline.app），等您確認即可送出邀請。",
+        },
+        {
+          time: "2 小時前",
+          role: "user",
+          message: "Zara 在地化進度更新？",
+        },
+      ],
     },
   },
 
@@ -314,6 +365,28 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
       ],
       completedToday: 3,
       timeSavedHours: 22,
+      recentConversations: [
+        {
+          time: "8 分鐘前",
+          role: "assistant",
+          message: "零售客戶 Alpha 的競爭力分析 Pitch 第二稿已完成（30頁），我標記了第 12、18、24 頁需要您確認的 3 個策略方向，請審閱後告知。",
+        },
+        {
+          time: "40 分鐘前",
+          role: "user",
+          message: "幫我約零售客戶 Alpha CEO 和 CFO 下週做策略回顧",
+        },
+        {
+          time: "41 分鐘前",
+          role: "assistant",
+          message: "已發送會議邀請，CEO 確認週一 15:00 可行，CFO 週一下午有衝突，我已提議備選週三 10:00，等待回覆。",
+        },
+        {
+          time: "3 小時前",
+          role: "user",
+          message: "東南亞市場分析 PPT 下載",
+        },
+      ],
     },
   },
 
@@ -403,6 +476,28 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
       ],
       completedToday: 3,
       timeSavedHours: 34,
+      recentConversations: [
+        {
+          time: "15 分鐘前",
+          role: "assistant",
+          message: "Q3 LP 投資報告（28頁）已就緒，財務數據 Excel 也已按 LP 格式匯出，包含 Portfolio 各公司 P&L 摘要，請確認後可立即發送給 12 位 LP。",
+        },
+        {
+          time: "45 分鐘前",
+          role: "user",
+          message: "幫我約主要 LP 下週做 Q3 電話溝通",
+        },
+        {
+          time: "46 分鐘前",
+          role: "assistant",
+          message: "正在聯繫三位主要 LP，已確認 LP-A 週一 09:00 可行，LP-B 和 LP-C 等待回覆，會議連結已準備好，確認後立即發送。",
+        },
+        {
+          time: "2 小時前",
+          role: "user",
+          message: "C 公司品牌問題怎麼處理比較好？",
+        },
+      ],
     },
   },
 
@@ -493,6 +588,28 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
       ],
       completedToday: 4,
       timeSavedHours: 30,
+      recentConversations: [
+        {
+          time: "3 分鐘前",
+          role: "assistant",
+          message: "Azure 10月行銷內容包已完成：5個客戶案例、3個功能介紹、2個促銷訊息，已按格式整理好，可直接交給各渠道使用。",
+        },
+        {
+          time: "25 分鐘前",
+          role: "user",
+          message: "整理剛剛和 AWS 客戶的通話重點",
+        },
+        {
+          time: "26 分鐘前",
+          role: "assistant",
+          message: "通話摘要已完成：客戶對 Azure Copilot 感興趣但有成本疑慮，我已建立 3 個後續任務並分配給 Tyler，包含準備 ROI 計算器和客戶案例。",
+        },
+        {
+          time: "1 小時前",
+          role: "user",
+          message: "Ignite 台灣場邀請媒體進度？",
+        },
+      ],
     },
   },
 };

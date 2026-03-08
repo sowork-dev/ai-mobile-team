@@ -14,12 +14,112 @@ import {
 } from "docx";
 import ExcelJS from "exceljs";
 
-// ── 顏色常數（pptxgenjs 不帶 #）─────────────────────────────────
-const NAVY = "1B2B4B";
-const GOLD = "C9A84C";
-const WHITE = "FFFFFF";
-const DARK = "1C1C1C";
-const GRAY = "888888";
+// ── 主題系統 ─────────────────────────────────────────────────
+export type PptTheme = "bcg" | "minimal" | "tech" | "warm";
+
+interface ThemeColors {
+  coverBg: string;
+  coverAccent: string;   // 封面裝飾色（左側條 / 底線）
+  coverTitle: string;
+  coverSubtitle: string; // 公司名稱 + 日期
+  headerBg: string;      // 內容頁頂部橫條
+  headerAccent: string;  // 右側小矩形 / 分隔線
+  dividerLine: string;   // 金色分隔短線
+  bodyText: string;
+  footerText: string;
+}
+
+function getThemeColors(theme: PptTheme, customPrimary?: string): ThemeColors {
+  if (customPrimary) {
+    // 自定義品牌主色：coverBg 與 headerBg 使用主色，accent 使用淡化版
+    return {
+      coverBg: customPrimary,
+      coverAccent: "FFFFFF",
+      coverTitle: "FFFFFF",
+      coverSubtitle: "FFFFFFCC",
+      headerBg: customPrimary,
+      headerAccent: "FFFFFF",
+      dividerLine: "FFFFFF",
+      bodyText: "1C1C1C",
+      footerText: "888888",
+    };
+  }
+  switch (theme) {
+    case "minimal":
+      return {
+        coverBg: "FFFFFF",
+        coverAccent: "2563EB",
+        coverTitle: "111111",
+        coverSubtitle: "555555",
+        headerBg: "111111",
+        headerAccent: "2563EB",
+        dividerLine: "2563EB",
+        bodyText: "333333",
+        footerText: "999999",
+      };
+    case "tech":
+      return {
+        coverBg: "0F2744",
+        coverAccent: "00A3E0",
+        coverTitle: "FFFFFF",
+        coverSubtitle: "00A3E0",
+        headerBg: "0F2744",
+        headerAccent: "00A3E0",
+        dividerLine: "00A3E0",
+        bodyText: "1C2A3A",
+        footerText: "888888",
+      };
+    case "warm":
+      return {
+        coverBg: "FFF8F3",
+        coverAccent: "E07B39",
+        coverTitle: "5C3D1E",
+        coverSubtitle: "E07B39",
+        headerBg: "5C3D1E",
+        headerAccent: "E07B39",
+        dividerLine: "E07B39",
+        bodyText: "3D2A15",
+        footerText: "9E7A56",
+      };
+    case "bcg":
+    default:
+      return {
+        coverBg: "1B2B4B",
+        coverAccent: "C9A84C",
+        coverTitle: "FFFFFF",
+        coverSubtitle: "C9A84C",
+        headerBg: "1B2B4B",
+        headerAccent: "C9A84C",
+        dividerLine: "C9A84C",
+        bodyText: "1C1C1C",
+        footerText: "888888",
+      };
+  }
+}
+
+// ── 從 PPTX buffer 提取主色 ────────────────────────────────────
+import JSZip from "jszip";
+
+export async function extractPptxPrimaryColor(buffer: Buffer): Promise<string> {
+  try {
+    const zip = await JSZip.loadAsync(buffer);
+    const themeFile = zip.file("ppt/theme/theme1.xml");
+    if (!themeFile) return "1B2B4B";
+    const xml = await themeFile.async("string");
+    // 找第一個 dk1（深色1，通常是主色）附近的 srgbClr
+    const dk1Match = xml.match(/<a:dk1>[\s\S]*?<a:srgbClr val="([0-9A-Fa-f]{6})"/);
+    if (dk1Match) return dk1Match[1].toUpperCase();
+    // fallback: 找第一個 srgbClr
+    const anyMatch = xml.match(/<a:srgbClr val="([0-9A-Fa-f]{6})"/);
+    return anyMatch ? anyMatch[1].toUpperCase() : "1B2B4B";
+  } catch {
+    return "1B2B4B";
+  }
+}
+
+// ── 顏色常數（其他生成器用）──────────────────────────────────────
+const NAVY = "1B2B4B"; // 用於 DOCX 標題色
+const WHITE = "FFFFFF"; // 用於 PPTX 內容頁白底
 
 // ── Markdown 解析：轉成投影片資料 ────────────────────────────────
 interface SlideData {
@@ -120,15 +220,21 @@ function parseMdToSlides(
   return slides.slice(0, maxSlides);
 }
 
-// ── PPTX 生成（BCG/McKinsey 顧問風格）──────────────────────────
+// ── PPTX 生成（多主題支援）──────────────────────────────────────
 export async function generatePPTX(
   title: string,
   content: string,
   companyName: string,
-  options?: { maxSlides?: number }
+  options?: { maxSlides?: number; theme?: PptTheme; customPrimary?: string }
 ): Promise<Buffer> {
   const pptx = new pptxgen();
   pptx.layout = "LAYOUT_WIDE"; // 13.33" × 7.5"
+
+  const theme = options?.theme ?? "bcg";
+  const c = getThemeColors(theme, options?.customPrimary);
+
+  // minimal 主題封面用深色標題，其他頁背景白色
+  const contentPageBg = theme === "warm" ? "FFFDF9" : WHITE;
 
   const slides = parseMdToSlides(title, content, companyName, options?.maxSlides ?? 12);
 
@@ -137,142 +243,92 @@ export async function generatePPTX(
 
     if (data.isCover) {
       // ── 封面 ──────────────────────────────────────────────
-      slide.background = { color: NAVY };
+      slide.background = { color: c.coverBg };
 
-      // 左側金色裝飾條
+      // 左側裝飾條
       slide.addShape("rect" as any, {
-        x: 0,
-        y: 0,
-        w: 0.12,
-        h: "100%",
-        fill: { color: GOLD },
-        line: { color: GOLD, width: 0 },
+        x: 0, y: 0, w: 0.12, h: "100%",
+        fill: { color: c.coverAccent },
+        line: { color: c.coverAccent, width: 0 },
       });
 
-      // 底部金色細線
+      // 底部細線
       slide.addShape("rect" as any, {
-        x: 0,
-        y: 6.92,
-        w: "100%",
-        h: 0.08,
-        fill: { color: GOLD },
-        line: { color: GOLD, width: 0 },
+        x: 0, y: 6.92, w: "100%", h: 0.08,
+        fill: { color: c.coverAccent },
+        line: { color: c.coverAccent, width: 0 },
       });
 
       // 主標題
       slide.addText(data.title, {
-        x: 0.55,
-        y: 1.8,
-        w: 12,
-        h: 2.2,
-        fontSize: 36,
-        bold: true,
-        color: WHITE,
-        align: "left",
-        fontFace: "Arial",
-        valign: "middle",
-        wrap: true,
+        x: 0.55, y: 1.8, w: 12, h: 2.2,
+        fontSize: 36, bold: true,
+        color: c.coverTitle,
+        align: "left", fontFace: "Arial", valign: "middle", wrap: true,
       });
 
       // 公司名稱 + 日期
       slide.addText(`${data.bullets[0]}  ·  ${data.bullets[1]}`, {
-        x: 0.55,
-        y: 4.3,
-        w: 12,
-        h: 0.5,
-        fontSize: 14,
-        color: GOLD,
-        align: "left",
-        fontFace: "Arial",
+        x: 0.55, y: 4.3, w: 12, h: 0.5,
+        fontSize: 14, color: c.coverSubtitle,
+        align: "left", fontFace: "Arial",
       });
 
       // Confidential 標記
       slide.addText("CONFIDENTIAL", {
-        x: 0.55,
-        y: 7.15,
-        w: 5,
-        h: 0.25,
-        fontSize: 8,
-        color: GRAY,
-        align: "left",
-        fontFace: "Arial",
+        x: 0.55, y: 7.15, w: 5, h: 0.25,
+        fontSize: 8, color: c.footerText,
+        align: "left", fontFace: "Arial",
       });
     } else {
       // ── 內容頁 ────────────────────────────────────────────
-      slide.background = { color: WHITE };
+      slide.background = { color: contentPageBg };
 
-      // 頂部 navy 橫條
+      // 頂部橫條
       slide.addShape("rect" as any, {
-        x: 0,
-        y: 0,
-        w: "100%",
-        h: 0.85,
-        fill: { color: NAVY },
-        line: { color: NAVY, width: 0 },
+        x: 0, y: 0, w: "100%", h: 0.85,
+        fill: { color: c.headerBg },
+        line: { color: c.headerBg, width: 0 },
       });
 
-      // 右側金色矩形裝飾
+      // 右側小矩形裝飾
       slide.addShape("rect" as any, {
-        x: 12.53,
-        y: 0,
-        w: 0.8,
-        h: 0.85,
-        fill: { color: GOLD },
-        line: { color: GOLD, width: 0 },
+        x: 12.53, y: 0, w: 0.8, h: 0.85,
+        fill: { color: c.headerAccent },
+        line: { color: c.headerAccent, width: 0 },
       });
 
       // 頁面標題
       slide.addText(data.title, {
-        x: 0.4,
-        y: 0,
-        w: 11.8,
-        h: 0.85,
-        fontSize: 20,
-        bold: true,
+        x: 0.4, y: 0, w: 11.8, h: 0.85,
+        fontSize: 20, bold: true,
         color: WHITE,
-        align: "left",
-        fontFace: "Arial",
-        valign: "middle",
+        align: "left", fontFace: "Arial", valign: "middle",
       });
 
-      // 金色分隔短線
+      // 分隔短線
       slide.addShape("rect" as any, {
-        x: 0.4,
-        y: 0.9,
-        w: 1.8,
-        h: 0.04,
-        fill: { color: GOLD },
-        line: { color: GOLD, width: 0 },
+        x: 0.4, y: 0.9, w: 1.8, h: 0.04,
+        fill: { color: c.dividerLine },
+        line: { color: c.dividerLine, width: 0 },
       });
 
       // 要點內容
       if (data.bullets.length > 0) {
         const bulletText = data.bullets.map((b) => `• ${b}`).join("\n");
         slide.addText(bulletText, {
-          x: 0.5,
-          y: 1.1,
-          w: 12,
-          h: 5.9,
-          fontSize: 15,
-          color: DARK,
-          align: "left",
-          valign: "top",
-          fontFace: "Arial",
-          lineSpacingMultiple: 1.6,
-          wrap: true,
+          x: 0.5, y: 1.1, w: 12, h: 5.9,
+          fontSize: 15, color: c.bodyText,
+          align: "left", valign: "top", fontFace: "Arial",
+          lineSpacingMultiple: 1.6, wrap: true,
         });
       }
 
       // 頁尾
       slide.addText(`${companyName}  |  Confidential`, {
-        x: 0.4,
-        y: 7.2,
-        w: 10,
-        h: 0.25,
-        fontSize: 8,
-        color: GRAY,
-        align: "left",
-        fontFace: "Arial",
+        x: 0.4, y: 7.2, w: 10, h: 0.25,
+        fontSize: 8, color: c.footerText,
+        align: "left", fontFace: "Arial",
       });
     }
   }

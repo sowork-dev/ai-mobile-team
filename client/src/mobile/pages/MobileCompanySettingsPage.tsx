@@ -2,7 +2,7 @@
  * 企業設定頁面 — 標準表單式公司基本資料設定
  * 取代原本的品牌定位對話流程
  */
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import MobileHeader from "../components/MobileHeader";
@@ -139,6 +139,168 @@ function TwilioSettingsSection({ locale }: { locale: string }) {
           {locale === "zh"
             ? "設定儲存於本機，伺服器需另外設定環境變數才能使用"
             : "Settings are stored locally. Server requires TWILIO_* environment variables to activate"}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── 品牌模板設定 ────────────────────────────────────────────────
+
+function BrandTemplateSection({ locale }: { locale: string }) {
+  const [templateStatus, setTemplateStatus] = useState<{ exists: boolean; primaryColor?: string; uploadedAt?: string } | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 查詢現有模板狀態
+  useEffect(() => {
+    fetch("/api/template/status?userId=dev-user-001")
+      .then(r => r.json())
+      .then(setTemplateStatus)
+      .catch(() => setTemplateStatus({ exists: false }));
+  }, []);
+
+  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith(".pptx")) {
+      toast.error(locale === "zh" ? "請上傳 .pptx 格式的模板文件" : "Please upload a .pptx template file");
+      return;
+    }
+
+    setUploading(true);
+    toast.info(locale === "zh" ? "正在分析模板配色..." : "Analyzing template colors...");
+
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+
+      const res = await fetch("/api/template/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ base64, userId: "dev-user-001" }),
+      });
+
+      if (!res.ok) throw new Error("上傳失敗");
+      const data = await res.json();
+      setTemplateStatus({ exists: true, primaryColor: data.primaryColor, uploadedAt: new Date().toISOString() });
+      toast.success(locale === "zh" ? "品牌模板已套用！導出 PPT 時將使用您的配色。" : "Brand template applied! Your color scheme will be used for PPT exports.");
+    } catch (err: any) {
+      toast.error((locale === "zh" ? "上傳失敗：" : "Upload failed: ") + (err.message || ""));
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }, [locale]);
+
+  const handleRemove = async () => {
+    try {
+      await fetch("/api/template/status?userId=dev-user-001&action=remove");
+      setTemplateStatus({ exists: false });
+      toast.success(locale === "zh" ? "品牌模板已移除" : "Brand template removed");
+    } catch { /* ignore */ }
+  };
+
+  return (
+    <div className="bg-white mx-4 mt-4 rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="px-4 py-3 border-b border-gray-100">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 bg-purple-600 rounded-md flex items-center justify-center flex-shrink-0">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" />
+            </svg>
+          </div>
+          <h2 className="font-semibold text-gray-900">
+            {locale === "zh" ? "品牌模板設定" : "Brand Template"}
+          </h2>
+          {templateStatus?.exists && (
+            <span className="ml-auto text-xs text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+              <span
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: templateStatus.primaryColor ? `#${templateStatus.primaryColor}` : "#7C3AED" }}
+              />
+              {locale === "zh" ? "已套用品牌模板" : "Brand template applied"}
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-gray-500 mt-1">
+          {locale === "zh"
+            ? "上傳您的 .pptx 品牌模板，系統將自動提取主色並套用到所有 PPT 導出"
+            : "Upload your .pptx brand template. The primary color will be extracted and applied to all PPT exports."}
+        </p>
+      </div>
+
+      <div className="p-4 space-y-3">
+        {templateStatus?.exists ? (
+          <>
+            <div className="flex items-center gap-3 bg-purple-50 rounded-xl p-3">
+              <div
+                className="w-10 h-10 rounded-lg flex-shrink-0 border border-white shadow-sm"
+                style={{ backgroundColor: templateStatus.primaryColor ? `#${templateStatus.primaryColor}` : "#7C3AED" }}
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-purple-900">
+                  {locale === "zh" ? "品牌主色" : "Brand Primary Color"}
+                </p>
+                <p className="text-xs text-purple-600 font-mono">
+                  #{templateStatus.primaryColor ?? "——"}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex-1 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-xl disabled:opacity-50 active:scale-95 transition-transform"
+              >
+                {uploading
+                  ? (locale === "zh" ? "分析中..." : "Analyzing...")
+                  : (locale === "zh" ? "重新上傳模板" : "Re-upload template")}
+              </button>
+              <button
+                onClick={handleRemove}
+                className="px-4 py-2.5 border border-gray-200 text-gray-600 text-sm rounded-xl active:scale-95 transition-transform"
+              >
+                {locale === "zh" ? "移除" : "Remove"}
+              </button>
+            </div>
+          </>
+        ) : (
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="w-full py-3.5 border-2 border-dashed border-purple-300 rounded-xl text-sm text-purple-600 font-medium hover:border-purple-400 disabled:opacity-50 active:scale-95 transition-transform flex items-center justify-center gap-2"
+          >
+            {uploading ? (
+              <>
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                  <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
+                </svg>
+                {locale === "zh" ? "正在分析配色..." : "Analyzing colors..."}
+              </>
+            ) : (
+              <>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1M16 8l-4-4-4 4M12 4v12" />
+                </svg>
+                {locale === "zh" ? "上傳 .pptx 品牌模板" : "Upload .pptx brand template"}
+              </>
+            )}
+          </button>
+        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pptx"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+        <p className="text-xs text-gray-400 text-center">
+          {locale === "zh"
+            ? "支援 .pptx 格式，系統自動提取主色套用至所有匯出"
+            : "Supports .pptx format. Primary color is automatically extracted and applied to all exports."}
         </p>
       </div>
     </div>
@@ -813,6 +975,56 @@ export default function MobileCompanySettingsPage() {
 
         {/* Twilio 電話整合 */}
         <TwilioSettingsSection locale={locale} />
+
+        {/* 品牌模板設定 */}
+        <BrandTemplateSection locale={locale} />
+
+        {/* 資料安全與隱私保護 */}
+        <div className="bg-blue-50 mx-4 mt-4 rounded-2xl border border-blue-100 overflow-hidden">
+          <div className="px-4 py-3 border-b border-blue-100">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center flex-shrink-0">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+              </div>
+              <h2 className="font-semibold text-blue-900">
+                {locale === "zh" ? "資料安全與隱私保護" : "Data Security & Privacy"}
+              </h2>
+            </div>
+          </div>
+          <div className="p-4 space-y-2.5">
+            {[
+              locale === "zh"
+                ? "所有對話與文件儲存在您企業的專屬資料庫，不與其他用戶共享"
+                : "All conversations and documents are stored in your dedicated database, never shared with other users",
+              locale === "zh"
+                ? "AI 模型調用使用 API 金鑰方式，您的資料不用於模型訓練"
+                : "AI models are accessed via API keys — your data is never used for model training",
+              locale === "zh"
+                ? "支援企業自建私有部署（Private Cloud / On-Premise）"
+                : "Supports enterprise private deployment (Private Cloud / On-Premise)",
+              locale === "zh"
+                ? "符合 ISO 27001 規範（認證中）"
+                : "ISO 27001 compliant (certification in progress)",
+            ].map((text, i) => (
+              <div key={i} className="flex items-start gap-2.5">
+                <svg className="flex-shrink-0 mt-0.5" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <p className="text-sm text-blue-800">{text}</p>
+              </div>
+            ))}
+            <div className="mt-3 pt-3 border-t border-blue-200">
+              <p className="text-xs text-blue-600">
+                {locale === "zh"
+                  ? "如需企業合規報告，請聯繫 "
+                  : "For enterprise compliance reports, contact "}
+                <span className="font-medium">enterprise@sowork.ai</span>
+              </p>
+            </div>
+          </div>
+        </div>
 
         {/* 公司簡介 */}
         <div className="bg-white mx-4 mt-4 mb-6 rounded-2xl border border-gray-100 overflow-hidden">

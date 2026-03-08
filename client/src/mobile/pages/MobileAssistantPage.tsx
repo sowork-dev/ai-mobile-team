@@ -12,6 +12,9 @@ import MobileHeader from "../components/MobileHeader";
 import { trpc } from "@/lib/trpc";
 import { getDemoData } from "../demoData";
 import { useI18n } from "@/i18n";
+import { generatePositioningBookPPT, generatePositioningBookDOC } from "@/lib/positioningBookExporter";
+import { samplePositioningPlan } from "@/lib/samplePositioningPlan";
+import { generateXLS, generatePDF } from "@/lib/documentGenerator";
 
 // 推薦的 AI 員工
 interface AgentRecommendation {
@@ -41,7 +44,7 @@ interface Message {
 
 export default function MobileAssistantPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { locale, t } = useI18n();
+  const { locale, t, toggleLocale } = useI18n();
 
   const demoPersonaId = localStorage.getItem("demoPersonaId");
   const demoAssistant = demoPersonaId ? getDemoData(demoPersonaId) : null;
@@ -78,6 +81,107 @@ export default function MobileAssistantPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // 判斷是否為下載類型動作（demo 模式用）
+  const getDownloadType = (prompt: string): "ppt" | "excel" | "pdf" | "docx" | null => {
+    const p = prompt.toLowerCase();
+    if (p.includes("ppt") || p.includes("powerpoint") || p.includes("簡報")) return "ppt";
+    if (p.includes("excel") || p.includes("財務") || p.includes("表格")) return "excel";
+    if (p.includes("pdf")) return "pdf";
+    if (p.includes("word") || p.includes("doc")) return "docx";
+    return null;
+  };
+
+  const handleDemoDownload = async (prompt: string, label: string) => {
+    const downloadType = getDownloadType(prompt);
+    if (!downloadType || !demoPersonaId) return false;
+
+    const companyName = demoAssistant
+      ? label.replace(/下載|匯出|報告|PDF|PPT|Excel|Word/g, "").trim() || demoPersonaId
+      : demoPersonaId;
+
+    setIsLoading(true);
+
+    // 顯示 AI 正在生成的訊息
+    const generatingMsg: Message = {
+      id: Date.now().toString(),
+      role: "assistant",
+      content: locale === "zh"
+        ? `正在為您生成 ${downloadType.toUpperCase()} 文件，請稍候...`
+        : `Generating ${downloadType.toUpperCase()} file for you, please wait...`,
+      timestamp: new Date(),
+    };
+    setMessages(prev => [...prev, generatingMsg]);
+
+    try {
+      await new Promise(r => setTimeout(r, 1500)); // 模擬生成時間
+
+      if (downloadType === "ppt") {
+        await generatePositioningBookPPT({
+          brandName: companyName || "Demo",
+          plan: samplePositioningPlan,
+          planIndex: 0,
+          reportDate: new Date(),
+          author: "幕僚長 AI",
+        });
+      } else if (downloadType === "docx") {
+        await generatePositioningBookDOC({
+          brandName: companyName || "Demo",
+          plan: samplePositioningPlan,
+          planIndex: 0,
+          reportDate: new Date(),
+          author: "幕僚長 AI",
+        });
+      } else if (downloadType === "excel") {
+        await generateXLS({
+          title: `${companyName || "Demo"} 財務數據報表`,
+          content: "財務數據",
+          author: "幕僚長 AI",
+          date: new Date(),
+          tableData: {
+            headers: ["項目", "Q1", "Q2", "Q3", "Q4", "全年合計"],
+            rows: [
+              ["營業收入", "12.3M", "14.8M", "16.2M", "19.5M", "62.8M"],
+              ["毛利率", "42%", "45%", "44%", "48%", "45%"],
+              ["EBITDA", "3.2M", "4.1M", "4.6M", "5.8M", "17.7M"],
+              ["ROI", "18%", "22%", "24%", "29%", "23%"],
+              ["客戶數", "48", "56", "61", "72", "72"],
+              ["NPS", "67", "71", "74", "78", "78"],
+            ],
+          },
+        });
+      } else if (downloadType === "pdf") {
+        await generatePDF({
+          title: `${companyName || "Demo"} 分析報告`,
+          content: "本報告由 AI 幕僚長自動生成，包含市場分析、競品比較與策略建議。\n\n主要發現：\n1. 市場份額持續增長，同比提升 18%\n2. 競品在短影音領域加大投放，建議調整策略\n3. 三個優先行動方案已標記，請確認後執行",
+          author: "幕僚長 AI",
+          date: new Date(),
+        });
+      }
+
+      const doneMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: locale === "zh"
+          ? `✅ ${downloadType.toUpperCase()} 文件已生成並下載完成！如需修改版本或其他格式，請告訴我。`
+          : `✅ ${downloadType.toUpperCase()} file generated and downloaded! Let me know if you need a different version or format.`,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, doneMsg]);
+    } catch (err) {
+      console.error("Download error:", err);
+      const errMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: locale === "zh" ? "文件生成失敗，請稍後再試。" : "File generation failed, please try again.",
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errMsg]);
+    } finally {
+      setIsLoading(false);
+    }
+    return true;
+  };
 
   const handleSend = async (text?: string) => {
     const messageText = text || input.trim();
@@ -244,6 +348,13 @@ export default function MobileAssistantPage() {
           </div>
           <div className="flex items-center gap-3">
             <button
+              onClick={toggleLocale}
+              className="flex items-center justify-center w-8 h-8 bg-gray-100 rounded-full active:bg-gray-200 transition-colors text-base"
+              title={locale === "zh" ? "Switch to English" : "切換中文"}
+            >
+              🌐
+            </button>
+            <button
               onClick={() => window.location.href = "/app/company-settings"}
               className="flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 rounded-lg active:bg-blue-100 transition-colors"
             >
@@ -300,12 +411,54 @@ export default function MobileAssistantPage() {
             {quickActions.map((action) => (
               <button
                 key={action.label}
-                onClick={() => handleSend(action.prompt)}
+                onClick={async () => {
+                  if (demoPersonaId) {
+                    const handled = await handleDemoDownload(action.prompt, action.label);
+                    if (!handled) handleSend(action.prompt);
+                  } else {
+                    handleSend(action.prompt);
+                  }
+                }}
                 className="flex items-center gap-3 bg-[#F2F2F7] rounded-xl px-4 py-3.5 active:bg-[#E5E5EA] transition-colors"
               >
                 <div className="flex-shrink-0">{action.icon}</div>
                 <span className="text-sm font-medium text-[#1C1C1E]">{action.label}</span>
               </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 最近記錄區塊 */}
+      {messages.length <= 1 && demoAssistant?.assistantContext.recentConversations && (
+        <div className="flex-shrink-0 px-4 pb-4">
+          <p className="text-xs text-[#8E8E93] mb-3 tracking-wide">
+            {locale === "zh" ? "最近記錄" : "Recent Activity"}
+          </p>
+          <div className="space-y-2.5">
+            {demoAssistant.assistantContext.recentConversations.map((conv, idx) => (
+              <div key={idx} className={`flex gap-2.5 ${conv.role === "user" ? "justify-end" : "justify-start"}`}>
+                {conv.role === "assistant" && (
+                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#1C1C2E] flex items-center justify-center">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
+                      <circle cx="12" cy="8" r="3.5" />
+                      <path d="M5 20c0-3.5 3.5-5.5 7-5.5s7 2 7 5.5" />
+                    </svg>
+                  </div>
+                )}
+                <div className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 ${
+                  conv.role === "user"
+                    ? "bg-[#007AFF] rounded-br-sm"
+                    : "bg-[#F0F0F5] rounded-bl-sm"
+                }`}>
+                  <p className={`text-[14px] leading-snug ${conv.role === "user" ? "text-white" : "text-[#1C1C1E]"}`}>
+                    {conv.message}
+                  </p>
+                  <p className={`text-[10px] mt-1 ${conv.role === "user" ? "text-white/60" : "text-[#8E8E93]"}`}>
+                    {conv.time}
+                  </p>
+                </div>
+              </div>
             ))}
           </div>
         </div>
