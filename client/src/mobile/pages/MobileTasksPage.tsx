@@ -9,7 +9,7 @@ import { useI18n } from "@/i18n";
 import { taskTemplates, TaskTemplate, TaskStage, categoryLabels } from "../components/TaskTemplates";
 import { trpc } from "@/lib/trpc";
 
-type TaskStatus = "pending" | "in_progress" | "completed" | "review";
+type TaskStatus = "pending" | "in_progress" | "pending_approval" | "completed";
 
 interface Task {
   id: string;
@@ -30,7 +30,7 @@ interface Task {
 const STATUS_CONFIG: Record<TaskStatus, { label: string; labelEn: string; color: string; dot: string }> = {
   pending: { label: "待處理", labelEn: "Pending", color: "text-gray-500", dot: "bg-gray-400" },
   in_progress: { label: "進行中", labelEn: "In Progress", color: "text-gray-700", dot: "bg-gray-600" },
-  review: { label: "待審核", labelEn: "Review", color: "text-gray-600", dot: "bg-gray-500" },
+  pending_approval: { label: "待審批", labelEn: "Pending Approval", color: "text-amber-600", dot: "bg-amber-500" },
   completed: { label: "已完成", labelEn: "Completed", color: "text-gray-900", dot: "bg-gray-900" },
 };
 
@@ -65,22 +65,48 @@ export default function MobileTasksPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<TaskTemplate | null>(null);
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
   const [roleFilter, setRoleFilter] = useState<UserRole>("all");
-  
+  const [approvalComment, setApprovalComment] = useState("");
+  const [rejectingApprovalId, setRejectingApprovalId] = useState<string | null>(null);
+
   // 檢查是否使用演示資料
   const useDemoData = localStorage.getItem("useDemoData") === "true";
-  
+
   // 獲取演示任務
   const { data: demoTasks } = trpc.demo.tasks.useQuery(
     { filter },
     { enabled: useDemoData }
   );
-  
+
   // 獲取任務列表（從幕僚長 API）
   const { data: realTasks, isLoading: tasksLoading, refetch: refetchTasks } = trpc.chiefOfStaff.tasks.useQuery(
     { status: filter },
     { refetchInterval: 10000 } // 每 10 秒刷新一次
   );
-  
+
+  // 獲取待審批列表
+  const { data: pendingApprovalsData, refetch: refetchApprovals } = trpc.chiefOfStaff.pendingApprovals.useQuery(
+    undefined,
+    { refetchInterval: 10000 }
+  );
+
+  // 審批通過
+  const approveMutation = trpc.chiefOfStaff.approveTask.useMutation({
+    onSuccess: () => {
+      refetchTasks();
+      refetchApprovals();
+    },
+  });
+
+  // 審批駁回
+  const rejectMutation = trpc.chiefOfStaff.rejectTask.useMutation({
+    onSuccess: () => {
+      setRejectingApprovalId(null);
+      setApprovalComment("");
+      refetchTasks();
+      refetchApprovals();
+    },
+  });
+
   // 獲取選中模板的 AI 員工配對
   const { data: agentMapping } = trpc.task.getAgentMapping.useQuery(
     { taskType: selectedTemplate?.id || "" },
@@ -233,6 +259,73 @@ export default function MobileTasksPage() {
           </button>
         ))}
       </div>
+
+      {/* 待審批區塊 */}
+      {pendingApprovalsData && pendingApprovalsData.count > 0 && (
+        <div className="flex-shrink-0 px-4 pb-2">
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-3 bg-amber-100 border-b border-amber-200">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              <span className="text-sm font-semibold text-amber-800">
+                {locale === "zh" ? `待審批 (${pendingApprovalsData.count})` : `Pending Approval (${pendingApprovalsData.count})`}
+              </span>
+            </div>
+            <div className="divide-y divide-amber-100">
+              {pendingApprovalsData.approvals.map((approval: any) => (
+                <div key={approval.id} className="p-4">
+                  <p className="text-sm font-medium text-gray-900 mb-0.5">{approval.stageName}</p>
+                  {approval.aiSummary && (
+                    <p className="text-xs text-gray-600 mb-3 line-clamp-2">{approval.aiSummary}</p>
+                  )}
+                  {rejectingApprovalId === approval.id ? (
+                    <div className="space-y-2">
+                      <textarea
+                        value={approvalComment}
+                        onChange={(e) => setApprovalComment(e.target.value)}
+                        placeholder={locale === "zh" ? "請輸入駁回原因（選填）" : "Rejection reason (optional)"}
+                        className="w-full text-xs border border-gray-200 rounded-lg p-2 resize-none h-16 focus:outline-none focus:border-amber-400"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => rejectMutation.mutate({ approvalId: approval.id, comment: approvalComment || undefined })}
+                          disabled={rejectMutation.isPending}
+                          className="flex-1 py-2 bg-red-500 text-white text-xs font-semibold rounded-lg active:opacity-80"
+                        >
+                          {locale === "zh" ? "確認駁回" : "Confirm Reject"}
+                        </button>
+                        <button
+                          onClick={() => { setRejectingApprovalId(null); setApprovalComment(""); }}
+                          className="flex-1 py-2 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg"
+                        >
+                          {locale === "zh" ? "取消" : "Cancel"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => approveMutation.mutate({ approvalId: approval.id })}
+                        disabled={approveMutation.isPending}
+                        className="flex-1 py-2 bg-green-500 text-white text-xs font-semibold rounded-lg active:opacity-80"
+                      >
+                        {locale === "zh" ? "✓ 通過" : "✓ Approve"}
+                      </button>
+                      <button
+                        onClick={() => setRejectingApprovalId(approval.id)}
+                        className="flex-1 py-2 bg-red-100 text-red-600 text-xs font-semibold rounded-lg active:opacity-80"
+                      >
+                        {locale === "zh" ? "✗ 駁回" : "✗ Reject"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 任務列表 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">

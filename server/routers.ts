@@ -608,7 +608,7 @@ const chiefOfStaffRouter = router({
   updateTask: publicProcedure
     .input(z.object({
       taskId: z.string(),
-      status: z.enum(["pending", "in_progress", "review", "completed"]).optional(),
+      status: z.enum(["pending", "in_progress", "pending_approval", "completed"]).optional(),
       currentStage: z.number().optional(),
     }))
     .mutation(({ input }) => {

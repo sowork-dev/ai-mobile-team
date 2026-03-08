@@ -12,12 +12,13 @@ import { scanKnowledgeBase, isConnected } from "./onedrive.js";
 import { getKnowledgeContext as getDbKnowledgeContext } from "./knowledgeBase.js";
 
 // 意圖類型
-export type IntentType = 
+export type IntentType =
   | "build_team"      // 組建團隊
   | "assign_task"     // 派發任務
   | "check_progress"  // 查看進度
   | "check_todo"      // 今日待辦
   | "knowledge_query" // 查詢知識庫
+  | "handle_approval" // 處理審批任務
   | "general_chat"    // 一般對話
   | "unknown";
 
@@ -83,17 +84,19 @@ function getModelName(): string {
 
 /**
  * 獲取知識庫上下文（整合 DB + OneDrive）
+ * @param agentId - 指定 agent 的知識庫（不傳則搜尋全域）
  */
 async function getKnowledgeContext(
   userId: string = "dev-user-001",
-  userQuery = ""
+  userQuery = "",
+  agentId?: number
 ): Promise<string> {
   const parts: string[] = [];
 
-  // 1. 從資料庫查詢 agent_knowledge_base
+  // 1. 從資料庫查詢 agent_knowledge_base（支援 agentId 隔離）
   if (userQuery) {
     try {
-      const dbContext = await getDbKnowledgeContext(userQuery);
+      const dbContext = await getDbKnowledgeContext(userQuery, agentId);
       if (dbContext) parts.push(dbContext);
     } catch (error) {
       console.error("Failed to fetch DB knowledge:", error);
@@ -149,7 +152,7 @@ async function analyzeIntent(message: string): Promise<{
         role: "system",
         content: `你是一個意圖分析助手。分析用戶訊息並返回 JSON 格式：
 {
-  "intent": "build_team" | "assign_task" | "check_progress" | "check_todo" | "knowledge_query" | "general_chat",
+  "intent": "build_team" | "assign_task" | "check_progress" | "check_todo" | "knowledge_query" | "handle_approval" | "general_chat",
   "taskDescription": "任務描述（如果有）",
   "skills": ["需要的技能1", "技能2"]
 }
@@ -160,6 +163,7 @@ async function analyzeIntent(message: string): Promise<{
 - check_progress: 用戶想查看進度、追蹤狀態
 - check_todo: 用戶想看今日待辦、任務列表
 - knowledge_query: 用戶詢問公司資料、文件、政策、規定、SOP、產品資訊等
+- handle_approval: 用戶想審批任務、查看待審批項目、通過或駁回AI產出
 - general_chat: 一般對話、問答
 
 只返回 JSON，不要其他內容。`
@@ -404,6 +408,19 @@ export async function chat(
 
     // 2. 根據意圖處理
     switch (intent) {
+      case "handle_approval": {
+        const pendingList = getPendingApprovals("dev-user-001");
+        const count = pendingList.length;
+        response.message = count > 0
+          ? `目前有 ${count} 個任務等待您審批。請前往任務列表查看「待審批」項目，您可以針對每個 AI 產出進行通過或駁回操作，並留下修改意見。`
+          : "目前沒有待審批的任務。AI 完成任務階段後，會自動提交審批申請。";
+        response.suggestedActions = [
+          { label: "查看待審批任務", action: "view_pending_approvals" },
+          { label: "查看所有任務", action: "view_tasks", params: { status: "all" } },
+        ];
+        break;
+      }
+
       case "build_team":
       case "assign_task": {
         // 推薦 AI 員工
@@ -412,8 +429,9 @@ export async function chat(
           skills
         );
 
-        // 獲取相關品牌知識（幫助 AI 理解任務背景）
-        const knowledgeContext = await getKnowledgeContext("dev-user-001", userMessage);
+        // 獲取相關品牌知識（使用主責 agent 的獨立知識庫）
+        const primaryAgentId = recommendations[0]?.id;
+        const knowledgeContext = await getKnowledgeContext("dev-user-001", userMessage, primaryAgentId);
 
         response.recommendations = recommendations;
         response.message = await generateResponse(userMessage, intent, {
@@ -507,7 +525,7 @@ export interface Task {
   id: string;
   title: string;
   description: string;
-  status: "pending" | "in_progress" | "review" | "completed";
+  status: "pending" | "in_progress" | "pending_approval" | "completed";
   currentStage: number;
   totalStages: number;
   assignedAgents: {
@@ -579,7 +597,7 @@ export async function requestApproval(
   stage.requiresApproval = true;
   stage.approvalId = approvalId;
   task.pendingApproval = approval;
-  task.status = "review";
+  task.status = "pending_approval";
   task.updatedAt = new Date();
   tasks.set(taskId, task);
   
@@ -655,7 +673,7 @@ export async function handleApproval(
       message: `✅ 已通過「${stage.name}」階段的審批${comment ? `\n備註：${comment}` : ""}`,
     };
   } else {
-    // 駁回：階段保持，等待 AI 重做
+    // 駁回：階段退回，等待 AI 根據意見重做
     stage.status = "in_progress";
     task.status = "in_progress";
     task.updatedAt = new Date();
@@ -772,7 +790,7 @@ export function getTasks(filter?: {
   
   if (filter.status === "active") {
     return allTasks
-      .filter(t => t.status === "pending" || t.status === "in_progress" || t.status === "review")
+      .filter(t => t.status === "pending" || t.status === "in_progress" || t.status === "pending_approval")
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
   
@@ -881,9 +899,9 @@ export async function simulateTaskProgress(taskId: string): Promise<{
       }
     }
     
-    // 檢查是否完成
+    // 檢查是否完成（最後階段需審批）
     if (task.currentStage >= task.totalStages) {
-      task.status = "review";
+      task.status = "pending_approval";
     }
     
     task.updatedAt = new Date();

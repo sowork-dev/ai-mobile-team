@@ -67,6 +67,8 @@ export async function getAgentKnowledge(
 
 /**
  * 搜尋知識庫 - 支援全文搜尋
+ * 重要：agentId 隔離 — 若傳入 agentId，僅搜尋該 agent 的知識庫，確保不同 agent 互不干擾。
+ *       若不傳 agentId，則搜尋所有 agent（僅限管理用途）。
  */
 export async function searchKnowledge(
   keyword: string,
@@ -80,7 +82,7 @@ export async function searchKnowledge(
       AND (title LIKE ? OR content LIKE ? OR tags LIKE ?)
   `;
 
-  if (agentId) {
+  if (agentId !== undefined) {
     sql += ` AND agentId = ?`;
     params.push(agentId);
   }
@@ -89,6 +91,17 @@ export async function searchKnowledge(
 
   const rows = await query<any>(sql, params);
   return rows.map(parseRow);
+}
+
+/**
+ * 嚴格 agent 隔離搜尋 - 必須指定 agentId，不跨 agent 查詢
+ */
+export async function searchAgentKnowledge(
+  keyword: string,
+  agentId: number,
+  limit = 5
+): Promise<KnowledgeEntry[]> {
+  return searchKnowledge(keyword, agentId, limit);
 }
 
 /**
