@@ -235,10 +235,25 @@ export default function MobileAssistantPage() {
             </div>
             <span className="text-base font-medium text-[#1C1C1E]">幕僚長</span>
           </div>
-          {/* 狀態 - 低調的灰色 */}
-          <div className="flex items-center gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#34C759]" />
-            <span className="text-xs text-[#8E8E93]">在線</span>
+          {/* 右側按鈕組 */}
+          <div className="flex items-center gap-3">
+            {/* 知識庫按鈕 */}
+            <button 
+              onClick={() => window.location.href = "/app/company-settings"}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 rounded-lg active:bg-blue-100 transition-colors"
+              title="連接知識庫"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 1.5 17V4.5A2.5 2.5 0 0 1 4 2h8.5L17 6.5V17a2.5 2.5 0 0 1-2.5 2.5H4z" transform="scale(1.2) translate(-1,-1)" />
+                <path d="M12 2v5h5" transform="scale(1.2) translate(-1,-1)" />
+              </svg>
+              <span className="text-xs text-blue-600 font-medium">知識庫</span>
+            </button>
+            {/* 狀態 - 低調的灰色 */}
+            <div className="flex items-center gap-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#34C759]" />
+              <span className="text-xs text-[#8E8E93]">在線</span>
+            </div>
           </div>
         </div>
       </div>

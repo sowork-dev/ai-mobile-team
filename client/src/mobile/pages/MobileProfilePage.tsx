@@ -53,6 +53,20 @@ export default function MobileProfilePage() {
           color: "text-gray-700",
           bg: "bg-gray-50",
         },
+        {
+          icon: (
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 1.5 17V4.5A2.5 2.5 0 0 1 4 2h8.5L17 6.5V17a2.5 2.5 0 0 1-2.5 2.5H4z" transform="scale(0.9)" />
+              <path d="M12 2v5h5" transform="scale(0.9)" />
+              <path d="M5 10h8M5 13h6" transform="scale(0.9)" />
+            </svg>
+          ),
+          label: "知識庫",
+          desc: "連接 OneDrive 公司文件",
+          action: () => navigate("/company-settings"),
+          color: "text-blue-600",
+          bg: "bg-blue-50",
+        },
       ],
     },
     {
