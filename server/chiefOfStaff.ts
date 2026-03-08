@@ -11,18 +11,27 @@ import { query } from "./db.js";
 import { scanKnowledgeBase, isConnected } from "./onedrive.js";
 import { getKnowledgeContext as getDbKnowledgeContext } from "./knowledgeBase.js";
 import { pushNotification } from "./taskRouting.js";
-import { sendLineMessage, getLineContact } from "./lineIntegration.js";
+import { sendLineMessage, getLineContact, sendMeetingAvailabilityMessage } from "./lineIntegration.js";
+import {
+  createSchedulingSession,
+  setParticipantLineId,
+  markSessionWaiting,
+  generateNextWeekDates,
+} from "./schedulingSession.js";
 
 // 意圖類型
 export type IntentType =
-  | "build_team"        // 組建團隊
-  | "assign_task"       // 派發任務
-  | "check_progress"    // 查看進度
-  | "check_todo"        // 今日待辦
-  | "knowledge_query"   // 查詢知識庫
-  | "handle_approval"   // 處理審批任務
-  | "send_line_message" // 發送 LINE 訊息
-  | "general_chat"      // 一般對話
+  | "build_team"          // 組建團隊
+  | "assign_task"         // 派發任務
+  | "check_progress"      // 查看進度
+  | "check_todo"          // 今日待辦
+  | "knowledge_query"     // 查詢知識庫
+  | "handle_approval"     // 處理審批任務
+  | "send_line_message"   // 發送 LINE 訊息
+  | "create_call_summary" // 建立通話摘要
+  | "schedule_meeting"    // 排程會議（約開會）
+  | "book_restaurant"     // 訂餐廳（約吃飯）
+  | "general_chat"        // 一般對話
   | "unknown";
 
 // 知識庫上下文緩存
@@ -147,9 +156,12 @@ async function analyzeIntent(message: string): Promise<{
   skills?: string[];
   lineContactName?: string;
   lineMessage?: string;
+  callSummaryContent?: string;
+  schedulingParticipants?: string[];
+  schedulingTimeHint?: string;
 }> {
   const client = createClient();
-  
+
   const response = await client.chat.completions.create({
     model: getModelName(),
     messages: [
@@ -157,11 +169,14 @@ async function analyzeIntent(message: string): Promise<{
         role: "system",
         content: `你是一個意圖分析助手。分析用戶訊息並返回 JSON 格式：
 {
-  "intent": "build_team" | "assign_task" | "check_progress" | "check_todo" | "knowledge_query" | "handle_approval" | "send_line_message" | "general_chat",
+  "intent": "build_team" | "assign_task" | "check_progress" | "check_todo" | "knowledge_query" | "handle_approval" | "send_line_message" | "create_call_summary" | "schedule_meeting" | "book_restaurant" | "general_chat",
   "taskDescription": "任務描述（如果有）",
   "skills": ["需要的技能1", "技能2"],
   "lineContactName": "LINE 聯絡人姓名（如果意圖是 send_line_message）",
-  "lineMessage": "要發送的 LINE 訊息內容（如果意圖是 send_line_message）"
+  "lineMessage": "要發送的 LINE 訊息內容（如果意圖是 send_line_message）",
+  "callSummaryContent": "通話內容摘要（如果用戶提供了具體的通話內容，提取並放在這裡）",
+  "schedulingParticipants": ["參與者1", "參與者2"],
+  "schedulingTimeHint": "時間偏好（如：下週任一天、下週五）"
 }
 
 意圖說明：
@@ -172,6 +187,9 @@ async function analyzeIntent(message: string): Promise<{
 - knowledge_query: 用戶詢問公司資料、文件、政策、規定、SOP、產品資訊等
 - handle_approval: 用戶想審批任務、查看待審批項目、通過或駁回AI產出
 - send_line_message: 用戶想傳 LINE、發 LINE 訊息、LINE 通知某人、傳訊息給某人
+- create_call_summary: 用戶說剛打完電話、電話結束、幫我整理電話內容、或提供了通話摘要內容
+- schedule_meeting: 用戶想約會議、安排開會、schedule meeting、約個時間開會
+- book_restaurant: 用戶想訂餐廳、約吃飯、安排聚餐、book restaurant
 - general_chat: 一般對話、問答
 
 只返回 JSON，不要其他內容。`
@@ -191,6 +209,55 @@ async function analyzeIntent(message: string): Promise<{
     return JSON.parse(cleaned);
   } catch {
     return { intent: "general_chat" };
+  }
+}
+
+/**
+ * 提取通話摘要重點並建立後續任務
+ */
+async function extractCallSummary(content: string): Promise<{
+  contact?: string;
+  keyPoints: string[];
+  actionItems: string[];
+  formattedSummary: string;
+}> {
+  const client = createClient();
+
+  const response = await client.chat.completions.create({
+    model: getModelName(),
+    messages: [
+      {
+        role: "system",
+        content: `你是通話記錄分析專家。從通話摘要中提取關鍵信息，返回 JSON：
+{
+  "contact": "通話對象姓名或公司（如果有提到）",
+  "keyPoints": ["重點1", "重點2", "重點3"],
+  "actionItems": ["待辦1", "待辦2"],
+  "formattedSummary": "整理好的通話摘要（200字內，條列式，繁體中文）"
+}
+只返回 JSON。`
+      },
+      {
+        role: "user",
+        content: content,
+      }
+    ],
+    temperature: 0.5,
+    max_tokens: 600,
+  });
+
+  try {
+    const raw = response.choices[0]?.message?.content || "{}";
+    const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
+    const result = JSON.parse(cleaned);
+    return {
+      contact: result.contact,
+      keyPoints: result.keyPoints || [],
+      actionItems: result.actionItems || [],
+      formattedSummary: result.formattedSummary || content,
+    };
+  } catch {
+    return { keyPoints: [], actionItems: [], formattedSummary: content };
   }
 }
 
@@ -408,6 +475,18 @@ export async function chat(
   try {
     // 1. 分析意圖
     const intentResult = await analyzeIntent(userMessage);
+
+    // 若上一則 AI 訊息是在等通話摘要，把當前訊息視為通話內容
+    const lastAssistantMsg = conversationHistory?.[conversationHistory.length - 1];
+    if (
+      lastAssistantMsg?.role === "assistant" &&
+      lastAssistantMsg.content.includes("請說一下或貼上") &&
+      intentResult.intent !== "create_call_summary"
+    ) {
+      intentResult.intent = "create_call_summary";
+      intentResult.callSummaryContent = userMessage;
+    }
+
     const { intent, taskDescription, skills } = intentResult;
 
     let response: ChiefOfStaffResponse = {
@@ -448,6 +527,53 @@ export async function chat(
         } else {
           response.message = `❌ 發送 LINE 訊息失敗：${result.error}\n\n請確認 LINE Channel Access Token 已正確設定，且 ${contactName} 的 LINE User ID 正確。`;
         }
+        break;
+      }
+
+      case "create_call_summary": {
+        const callContent = intentResult.callSummaryContent;
+
+        if (!callContent) {
+          response.message = "請說一下或貼上這次通話的重點，例如：通話對象、討論內容、達成的共識或決定。";
+          break;
+        }
+
+        const extracted = await extractCallSummary(callContent);
+
+        // 若有待辦事項，自動建立任務
+        let taskCreatedMsg = "";
+        if (extracted.actionItems.length > 0) {
+          const taskId = `task_call_${Date.now()}`;
+          const callTask: Task = {
+            id: taskId,
+            title: `通話後續：${extracted.contact || "待跟進"}`,
+            description: extracted.actionItems.join("\n"),
+            status: "pending",
+            currentStage: 1,
+            totalStages: extracted.actionItems.length,
+            assignedAgents: [],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            createdBy: "dev-user-001",
+            stages: extracted.actionItems.map((item, i) => ({
+              name: item,
+              status: i === 0 ? ("in_progress" as const) : ("pending" as const),
+            })),
+          };
+          tasks.set(taskId, callTask);
+          taskCreatedMsg = `\n\n✅ 已自動建立 **${extracted.actionItems.length}** 個後續任務`;
+          response.taskCreated = {
+            id: taskId,
+            title: callTask.title,
+            assignedTo: [],
+          };
+        }
+
+        response.message = `📞 **通話摘要整理完成**\n\n${extracted.formattedSummary}${taskCreatedMsg}`;
+        response.suggestedActions = [
+          { label: "查看所有任務", action: "view_tasks", params: { status: "all" } },
+          { label: "再記錄一通電話", action: "new_call_summary" },
+        ];
         break;
       }
 
@@ -518,6 +644,76 @@ export async function chat(
         response.suggestedActions = [
           { label: "連接更多資料來源", action: "connect_onedrive" },
           { label: "搜尋知識庫", action: "search_knowledge" },
+        ];
+        break;
+      }
+
+      case "schedule_meeting":
+      case "book_restaurant": {
+        const sessionType = intent === "schedule_meeting" ? "meeting" : "dinner";
+        const typeLabel = sessionType === "meeting" ? "會議" : "聚餐";
+        const participants = intentResult.schedulingParticipants || [];
+
+        if (participants.length === 0) {
+          response.message = `好的，請告訴我要邀請哪些人參加${typeLabel}？（請列出姓名，例如：Eric、Lisa、Tom）`;
+          break;
+        }
+
+        // 確認哪些人有 LINE ID
+        const missing = participants.filter((name) => !getLineContact(name));
+        if (missing.length > 0) {
+          const missingList = missing.map((n) => `- **${n}**`).join("\n");
+          response.message = `好的，我來幫你安排${typeLabel}。以下參與者還沒有設定 LINE User ID：\n${missingList}\n\n請先在「聯絡人」設定中加入他們的 LINE ID，或告訴我他們的 LINE User ID。`;
+          response.suggestedActions = [
+            { label: "前往聯絡人設定", action: "navigate_contacts" },
+          ];
+          break;
+        }
+
+        // 建立排程 session 並發送時間選擇詢問
+        const dates = generateNextWeekDates();
+        const session = createSchedulingSession({
+          type: sessionType,
+          requester: "dev-user-001",
+          requesterName: "CJ Wang",
+          description: userMessage,
+          participantNames: participants,
+          proposedDates: dates.map((d) => d.value),
+        });
+
+        // 為每位參與者設定 LINE ID 並發送詢問
+        let sentCount = 0;
+        const sendErrors: string[] = [];
+        for (const name of participants) {
+          const contact = getLineContact(name);
+          if (contact) {
+            setParticipantLineId(session.id, name, contact.lineUserId);
+            const result = await sendMeetingAvailabilityMessage(
+              contact.lineUserId,
+              "CJ Wang",
+              session.id,
+              dates,
+              sessionType
+            );
+            if (result.success) sentCount++;
+            else sendErrors.push(`${name}：${result.error}`);
+          }
+        }
+
+        markSessionWaiting(session.id);
+
+        const participantList = participants.join("、");
+        if (sentCount > 0) {
+          response.message = `✅ 已傳 LINE 給 **${participantList}**，詢問下週可用時間。\n\n等大家回覆後，我會自動找出共同空檔並建議最佳時段。\n\n📋 排程 ID：\`${session.id}\``;
+          if (sendErrors.length > 0) {
+            response.message += `\n\n⚠️ 部分發送失敗：${sendErrors.join(", ")}`;
+          }
+        } else {
+          response.message = `❌ 發送 LINE 失敗，請確認 LINE Channel Access Token 已正確設定。\n\n${sendErrors.join("\n")}`;
+        }
+        response.suggestedActions = [
+          { label: "查看排程狀態", action: "view_scheduling", params: { sessionId: session.id } },
+          { label: "前往聯絡人設定", action: "navigate_contacts" },
         ];
         break;
       }

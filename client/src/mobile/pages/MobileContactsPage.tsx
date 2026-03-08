@@ -116,6 +116,135 @@ function AgentCard({ agent, onChat, onAdd, onCardClick }: { agent: any; onChat: 
   );
 }
 
+// ── 電話聯絡人區塊 ──────────────────────────────────────────────────────────
+
+function PhoneContactsSection({ locale }: { locale: string }) {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+
+  const { data: isEnabled } = trpc.phone.isEnabled.useQuery();
+  const { data: contacts = [], refetch } = trpc.phone.contacts.list.useQuery();
+  const saveContact = trpc.phone.contacts.save.useMutation({
+    onSuccess: () => { refetch(); setName(""); setPhone(""); },
+  });
+  const deleteContact = trpc.phone.contacts.delete.useMutation({
+    onSuccess: () => refetch(),
+  });
+  const initiateCall = trpc.phone.initiate.useMutation();
+
+  const handleCall = async (contact: { name: string; phone: string }) => {
+    if (isEnabled?.enabled) {
+      const result = await initiateCall.mutateAsync({ to: contact.phone });
+      if (!result.success) {
+        toast.error(result.error || (locale === "zh" ? "撥號失敗" : "Call failed"));
+      } else {
+        toast.success(locale === "zh" ? `正在撥打 ${contact.name}...` : `Calling ${contact.name}...`);
+      }
+    } else {
+      // 無 Twilio → 顯示電話號碼讓用戶自行撥打
+      window.open(`tel:${contact.phone}`, "_self");
+    }
+  };
+
+  return (
+    <div className="mt-3 bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-7 h-7 bg-gray-900 rounded-lg flex items-center justify-center flex-shrink-0">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.77a16 16 0 0 0 6 6l.86-.86a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16z" />
+          </svg>
+        </div>
+        <p className="text-sm font-semibold text-gray-900">
+          {locale === "zh" ? "電話聯絡人" : "Phone Contacts"}
+        </p>
+        {isEnabled?.enabled && (
+          <span className="ml-auto text-[10px] bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-medium">
+            Twilio
+          </span>
+        )}
+      </div>
+
+      <p className="text-xs text-gray-500 mb-3">
+        {locale === "zh"
+          ? "新增聯絡人電話，幕僚長可協助記錄通話摘要，點擊即可撥打"
+          : "Add phone contacts to log call summaries and dial with one tap"}
+      </p>
+
+      {/* 新增表單 */}
+      <div className="space-y-2 mb-3">
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder={locale === "zh" ? "聯絡人姓名" : "Contact name"}
+          className="w-full px-3 py-2.5 bg-gray-100 rounded-xl text-sm focus:outline-none"
+        />
+        <input
+          type="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder={locale === "zh" ? "電話號碼（例：+886912345678）" : "Phone number (e.g. +886912345678)"}
+          className="w-full px-3 py-2.5 bg-gray-100 rounded-xl text-sm focus:outline-none font-mono"
+        />
+        <button
+          onClick={() => {
+            if (!name.trim() || !phone.trim()) {
+              toast.error(locale === "zh" ? "請填寫姓名和電話" : "Please fill in name and phone");
+              return;
+            }
+            saveContact.mutate({ name: name.trim(), phone: phone.trim() });
+          }}
+          disabled={saveContact.isPending}
+          className="w-full py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold active:scale-95 transition-transform disabled:opacity-50"
+        >
+          {saveContact.isPending
+            ? (locale === "zh" ? "儲存中..." : "Saving...")
+            : (locale === "zh" ? "新增電話聯絡人" : "Add Phone Contact")}
+        </button>
+      </div>
+
+      {/* 聯絡人列表 */}
+      {contacts.length > 0 && (
+        <div className="space-y-2 pt-2 border-t border-gray-100">
+          <p className="text-xs text-gray-400 font-medium">
+            {locale === "zh" ? "已設定的聯絡人" : "Configured contacts"}
+          </p>
+          {contacts.map((contact) => (
+            <div key={contact.name} className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                <span className="text-[10px] font-bold text-gray-600">{contact.name[0]}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-800">{contact.name}</p>
+                <p className="text-[10px] text-gray-400 font-mono truncate">{contact.phone}</p>
+              </div>
+              {/* 撥打按鈕 */}
+              <button
+                onClick={() => handleCall(contact)}
+                disabled={initiateCall.isPending}
+                className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center active:bg-green-100"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.77a16 16 0 0 0 6 6l.86-.86a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16z" />
+                </svg>
+              </button>
+              {/* 刪除按鈕 */}
+              <button
+                onClick={() => deleteContact.mutate({ name: contact.name })}
+                className="p-1.5 rounded-lg active:bg-gray-100"
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#9CA3AF" strokeWidth="1.8" strokeLinecap="round">
+                  <path d="M2 4h10M5 4V2.5h4V4M5.5 6.5v4M8.5 6.5v4M3 4l.7 7.5h6.6L11 4" />
+                </svg>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function MobileContactsPage() {
   const [, navigate] = useLocation();
   const { locale, t } = useI18n();
@@ -390,6 +519,9 @@ export default function MobileContactsPage() {
               </button>
             </div>
           </div>
+
+          {/* 電話聯絡人 */}
+          <PhoneContactsSection locale={locale} />
 
           {/* LINE 聯絡人 */}
           <div className="mt-3 bg-white rounded-2xl border border-gray-100 shadow-sm p-4">

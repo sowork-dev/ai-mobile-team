@@ -62,6 +62,17 @@ import {
 import { executeAction, ActionType, ActionResult } from "./actionExecutor.js";
 import { generateProfessionalPPT, getManusTaskStatus, waitForTaskCompletion } from "./manus.js";
 import { DEMO_COMPANY, DEMO_DEPARTMENTS, DEMO_MEETINGS, DEMO_TASKS, DEMO_AGENTS, getAgentsByDepartment, getMeetingsByDepartment, getDemoTasks, getAllPersonas, getDemoPersona } from "./seedData.js";
+import {
+  createSchedulingSession,
+  getSchedulingSession,
+  getSchedulingSessions,
+  setParticipantLineId,
+  markSessionWaiting,
+  recordParticipantReply,
+  confirmSchedulingTime,
+  generateNextWeekDates,
+} from "./schedulingSession.js";
+import { sendMeetingAvailabilityMessage, sendSchedulingConfirmation } from "./lineIntegration.js";
 
 const t = initTRPC.create({
   transformer: superjson,
@@ -1226,6 +1237,178 @@ const lineRouter = router({
     }),
 });
 
+// Phone Integration Router
+import {
+  isTwilioEnabled,
+  initiateCall,
+  getAllPhoneContacts,
+  savePhoneContact,
+  deletePhoneContact,
+} from "./phoneIntegration.js";
+
+const phoneRouter = router({
+  // 是否已設定 Twilio
+  isEnabled: publicProcedure.query(() => ({ enabled: isTwilioEnabled })),
+
+  // 發起通話（需要 Twilio）
+  initiate: publicProcedure
+    .input(z.object({ to: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      return initiateCall(input.to);
+    }),
+
+  // 電話聯絡人管理
+  contacts: router({
+    list: publicProcedure.query(() => getAllPhoneContacts()),
+
+    save: publicProcedure
+      .input(z.object({
+        name: z.string().min(1),
+        phone: z.string().min(1),
+        note: z.string().optional(),
+      }))
+      .mutation(({ input }) => {
+        savePhoneContact({ name: input.name, phone: input.phone, note: input.note });
+        return { success: true };
+      }),
+
+    delete: publicProcedure
+      .input(z.object({ name: z.string().min(1) }))
+      .mutation(({ input }) => {
+        const deleted = deletePhoneContact(input.name);
+        return { success: deleted };
+      }),
+  }),
+});
+
+// Scheduling Router — LINE 排程協調（Sprint 5-C）
+const schedulingRouter = router({
+  // 建立排程工作階段並發送 LINE 詢問
+  create: publicProcedure
+    .input(z.object({
+      type: z.enum(["meeting", "dinner"]),
+      participantNames: z.array(z.string().min(1)),
+      description: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const dates = generateNextWeekDates();
+      const session = createSchedulingSession({
+        type: input.type,
+        requester: "dev-user-001",
+        requesterName: "CJ Wang",
+        description: input.description || `約${input.type === "meeting" ? "會議" : "聚餐"}`,
+        participantNames: input.participantNames,
+        proposedDates: dates.map((d) => d.value),
+      });
+
+      // 發送 LINE 時間選擇訊息給每位參與者
+      const results: { name: string; sent: boolean; error?: string }[] = [];
+      for (const name of input.participantNames) {
+        const contact = getLineContact(name);
+        if (!contact) {
+          results.push({ name, sent: false, error: "找不到 LINE 聯絡人" });
+          continue;
+        }
+        setParticipantLineId(session.id, name, contact.lineUserId);
+        const result = await sendMeetingAvailabilityMessage(
+          contact.lineUserId,
+          "CJ Wang",
+          session.id,
+          dates,
+          input.type
+        );
+        results.push({ name, sent: result.success, error: result.error });
+      }
+
+      markSessionWaiting(session.id);
+
+      return {
+        success: true,
+        session,
+        sentResults: results,
+        proposedDates: dates,
+      };
+    }),
+
+  // 獲取所有排程工作階段
+  list: publicProcedure
+    .input(z.object({ requester: z.string().optional() }).optional())
+    .query(({ input }) => {
+      return getSchedulingSessions(input?.requester || "dev-user-001");
+    }),
+
+  // 獲取單個排程工作階段
+  get: publicProcedure
+    .input(z.object({ sessionId: z.string() }))
+    .query(({ input }) => {
+      return getSchedulingSession(input.sessionId) ?? null;
+    }),
+
+  // 手動記錄參與者回覆（Demo 用）
+  recordReply: publicProcedure
+    .input(z.object({
+      sessionId: z.string(),
+      participantName: z.string(),
+      selectedDates: z.array(z.string()),
+    }))
+    .mutation(({ input }) => {
+      const result = recordParticipantReply(input.sessionId, input.participantName, input.selectedDates);
+      if (!result) {
+        return { success: false, message: "找不到排程工作階段或參與者" };
+      }
+      const { session, allReplied } = result;
+      return {
+        success: true,
+        allReplied,
+        commonDates: session.commonDates || [],
+        status: session.status,
+        message: allReplied
+          ? `所有人已回覆！共同可用時間：${(session.commonDates || []).join("、") || "無共同時間"}`
+          : `已記錄 ${input.participantName} 的回覆`,
+      };
+    }),
+
+  // 確認時間並通知所有人
+  confirm: publicProcedure
+    .input(z.object({
+      sessionId: z.string(),
+      confirmedTime: z.string(),
+      meetLink: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const session = confirmSchedulingTime(input.sessionId, input.confirmedTime, input.meetLink);
+      if (!session) {
+        return { success: false, message: "找不到排程工作階段" };
+      }
+
+      // 通知所有有 LINE ID 的參與者
+      const notifyResults: { name: string; sent: boolean }[] = [];
+      for (const p of session.participants) {
+        if (p.lineUserId) {
+          const result = await sendSchedulingConfirmation(
+            p.lineUserId,
+            input.confirmedTime,
+            session.type,
+            input.meetLink
+          );
+          notifyResults.push({ name: p.name, sent: result.success });
+        }
+      }
+
+      return {
+        success: true,
+        session,
+        notifyResults,
+        message: `時間已確認：${input.confirmedTime}`,
+      };
+    }),
+
+  // 獲取下週日期選項
+  nextWeekDates: publicProcedure.query(() => {
+    return generateNextWeekDates();
+  }),
+});
+
 // Main App Router
 export const appRouter = router({
   auth: authRouter,
@@ -1241,6 +1424,8 @@ export const appRouter = router({
   demo: demoRouter,
   knowledgeBase: knowledgeBaseRouter,
   line: lineRouter,
+  phone: phoneRouter,
+  scheduling: schedulingRouter,
 
   // Health check
   health: publicProcedure.query(() => ({

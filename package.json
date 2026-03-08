@@ -66,6 +66,7 @@
     "pdf-parse": "^2.4.5",
     "pdfkit": "^0.17.2",
     "pptxgenjs": "^4.0.1",
+    "puppeteer": "^24.38.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.56.4",

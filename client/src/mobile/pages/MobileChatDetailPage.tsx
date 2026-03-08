@@ -22,7 +22,7 @@ interface Message {
 }
 
 interface DeliverableData {
-  type: "presentation" | "pdf" | "markdown" | "excel";
+  type: "presentation" | "pdf-report" | "pdf" | "markdown" | "excel";
   title: string;
   url?: string;
   status: "generating" | "ready";
@@ -31,6 +31,17 @@ interface DeliverableData {
 
 // ── 輸出格式選單（聊天版）────────────────────────────────────
 const OUTPUT_FORMATS = [
+  {
+    id: "pdf-report",
+    label: "PDF 報告",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M10 2H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V6z" />
+        <path d="M10 2v4h4" />
+        <path d="M6 9h3M6 12h6" />
+      </svg>
+    ),
+  },
   {
     id: "presentation",
     label: "簡報 PPT",
@@ -245,12 +256,15 @@ function DeliverableCard({
   const getApiFormat = () => {
     if (deliverable.type === "presentation") return "pptx";
     if (deliverable.type === "excel") return "xlsx";
+    if (deliverable.type === "pdf-report") return "pdf";
     return "docx";
   };
 
+  const getFileExt = (fmt: string) => fmt;
+
   const handleDownload = async () => {
     const format = getApiFormat();
-    const ext = format;
+    const ext = getFileExt(format);
     setDownloading(true);
     try {
       const res = await fetch("/api/export/pptx", {
@@ -285,6 +299,11 @@ function DeliverableCard({
         <rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" />
       </svg>
     ),
+    "pdf-report": (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9553F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M8 13h4M8 17h8" />
+      </svg>
+    ),
     pdf: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
@@ -303,6 +322,7 @@ function DeliverableCard({
   };
   const typeLabels: Record<string, string> = {
     presentation: "簡報 PPT",
+    "pdf-report": "PDF 報告",
     pdf: "Word 報告",
     excel: "Excel 表格",
     markdown: "Markdown 檔案",
@@ -506,6 +526,7 @@ export default function MobileChatDetailPage() {
 
   const handleOutputFormat = (format: string, sourceContent = "") => {
     const labels: Record<string, string> = {
+      "pdf-report": "PDF 報告",
       presentation: "簡報 PPT",
       pdf: "Word 報告",
       excel: "Excel 表格",

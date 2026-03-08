@@ -1,7 +1,8 @@
 /**
  * 文件導出生成器
- * 生成真實可下載的 PPTX 和 DOCX 文件（顧問風格）
+ * 生成真實可下載的 PPTX、DOCX、XLSX、PDF 文件（顧問風格）
  */
+import puppeteer from "puppeteer";
 import pptxgen from "pptxgenjs";
 import {
   Document,
@@ -583,4 +584,281 @@ export async function generateXLSX(
 
   const arrayBuffer = await workbook.xlsx.writeBuffer();
   return Buffer.from(arrayBuffer);
+}
+
+// ── PDF 生成（Puppeteer HTML→PDF，BCG 顧問風格）──────────────────
+
+/** 將 Markdown 內容轉成結構化 HTML 頁面段落 */
+function mdToHtmlSections(content: string): string {
+  const lines = content.split("\n");
+  let html = "";
+  let inList = false;
+
+  const closeList = () => {
+    if (inList) { html += "</ul>\n"; inList = false; }
+  };
+
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+
+    if (!line.trim()) {
+      closeList();
+      continue;
+    }
+
+    if (line.startsWith("# ")) {
+      closeList();
+      // H1 → 跳過（已用作封面標題）
+    } else if (line.startsWith("## ")) {
+      closeList();
+      html += `<h2>${escHtml(line.slice(3))}</h2>\n`;
+    } else if (line.startsWith("### ")) {
+      closeList();
+      html += `<h3>${escHtml(line.slice(4))}</h3>\n`;
+    } else if (/^[-*]\s+/.test(line)) {
+      if (!inList) { html += "<ul>\n"; inList = true; }
+      html += `<li>${inlineMd(line.replace(/^[-*]\s+/, ""))}</li>\n`;
+    } else if (/^\d+\.\s+/.test(line)) {
+      if (!inList) { html += "<ul>\n"; inList = true; }
+      html += `<li>${inlineMd(line.replace(/^\d+\.\s+/, ""))}</li>\n`;
+    } else {
+      closeList();
+      html += `<p>${inlineMd(line)}</p>\n`;
+    }
+  }
+  closeList();
+  return html;
+}
+
+function escHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function inlineMd(s: string): string {
+  return escHtml(s)
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>");
+}
+
+function buildPdfHtml(title: string, content: string, companyName: string): string {
+  const date = new Date().toLocaleDateString("zh-TW", {
+    year: "numeric", month: "long", day: "numeric",
+  });
+  const bodyHtml = mdToHtmlSections(content);
+
+  return `<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  @page { size: A4; margin: 0; }
+
+  body {
+    font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", "Heiti TC", Arial, sans-serif;
+    font-size: 11pt;
+    color: #1C1C1C;
+    background: #fff;
+  }
+
+  /* ── 封面 ── */
+  .cover {
+    width: 210mm;
+    height: 297mm;
+    background: #1B2B4B;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 48pt;
+    page-break-after: always;
+  }
+  .cover-accent {
+    position: absolute;
+    left: 0; top: 0;
+    width: 8pt; height: 100%;
+    background: #C9A84C;
+  }
+  .cover-bottom-line {
+    position: absolute;
+    left: 0; bottom: 24pt;
+    width: 100%; height: 3pt;
+    background: #C9A84C;
+  }
+  .cover-title {
+    font-size: 28pt;
+    font-weight: 700;
+    color: #FFFFFF;
+    line-height: 1.3;
+    margin-bottom: 24pt;
+    max-width: 480pt;
+  }
+  .cover-subtitle {
+    font-size: 12pt;
+    color: #C9A84C;
+    letter-spacing: 0.05em;
+  }
+  .cover-confidential {
+    position: absolute;
+    left: 48pt; bottom: 32pt;
+    font-size: 7pt;
+    color: #888888;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* ── 正文頁 ── */
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 0 0 40pt 0;
+    page-break-after: always;
+    position: relative;
+  }
+
+  /* 頁首 */
+  .page-header {
+    background: #1B2B4B;
+    padding: 14pt 48pt 14pt 48pt;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24pt;
+  }
+  .page-header-title {
+    font-size: 10pt;
+    color: #FFFFFF;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+  }
+  .page-header-accent {
+    width: 20pt; height: 100%;
+    min-height: 40pt;
+    background: #C9A84C;
+    margin: -14pt -0pt -14pt 12pt;
+    flex-shrink: 0;
+  }
+
+  /* 正文內容 */
+  .page-body {
+    padding: 0 48pt;
+  }
+
+  h2 {
+    font-size: 16pt;
+    font-weight: 700;
+    color: #1B2B4B;
+    margin-top: 22pt;
+    margin-bottom: 8pt;
+    padding-bottom: 6pt;
+    border-bottom: 2pt solid #C9A84C;
+  }
+  h3 {
+    font-size: 12pt;
+    font-weight: 600;
+    color: #1B2B4B;
+    margin-top: 14pt;
+    margin-bottom: 5pt;
+  }
+  p {
+    font-size: 11pt;
+    line-height: 1.75;
+    color: #333;
+    margin-bottom: 8pt;
+  }
+  ul {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 10pt;
+  }
+  ul li {
+    font-size: 11pt;
+    line-height: 1.75;
+    color: #333;
+    padding-left: 18pt;
+    position: relative;
+    margin-bottom: 4pt;
+  }
+  ul li::before {
+    content: "▸";
+    position: absolute;
+    left: 0;
+    color: #C9A84C;
+    font-size: 10pt;
+  }
+  strong { color: #1B2B4B; font-weight: 700; }
+  em { font-style: italic; color: #555; }
+
+  /* 頁尾 */
+  .page-footer {
+    position: absolute;
+    bottom: 16pt;
+    left: 48pt; right: 48pt;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 0.5pt solid #E5E7EB;
+    padding-top: 6pt;
+  }
+  .page-footer-text {
+    font-size: 7pt;
+    color: #999;
+    letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+
+<!-- 封面 -->
+<div class="cover">
+  <div class="cover-accent"></div>
+  <div class="cover-title">${escHtml(title)}</div>
+  <div class="cover-subtitle">${escHtml(companyName)}　·　${escHtml(date)}</div>
+  <div class="cover-confidential">CONFIDENTIAL</div>
+  <div class="cover-bottom-line"></div>
+</div>
+
+<!-- 正文 -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-header-title">${escHtml(companyName)}</span>
+    <div class="page-header-accent"></div>
+  </div>
+  <div class="page-body">
+    ${bodyHtml}
+  </div>
+  <div class="page-footer">
+    <span class="page-footer-text">${escHtml(companyName)}  |  Confidential</span>
+    <span class="page-footer-text">${escHtml(date)}</span>
+  </div>
+</div>
+
+</body>
+</html>`;
+}
+
+export async function generatePDF(
+  title: string,
+  content: string,
+  companyName: string
+): Promise<Buffer> {
+  const browser = await puppeteer.launch({
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+    headless: true,
+  });
+
+  try {
+    const page = await browser.newPage();
+    const html = buildPdfHtml(title, content, companyName);
+    await page.setContent(html, { waitUntil: "networkidle0" });
+    const pdf = await page.pdf({
+      format: "A4",
+      printBackground: true,
+      margin: { top: "0", bottom: "0", left: "0", right: "0" },
+    });
+    return Buffer.from(pdf);
+  } finally {
+    await browser.close();
+  }
 }

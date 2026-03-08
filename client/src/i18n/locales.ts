@@ -88,8 +88,8 @@ export const locales = {
       quickAction2Prompt: "我要派發一個任務",
       quickAction3: "今日待辦",
       quickAction3Prompt: "查看我今天的待辦事項",
-      quickAction4: "查看進度",
-      quickAction4Prompt: "查看目前任務的進度",
+      quickAction4: "記錄通話",
+      quickAction4Prompt: "我剛打完電話，幫我整理通話重點",
     },
 
     // Tasks Page
@@ -302,8 +302,8 @@ export const locales = {
       quickAction2Prompt: "I want to assign a task",
       quickAction3: "Today's Todos",
       quickAction3Prompt: "Show me my todos for today",
-      quickAction4: "View Progress",
-      quickAction4Prompt: "Check the progress of current tasks",
+      quickAction4: "Log Call",
+      quickAction4Prompt: "I just finished a call, help me summarize the key points",
     },
 
     // Tasks Page

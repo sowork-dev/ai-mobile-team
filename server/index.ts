@@ -9,9 +9,10 @@ import { fileURLToPath } from "url";
 import * as trpcExpress from "@trpc/server/adapters/express";
 import { appRouter } from "./routers.js";
 import * as onedrive from "./onedrive.js";
-import { generatePPTX, generateDOCX, generateXLSX } from "./exportGenerators.js";
+import { generatePPTX, generateDOCX, generateXLSX, generatePDF } from "./exportGenerators.js";
 import { getFormatForRole } from "./formatMapping.js";
-import { validateWebhookSignature, parseWebhookEvents } from "./lineIntegration.js";
+import { validateWebhookSignature, parseWebhookEvents, parseSchedulingPostback } from "./lineIntegration.js";
+import { recordParticipantReplyByLineId, findSessionByLineUserId } from "./schedulingSession.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -50,6 +51,34 @@ app.post("/webhook/line", express.raw({ type: "application/json" }), (req, res) 
       const text = event.message.text;
       console.log(`📩 LINE message from ${userId}: ${text}`);
       // TODO: 將訊息轉入幕僚長聊天記錄
+    } else if (event.type === "postback") {
+      // 處理排程時間選擇 postback
+      const userId = event.source?.userId;
+      const data = event.postback?.data;
+      if (userId && data) {
+        const parsed = parseSchedulingPostback(data);
+        if (parsed) {
+          console.log(`📅 Scheduling postback from ${userId}: session=${parsed.sessionId} date=${parsed.date}`);
+          // 累積選擇（用戶可能多次點選不同日期）
+          const result = recordParticipantReplyByLineId(parsed.sessionId, userId, [parsed.date]);
+          if (result) {
+            if (result.allReplied) {
+              const common = result.session.commonDates || [];
+              console.log(`✅ All replied for session ${parsed.sessionId}. Common dates: ${common.join(", ")}`);
+            }
+          } else {
+            // 嘗試透過 session 找到參與者（多次點選累積日期）
+            const session = findSessionByLineUserId(userId);
+            if (session) {
+              const participant = session.participants.find((p) => p.lineUserId === userId);
+              if (participant) {
+                const updatedDates = Array.from(new Set([...participant.availableDates, parsed.date]));
+                recordParticipantReplyByLineId(parsed.sessionId, userId, updatedDates);
+              }
+            }
+          }
+        }
+      }
     } else if (event.type === "follow") {
       const userId = event.source?.userId;
       console.log(`✅ LINE follow event from ${userId}`);
@@ -121,7 +150,13 @@ app.post("/api/export/pptx", async (req, res) => {
     const formatConfig = getFormatForRole(userRole);
     const maxSlides = formatConfig.pptSlides ?? 11;
 
-    if (format === "docx") {
+    if (format === "pdf") {
+      const buffer = await generatePDF(title, content, companyName);
+      const filename = encodeURIComponent(`${title}.pdf`);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${filename}`);
+      res.send(buffer);
+    } else if (format === "docx") {
       const buffer = await generateDOCX(title, content, companyName);
       const filename = encodeURIComponent(`${title}.docx`);
       res.setHeader(

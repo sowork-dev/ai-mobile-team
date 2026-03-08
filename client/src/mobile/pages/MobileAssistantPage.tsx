@@ -176,6 +176,8 @@ export default function MobileAssistantPage() {
       window.location.href = `/app/tasks/${action.params.taskId}`;
     } else if (action.action === "change_team") {
       handleSend(locale === "zh" ? "請推薦其他人選" : "Please recommend other candidates");
+    } else if (action.action === "new_call_summary") {
+      handleSend(locale === "zh" ? "我剛打完電話，幫我整理通話重點" : "I just finished a call, help me summarize the key points");
     } else if (action.action === "continue") {
       // 不做任何事，讓用戶繼續輸入
     } else {
@@ -221,7 +223,7 @@ export default function MobileAssistantPage() {
         <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /><path d="M9 16l2 2 4-4" />
       </svg>,
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3C3C43" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" key="3">
-        <path d="M18 20V10M12 20V4M6 20v-6" />
+        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.77a16 16 0 0 0 6 6l.86-.86a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16z" />
       </svg>,
     ][i] ?? defaultIcon,
   }));

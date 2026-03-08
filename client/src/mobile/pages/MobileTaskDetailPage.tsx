@@ -8,9 +8,10 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { useI18n } from "@/i18n";
 
-type ExportFormat = "pptx" | "docx" | "xlsx";
+type ExportFormat = "pptx" | "docx" | "xlsx" | "pdf";
 
 const FORMAT_OPTIONS: { id: ExportFormat; label: string }[] = [
+  { id: "pdf", label: "PDF 報告 (.pdf)" },
   { id: "pptx", label: "簡報 PPT" },
   { id: "docx", label: "Word 報告" },
   { id: "xlsx", label: "Excel 表格" },
@@ -32,7 +33,8 @@ async function downloadFile(
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${title}.${format}`;
+  const ext = format === "pdf" ? "pdf" : format;
+  a.download = `${title}.${ext}`;
   a.click();
   URL.revokeObjectURL(url);
 }

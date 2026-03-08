@@ -36,6 +36,115 @@ const COMPANY_SIZE_OPTIONS = [
 ];
 
 
+// ── Twilio 設定區塊 ─────────────────────────────────────────────────────────
+
+function TwilioSettingsSection({ locale }: { locale: string }) {
+  const STORAGE_KEY = "twilioSettings";
+  const [accountSid, setAccountSid] = useState("");
+  const [authToken, setAuthToken] = useState("");
+  const [fromNumber, setFromNumber] = useState("");
+  const [saved, setSaved] = useState(false);
+
+  // 載入已存的設定
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setAccountSid(parsed.accountSid || "");
+        setAuthToken(parsed.authToken || "");
+        setFromNumber(parsed.fromNumber || "");
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  const handleSave = () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ accountSid, authToken, fromNumber }));
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+    toast.success(locale === "zh" ? "Twilio 設定已儲存" : "Twilio settings saved");
+  };
+
+  const isConfigured = accountSid.trim() && authToken.trim() && fromNumber.trim();
+
+  return (
+    <div className="bg-white mx-4 mt-4 rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="px-4 py-3 border-b border-gray-100">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 bg-[#F22F46] rounded-md flex items-center justify-center flex-shrink-0">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.77a16 16 0 0 0 6 6l.86-.86a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16z" />
+            </svg>
+          </div>
+          <h2 className="font-semibold text-gray-900">
+            {locale === "zh" ? "Twilio 電話整合" : "Twilio Phone Integration"}
+          </h2>
+          {isConfigured && (
+            <span className="ml-auto text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full font-medium">
+              {locale === "zh" ? "已設定" : "Configured"}
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-gray-500 mt-1">
+          {locale === "zh"
+            ? "設定後可從聯絡人頁面直接撥打電話（需要 Twilio 帳號）"
+            : "Configure to dial contacts directly from the app (requires Twilio account)"}
+        </p>
+      </div>
+
+      <div className="p-4 space-y-3">
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Account SID</label>
+          <input
+            type="text"
+            value={accountSid}
+            onChange={(e) => setAccountSid(e.target.value)}
+            placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 font-mono"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Auth Token</label>
+          <input
+            type="password"
+            value={authToken}
+            onChange={(e) => setAuthToken(e.target.value)}
+            placeholder="•••••••••••••••••••••••••••••••"
+            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 font-mono"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            {locale === "zh" ? "發話號碼 (From Number)" : "From Number"}
+          </label>
+          <input
+            type="tel"
+            value={fromNumber}
+            onChange={(e) => setFromNumber(e.target.value)}
+            placeholder="+1234567890"
+            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 font-mono"
+          />
+        </div>
+        <button
+          onClick={handleSave}
+          className={`w-full py-2.5 rounded-xl text-sm font-semibold active:scale-95 transition-transform ${
+            saved ? "bg-green-600 text-white" : "bg-gray-900 text-white"
+          }`}
+        >
+          {saved
+            ? (locale === "zh" ? "✓ 已儲存" : "✓ Saved")
+            : (locale === "zh" ? "儲存 Twilio 設定" : "Save Twilio Settings")}
+        </button>
+        <p className="text-xs text-gray-400 text-center">
+          {locale === "zh"
+            ? "設定儲存於本機，伺服器需另外設定環境變數才能使用"
+            : "Settings are stored locally. Server requires TWILIO_* environment variables to activate"}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function MobileCompanySettingsPage() {
   const [, navigate] = useLocation();
   const { locale, t } = useI18n();
@@ -701,6 +810,9 @@ export default function MobileCompanySettingsPage() {
             )}
           </div>
         </div>
+
+        {/* Twilio 電話整合 */}
+        <TwilioSettingsSection locale={locale} />
 
         {/* 公司簡介 */}
         <div className="bg-white mx-4 mt-4 mb-6 rounded-2xl border border-gray-100 overflow-hidden">
