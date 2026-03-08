@@ -4,6 +4,9 @@
  */
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { generatePositioningBookDOC, generatePositioningBookPPT } from "@/lib/positioningBookExporter";
+import { getSampleBrandData } from "@/lib/samplePositioningPlan";
+import { toast } from "sonner";
 
 export default function MobileDemoPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -12,8 +15,33 @@ export default function MobileDemoPage() {
 
   const selectedPersona = personas?.find(p => p.id === selectedId);
 
+  const [isExporting, setIsExporting] = useState(false);
+
   const handleSelectPersona = (personaId: string) => {
     setSelectedId(personaId);
+  };
+
+  const handleDownloadOutput = async (outputType: string, personaId: string) => {
+    if (outputType !== "doc" && outputType !== "ppt") return;
+    setIsExporting(true);
+    const toastId = toast.loading(
+      outputType === "doc" ? "正在生成定位書 Word 文件..." : "正在生成定位書 PPT 簡報..."
+    );
+    try {
+      const { brandName, plan } = getSampleBrandData(personaId);
+      if (outputType === "doc") {
+        await generatePositioningBookDOC({ brandName, plan, clientName: brandName });
+      } else {
+        await generatePositioningBookPPT({ brandName, plan, clientName: brandName });
+      }
+      toast.dismiss(toastId);
+      toast.success("文件已下載！");
+    } catch (e) {
+      toast.dismiss(toastId);
+      toast.error(`匯出失敗：${e}`);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleEnterDemo = () => {
@@ -134,11 +162,25 @@ export default function MobileDemoPage() {
                 <p className="text-white/50 text-xs">{task.description}</p>
                 {task.outputs && (
                   <div className="flex flex-wrap gap-1 mt-2">
-                    {task.outputs.map((o, j) => (
-                      <span key={j} className="text-xs bg-white/10 text-white/60 px-2 py-0.5 rounded">
-                        {o.type === "pdf" ? "📄" : o.type === "ppt" ? "📽️" : o.type === "xls" ? "📊" : "📝"} {o.name}
-                      </span>
-                    ))}
+                    {task.outputs.map((o, j) => {
+                      const isDownloadable = (o.type === "doc" || o.type === "ppt") && task.status === "completed";
+                      return (
+                        <button
+                          key={j}
+                          disabled={isExporting || !isDownloadable}
+                          onClick={() => isDownloadable && selectedPersona && handleDownloadOutput(o.type, selectedPersona.id)}
+                          className={`text-xs px-2 py-0.5 rounded transition-all ${
+                            isDownloadable
+                              ? "bg-amber-500/20 text-amber-300 border border-amber-500/30 active:scale-95 cursor-pointer"
+                              : "bg-white/10 text-white/60 cursor-default"
+                          }`}
+                        >
+                          {o.type === "pdf" ? "📄" : o.type === "ppt" ? "📽️" : o.type === "xls" ? "📊" : "📝"}{" "}
+                          {o.name}
+                          {isDownloadable && " ↓"}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>
