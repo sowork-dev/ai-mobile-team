@@ -41,6 +41,16 @@ import {
 } from "./chiefOfStaff.js";
 import { crawlWebsite, recommendAgentsForBrand, CrawlResult } from "./webCrawler.js";
 import * as onedrive from "./onedrive.js";
+import {
+  getAgentKnowledge,
+  searchKnowledge,
+  saveKnowledgeEntry,
+  deleteKnowledgeEntry,
+  parseFileContent,
+  KnowledgeType,
+  KnowledgeSourceType,
+  FileType,
+} from "./knowledgeBase.js";
 import { executeAction, ActionType, ActionResult } from "./actionExecutor.js";
 import { generateProfessionalPPT, getManusTaskStatus, waitForTaskCompletion } from "./manus.js";
 import { DEMO_COMPANY, DEMO_DEPARTMENTS, DEMO_MEETINGS, DEMO_TASKS, DEMO_AGENTS, getAgentsByDepartment, getMeetingsByDepartment, getDemoTasks, getAllPersonas, getDemoPersona } from "./seedData.js";
@@ -1029,6 +1039,112 @@ const demoRouter = router({
     .query(({ input }) => getDemoPersona(input.personaId) ?? null),
 });
 
+// Knowledge Base Router - 品牌知識庫管理
+const knowledgeBaseRouter = router({
+  // 列出知識庫條目（按 agentId 篩選）
+  list: publicProcedure
+    .input(z.object({
+      agentId: z.number().optional(),
+      activeOnly: z.boolean().optional(),
+    }).optional())
+    .query(async ({ input }) => {
+      if (input?.agentId) {
+        const entries = await getAgentKnowledge(input.agentId, input.activeOnly !== false);
+        return { entries, total: entries.length };
+      }
+      // 返回全局知識庫（所有 agent 的最新 20 條）
+      const rows = await query<any>(
+        `SELECT * FROM agent_knowledge_base WHERE isActive = 1 ORDER BY createdAt DESC LIMIT 20`
+      );
+      return { entries: rows, total: rows.length };
+    }),
+
+  // 搜尋知識庫
+  search: publicProcedure
+    .input(z.object({
+      keyword: z.string().min(1),
+      agentId: z.number().optional(),
+      limit: z.number().min(1).max(20).default(5),
+    }))
+    .query(async ({ input }) => {
+      const results = await searchKnowledge(input.keyword, input.agentId, input.limit);
+      return { results, total: results.length };
+    }),
+
+  // 手動新增知識條目
+  save: publicProcedure
+    .input(z.object({
+      agentId: z.number(),
+      type: z.enum(["brand_client", "brand_employer", "brand_market", "industry", "methodology_tool", "methodology_own"]),
+      title: z.string().min(1).max(256),
+      content: z.string().min(1),
+      source: z.string().optional(),
+      sourceType: z.enum(["research_report", "conference", "article", "collaboration", "internal", "ai_generated"]).optional(),
+      tags: z.array(z.string()).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const id = await saveKnowledgeEntry({
+        agentId: input.agentId,
+        type: input.type as KnowledgeType,
+        title: input.title,
+        content: input.content,
+        source: input.source,
+        sourceType: input.sourceType as KnowledgeSourceType | undefined,
+        tags: input.tags,
+      });
+      return { success: true, id };
+    }),
+
+  // 上傳文件（TXT/PDF/DOCX）並存入知識庫
+  upload: publicProcedure
+    .input(z.object({
+      agentId: z.number(),
+      type: z.enum(["brand_client", "brand_employer", "brand_market", "industry", "methodology_tool", "methodology_own"]).default("brand_client"),
+      title: z.string().min(1),
+      fileType: z.enum(["txt", "pdf", "docx"]),
+      base64Content: z.string().min(1),
+      source: z.string().optional(),
+      tags: z.array(z.string()).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      // 解析文件內容
+      const textContent = await parseFileContent(
+        input.base64Content,
+        input.fileType as FileType
+      );
+
+      if (!textContent || textContent.trim().length < 10) {
+        return { success: false, error: "無法提取文件內容，請確認文件格式正確" };
+      }
+
+      // 儲存到知識庫
+      const id = await saveKnowledgeEntry({
+        agentId: input.agentId,
+        type: input.type as KnowledgeType,
+        title: input.title,
+        content: textContent.trim(),
+        source: input.source || `上傳文件: ${input.title}`,
+        sourceType: "internal",
+        tags: input.tags,
+      });
+
+      return {
+        success: true,
+        id,
+        charCount: textContent.length,
+        preview: textContent.slice(0, 200),
+      };
+    }),
+
+  // 刪除知識條目（軟刪除）
+  delete: publicProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await deleteKnowledgeEntry(input.id);
+      return { success: true };
+    }),
+});
+
 // Main App Router
 export const appRouter = router({
   auth: authRouter,
@@ -1042,6 +1158,7 @@ export const appRouter = router({
   onedrive: onedriveRouter,
   manus: manusRouter,
   demo: demoRouter,
+  knowledgeBase: knowledgeBaseRouter,
   
   // Health check
   health: publicProcedure.query(() => ({

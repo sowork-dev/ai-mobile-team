@@ -9,6 +9,7 @@
 import OpenAI from "openai";
 import { query } from "./db.js";
 import { scanKnowledgeBase, isConnected } from "./onedrive.js";
+import { getKnowledgeContext as getDbKnowledgeContext } from "./knowledgeBase.js";
 
 // 意圖類型
 export type IntentType = 
@@ -81,31 +82,46 @@ function getModelName(): string {
 }
 
 /**
- * 獲取知識庫上下文
+ * 獲取知識庫上下文（整合 DB + OneDrive）
  */
-async function getKnowledgeContext(userId: string = "dev-user-001"): Promise<string> {
-  // 檢查連接狀態
-  if (!isConnected(userId)) {
-    return "";
+async function getKnowledgeContext(
+  userId: string = "dev-user-001",
+  userQuery = ""
+): Promise<string> {
+  const parts: string[] = [];
+
+  // 1. 從資料庫查詢 agent_knowledge_base
+  if (userQuery) {
+    try {
+      const dbContext = await getDbKnowledgeContext(userQuery);
+      if (dbContext) parts.push(dbContext);
+    } catch (error) {
+      console.error("Failed to fetch DB knowledge:", error);
+    }
   }
-  
-  // 使用緩存
-  const now = Date.now();
-  if (knowledgeCache && (now - knowledgeCache.timestamp) < CACHE_TTL) {
-    return formatKnowledgeDocs(knowledgeCache.docs);
+
+  // 2. 從 OneDrive 查詢（如果已連接）
+  if (isConnected(userId)) {
+    const now = Date.now();
+    if (knowledgeCache && now - knowledgeCache.timestamp < CACHE_TTL) {
+      const oneDriveCtx = formatKnowledgeDocs(knowledgeCache.docs);
+      if (oneDriveCtx) parts.push(oneDriveCtx);
+    } else {
+      try {
+        const docs = await scanKnowledgeBase(userId);
+        knowledgeCache = {
+          docs: docs.map((d) => ({ name: d.name, content: d.content.slice(0, 2000) })),
+          timestamp: now,
+        };
+        const oneDriveCtx = formatKnowledgeDocs(knowledgeCache.docs);
+        if (oneDriveCtx) parts.push(oneDriveCtx);
+      } catch (error) {
+        console.error("Failed to fetch OneDrive knowledge:", error);
+      }
+    }
   }
-  
-  try {
-    const docs = await scanKnowledgeBase(userId);
-    knowledgeCache = {
-      docs: docs.map(d => ({ name: d.name, content: d.content.slice(0, 2000) })), // 限制每檔 2000 字
-      timestamp: now,
-    };
-    return formatKnowledgeDocs(knowledgeCache.docs);
-  } catch (error) {
-    console.error("Failed to fetch knowledge base:", error);
-    return "";
-  }
+
+  return parts.join("\n\n");
 }
 
 function formatKnowledgeDocs(docs: Array<{ name: string; content: string }>): string {
@@ -285,6 +301,7 @@ async function generateResponse(
     recommendations?: AgentRecommendation[];
     taskDescription?: string;
     companyContext?: CompanyContext;
+    knowledgeContext?: string;
   }
 ): Promise<string> {
   const client = createClient();
@@ -315,6 +332,11 @@ ${decisionMaker ? `- 決策者：${decisionMaker}` : ""}
   if (intent === "build_team" && context?.recommendations) {
     contextInfo = `\n\n已為用戶推薦了以下 AI 員工：
 ${context.recommendations.map(r => `- ${r.name}（${r.title}）：${r.reason}`).join("\n")}`;
+  }
+
+  // 注入品牌知識庫上下文
+  if (context?.knowledgeContext) {
+    contextInfo += context.knowledgeContext;
   }
 
   const response = await client.chat.completions.create({
@@ -390,11 +412,15 @@ export async function chat(
           skills
         );
 
+        // 獲取相關品牌知識（幫助 AI 理解任務背景）
+        const knowledgeContext = await getKnowledgeContext("dev-user-001", userMessage);
+
         response.recommendations = recommendations;
         response.message = await generateResponse(userMessage, intent, {
           recommendations,
           taskDescription,
           companyContext,
+          knowledgeContext,
         });
         
         // 建議操作
@@ -425,8 +451,8 @@ export async function chat(
       }
 
       case "knowledge_query": {
-        // 獲取知識庫上下文
-        const knowledgeContext = await getKnowledgeContext("dev-user-001");
+        // 獲取知識庫上下文（整合 DB + OneDrive）
+        const knowledgeContext = await getKnowledgeContext("dev-user-001", userMessage);
         response.message = await generateKnowledgeResponse(userMessage, knowledgeContext);
         response.suggestedActions = [
           { label: "連接更多資料來源", action: "connect_onedrive" },
