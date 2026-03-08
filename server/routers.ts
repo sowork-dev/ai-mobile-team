@@ -29,8 +29,14 @@ import {
   getTask,
   updateTaskStatus,
   simulateTaskProgress,
+  requestApproval,
+  handleApproval,
+  getPendingApprovals,
+  getApprovalRecord,
   ChiefOfStaffResponse,
   Task,
+  ApprovalRecord,
+  ApprovalStatus,
 } from "./chiefOfStaff.js";
 import { crawlWebsite, recommendAgentsForBrand, CrawlResult } from "./webCrawler.js";
 import * as onedrive from "./onedrive.js";
@@ -575,9 +581,88 @@ const chiefOfStaffRouter = router({
   // 模擬任務進度（演示用）
   simulateProgress: publicProcedure
     .input(z.object({ taskId: z.string() }))
-    .mutation(({ input }) => {
-      simulateTaskProgress(input.taskId);
-      return getTask(input.taskId);
+    .mutation(async ({ input }) => {
+      const result = await simulateTaskProgress(input.taskId);
+      return {
+        task: result.task,
+        needsApproval: result.needsApproval,
+        approvalId: result.approvalId,
+      };
+    }),
+    
+  // ============ 審批功能 ============
+  
+  // 獲取待審批列表
+  pendingApprovals: publicProcedure
+    .input(z.object({ userId: z.string().optional() }).optional())
+    .query(({ input }) => {
+      const approvals = getPendingApprovals(input?.userId || "dev-user-001");
+      return {
+        approvals,
+        count: approvals.length,
+      };
+    }),
+    
+  // 獲取單個審批記錄
+  getApproval: publicProcedure
+    .input(z.object({ approvalId: z.string() }))
+    .query(({ input }) => {
+      return getApprovalRecord(input.approvalId);
+    }),
+    
+  // 審批通過
+  approveTask: publicProcedure
+    .input(z.object({
+      approvalId: z.string(),
+      comment: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      return handleApproval(input.approvalId, "approved", input.comment);
+    }),
+    
+  // 審批駁回
+  rejectTask: publicProcedure
+    .input(z.object({
+      approvalId: z.string(),
+      comment: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      return handleApproval(input.approvalId, "rejected", input.comment);
+    }),
+    
+  // 請求審批（由 AI 調用）
+  requestApproval: publicProcedure
+    .input(z.object({
+      taskId: z.string(),
+      stageIndex: z.number(),
+      aiSummary: z.string(),
+      deliverables: z.array(z.object({
+        type: z.string(),
+        title: z.string(),
+        url: z.string().optional(),
+        preview: z.string().optional(),
+      })).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const approval = await requestApproval(
+        input.taskId,
+        input.stageIndex,
+        input.aiSummary,
+        input.deliverables
+      );
+      
+      if (approval) {
+        return {
+          success: true,
+          approval,
+          message: `已提交審批請求，等待審核。`,
+        };
+      }
+      
+      return {
+        success: false,
+        message: "無法建立審批請求",
+      };
     }),
 });
 
@@ -730,11 +815,22 @@ const companyRouter = router({
 
 // OneDrive Router - 知識庫整合
 const onedriveRouter = router({
-  // 獲取授權 URL
-  getAuthUrl: publicProcedure.query(async () => {
-    const url = await onedrive.getAuthUrl();
-    return { url };
-  }),
+  // 獲取授權 URL (傳入 userId 以記錄 state)
+  connect: publicProcedure
+    .input(z.object({ userId: z.string().default("dev-user-001") }).optional())
+    .mutation(async ({ input }) => {
+      const userId = input?.userId || "dev-user-001";
+      const url = await onedrive.getAuthUrl(userId);
+      return { authUrl: url };
+    }),
+
+  // 向後兼容: getAuthUrl query
+  getAuthUrl: publicProcedure
+    .input(z.object({ userId: z.string().optional() }).optional())
+    .query(async ({ input }) => {
+      const url = await onedrive.getAuthUrl(input?.userId || "dev-user-001");
+      return { url };
+    }),
 
   // 處理授權回調
   handleCallback: publicProcedure
@@ -744,42 +840,55 @@ const onedriveRouter = router({
       return { success };
     }),
 
-  // 檢查連接狀態
+  // 連接狀態（含用戶資訊）
   status: publicProcedure
-    .input(z.object({ userId: z.string() }))
+    .input(z.object({ userId: z.string().optional() }).optional())
     .query(({ input }) => {
-      return { connected: onedrive.isConnected(input.userId) };
+      const userId = input?.userId || "dev-user-001";
+      return onedrive.getConnectionInfo(userId);
     }),
 
   // 列出文件
   listFiles: publicProcedure
-    .input(z.object({ userId: z.string(), folderId: z.string().optional() }))
+    .input(z.object({ userId: z.string().optional(), folderId: z.string().optional() }).optional())
     .query(async ({ input }) => {
-      const files = await onedrive.listFiles(input.userId, input.folderId);
+      const userId = input?.userId || "dev-user-001";
+      const files = await onedrive.listFiles(userId, input?.folderId);
       return { files };
     }),
 
   // 獲取文件內容
   getFile: publicProcedure
-    .input(z.object({ userId: z.string(), fileId: z.string() }))
+    .input(z.object({ userId: z.string().optional(), fileId: z.string() }))
     .query(async ({ input }) => {
-      const result = await onedrive.getFileContent(input.userId, input.fileId);
-      return result;
+      const userId = input?.userId || "dev-user-001";
+      return onedrive.getFileContent(userId, input.fileId);
     }),
 
   // 搜索文件
   searchFiles: publicProcedure
-    .input(z.object({ userId: z.string(), query: z.string() }))
+    .input(z.object({ userId: z.string().optional(), query: z.string() }))
     .query(async ({ input }) => {
-      const files = await onedrive.searchFiles(input.userId, input.query);
+      const userId = input?.userId || "dev-user-001";
+      const files = await onedrive.searchFiles(userId, input.query);
       return { files };
+    }),
+
+  // 掃描知識庫（供 AI 任務使用）
+  scanKnowledge: publicProcedure
+    .input(z.object({ userId: z.string().optional() }).optional())
+    .mutation(async ({ input }) => {
+      const userId = input?.userId || "dev-user-001";
+      const docs = await onedrive.scanKnowledgeBase(userId);
+      return { docs, count: docs.length };
     }),
 
   // 斷開連接
   disconnect: publicProcedure
-    .input(z.object({ userId: z.string() }))
+    .input(z.object({ userId: z.string().optional() }).optional())
     .mutation(({ input }) => {
-      onedrive.disconnect(input.userId);
+      const userId = input?.userId || "dev-user-001";
+      onedrive.disconnect(userId);
       return { success: true };
     }),
 });

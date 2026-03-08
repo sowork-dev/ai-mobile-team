@@ -5,21 +5,35 @@
 import { ConfidentialClientApplication } from "@azure/msal-node";
 import { Client } from "@microsoft/microsoft-graph-client";
 
-// 從環境變數讀取 Azure AD 配置（必填）
-const AZURE_CONFIG = {
-  clientId: process.env.AZURE_CLIENT_ID!,
-  tenantId: process.env.AZURE_TENANT_ID!,
-  clientSecret: process.env.AZURE_CLIENT_SECRET!,
-  redirectUri: process.env.AZURE_REDIRECT_URI || "https://dev-mobileteam.sowork.ai/api/auth/callback/microsoft",
-};
+// 從環境變數讀取 Azure AD 配置
+function getAzureConfig() {
+  return {
+    clientId: process.env.AZURE_CLIENT_ID || "",
+    tenantId: process.env.AZURE_TENANT_ID || "",
+    clientSecret: process.env.AZURE_CLIENT_SECRET || "",
+    redirectUri: process.env.AZURE_REDIRECT_URI || "https://dev-mobileteam.sowork.ai/api/auth/callback/microsoft",
+  };
+}
 
-const msalClient = new ConfidentialClientApplication({
-  auth: {
-    clientId: AZURE_CONFIG.clientId,
-    authority: `https://login.microsoftonline.com/${AZURE_CONFIG.tenantId}`,
-    clientSecret: AZURE_CONFIG.clientSecret,
-  },
-});
+// 延遲初始化 MSAL 客戶端
+let _msalClient: ConfidentialClientApplication | null = null;
+
+function getMsalClient(): ConfidentialClientApplication {
+  if (!_msalClient) {
+    const config = getAzureConfig();
+    if (!config.clientId || !config.clientSecret || !config.tenantId) {
+      throw new Error("Azure AD configuration not set. Please configure AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID environment variables.");
+    }
+    _msalClient = new ConfidentialClientApplication({
+      auth: {
+        clientId: config.clientId,
+        authority: `https://login.microsoftonline.com/${config.tenantId}`,
+        clientSecret: config.clientSecret,
+      },
+    });
+  }
+  return _msalClient;
+}
 
 const SCOPES = ["User.Read", "Files.Read.All", "offline_access"];
 
@@ -44,9 +58,10 @@ export interface OneDriveFile {
  * 產生 OAuth 授權 URL，state 帶上 userId
  */
 export async function getAuthUrl(userId: string = "dev-user-001"): Promise<string> {
-  const url = await msalClient.getAuthCodeUrl({
+  const config = getAzureConfig();
+  const url = await getMsalClient().getAuthCodeUrl({
     scopes: SCOPES,
-    redirectUri: AZURE_CONFIG.redirectUri,
+    redirectUri: config.redirectUri,
     state: encodeURIComponent(userId),
   });
   return url;
@@ -58,10 +73,11 @@ export async function getAuthUrl(userId: string = "dev-user-001"): Promise<strin
  */
 export async function handleCallback(code: string, userId: string): Promise<boolean> {
   try {
-    const response = await msalClient.acquireTokenByCode({
+    const config = getAzureConfig();
+    const response = await getMsalClient().acquireTokenByCode({
       code,
       scopes: SCOPES,
-      redirectUri: AZURE_CONFIG.redirectUri,
+      redirectUri: config.redirectUri,
     });
 
     if (!response?.accessToken) return false;

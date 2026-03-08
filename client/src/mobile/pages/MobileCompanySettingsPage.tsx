@@ -2,7 +2,7 @@
  * 企業設定頁面 — 標準表單式公司基本資料設定
  * 取代原本的品牌定位對話流程
  */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import MobileHeader from "../components/MobileHeader";
@@ -35,115 +35,12 @@ const COMPANY_SIZE_OPTIONS = [
   "1-10 人", "11-50 人", "51-200 人", "201-500 人", "500 人以上"
 ];
 
-// OneDrive 連接組件
-function OneDriveSection() {
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
-  const userId = "dev-user-001"; // 從 auth 獲取
-
-  // 檢查連接狀態
-  const statusQuery = trpc.onedrive.status.useQuery({ userId });
-  
-  useEffect(() => {
-    if (statusQuery.data) {
-      setIsConnected(statusQuery.data.connected);
-    }
-  }, [statusQuery.data]);
-
-  // 獲取授權 URL
-  const authUrlQuery = trpc.onedrive.getAuthUrl.useQuery(undefined, {
-    enabled: false,
-  });
-
-  // 斷開連接
-  const disconnectMutation = trpc.onedrive.disconnect.useMutation();
-
-  const handleConnect = async () => {
-    setIsConnecting(true);
-    try {
-      const result = await authUrlQuery.refetch();
-      if (result.data?.url) {
-        // 開啟授權視窗
-        window.open(result.data.url, "_blank", "width=600,height=700");
-        toast.info("請在彈出視窗中完成 Microsoft 登入");
-      }
-    } catch (error) {
-      toast.error("無法連接 OneDrive");
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
-  const handleDisconnect = async () => {
-    try {
-      await disconnectMutation.mutateAsync({ userId });
-      setIsConnected(false);
-      toast.success("已斷開 OneDrive 連接");
-    } catch (error) {
-      toast.error("斷開連接失敗");
-    }
-  };
-
-  return (
-    <div className="bg-white mx-4 mt-4 rounded-2xl border border-gray-100 overflow-hidden">
-      <div className="px-4 py-3 border-b border-gray-100">
-        <h2 className="font-semibold text-gray-900">知識庫設定</h2>
-        <p className="text-xs text-gray-500 mt-0.5">連接雲端硬碟作為 AI 知識庫來源</p>
-      </div>
-
-      <div className="p-4">
-        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-          <div className="flex items-center gap-3">
-            {/* OneDrive 圖示 */}
-            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0078D4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" />
-              </svg>
-            </div>
-            <div>
-              <p className="font-medium text-sm text-gray-900">Microsoft OneDrive</p>
-              <p className="text-xs text-gray-500">
-                {isConnected ? "已連接" : "未連接"}
-              </p>
-            </div>
-          </div>
-
-          {isConnected ? (
-            <button
-              onClick={handleDisconnect}
-              className="px-3 py-1.5 text-sm text-red-600 bg-red-50 rounded-lg active:bg-red-100"
-            >
-              斷開
-            </button>
-          ) : (
-            <button
-              onClick={handleConnect}
-              disabled={isConnecting}
-              className="px-3 py-1.5 text-sm text-white bg-gray-900 rounded-lg active:scale-95 disabled:opacity-50"
-            >
-              {isConnecting ? "連接中..." : "連接"}
-            </button>
-          )}
-        </div>
-
-        {isConnected && (
-          <p className="mt-3 text-xs text-green-600 flex items-center gap-1">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 6L9 17l-5-5" />
-            </svg>
-            OneDrive 文件將作為 AI 知識庫來源
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
 
 export default function MobileCompanySettingsPage() {
   const [, navigate] = useLocation();
   const { locale } = useI18n();
   const [isSaving, setIsSaving] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
+  const [_hasChanges, setHasChanges] = useState(false);
   
   const [formData, setFormData] = useState<CompanyInfo>({
     companyName: "",
@@ -301,6 +198,62 @@ export default function MobileCompanySettingsPage() {
     }));
     setHasChanges(true);
   };
+
+  // ── OneDrive 整合 ──────────────────────────────────────────────────────────
+  const onedrivePopupRef = useRef<Window | null>(null);
+
+  const onedriveStatus = trpc.onedrive.status.useQuery(undefined, {
+    refetchInterval: 5000, // 每 5 秒輪詢一次（等待 OAuth 完成）
+  });
+  const onedriveConnect = trpc.onedrive.connect.useMutation();
+  const onedriveDisconnect = trpc.onedrive.disconnect.useMutation();
+  const onedriveListFiles = trpc.onedrive.listFiles.useQuery(undefined, {
+    enabled: !!onedriveStatus.data?.connected,
+  });
+  const onedriveScanKnowledge = trpc.onedrive.scanKnowledge.useMutation();
+
+  const isOnedriveConnected = onedriveStatus.data?.connected ?? false;
+
+  // 開啟 OAuth 授權視窗
+  const handleOnedriveConnect = async () => {
+    try {
+      const { authUrl } = await onedriveConnect.mutateAsync({});
+      const popup = window.open(authUrl, "onedrive-auth", "width=600,height=700,scrollbars=yes");
+      onedrivePopupRef.current = popup;
+
+      // 監聽 popup 送回的 message
+      const handler = (e: MessageEvent) => {
+        if (e.data?.type === "onedrive-connected") {
+          toast.success("OneDrive 連接成功！");
+          onedriveStatus.refetch();
+          onedriveListFiles.refetch();
+          window.removeEventListener("message", handler);
+        }
+      };
+      window.addEventListener("message", handler);
+    } catch (err: any) {
+      toast.error("無法取得授權網址：" + (err.message || "請稍後再試"));
+    }
+  };
+
+  // 掃描 OneDrive 知識庫
+  const handleScanKnowledge = async () => {
+    try {
+      toast.info("正在掃描 OneDrive 知識庫...");
+      const result = await onedriveScanKnowledge.mutateAsync({});
+      toast.success(`掃描完成！找到 ${result.count} 個文件`);
+    } catch (err: any) {
+      toast.error("掃描失敗：" + (err.message || "請確認 OneDrive 已連接"));
+    }
+  };
+
+  // 斷開 OneDrive
+  const handleOnedriveDisconnect = async () => {
+    await onedriveDisconnect.mutateAsync({});
+    toast.success("已斷開 OneDrive 連接");
+    onedriveStatus.refetch();
+  };
+  // ── /OneDrive ──────────────────────────────────────────────────────────────
 
   // 建立品牌群組 mutation
   const createGroupsMutation = trpc.company.createBrandGroups.useMutation();
@@ -622,8 +575,132 @@ export default function MobileCompanySettingsPage() {
           </div>
         </div>
 
-        {/* 知識庫設定 - OneDrive 整合 */}
-        <OneDriveSection />
+        {/* OneDrive 知識庫整合 */}
+        <div className="bg-white mx-4 mt-4 rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-100">
+            <div className="flex items-center gap-2">
+              {/* OneDrive 圖示 */}
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6.5 20C4.01 20 2 17.99 2 15.5C2 13.24 3.66 11.37 5.83 11.04C5.64 10.56 5.5 10.05 5.5 9.5C5.5 7.01 7.51 5 10 5C11.78 5 13.32 6.01 14.1 7.49C14.56 7.18 15.11 7 15.7 7C17.52 7 19 8.48 19 10.3C19 10.45 18.99 10.6 18.97 10.75C21.22 11.14 23 13.14 23 15.5C23 17.99 20.99 20 18.5 20H6.5Z" fill="#0078D4"/>
+              </svg>
+              <h2 className="font-semibold text-gray-900">
+                {locale === "zh" ? "OneDrive 知識庫" : "OneDrive Knowledge Base"}
+              </h2>
+              {isOnedriveConnected && (
+                <span className="ml-auto text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full font-medium">
+                  已連接
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              連接 OneDrive 後，AI 員工可掃描您的文件作為知識庫
+            </p>
+          </div>
+
+          <div className="p-4 space-y-3">
+            {isOnedriveConnected ? (
+              <>
+                {/* 已連接狀態 */}
+                <div className="flex items-center gap-3 bg-blue-50 rounded-xl p-3">
+                  <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 6L9 17l-5-5" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-blue-900">
+                      {onedriveStatus.data?.userName || "Microsoft 帳號"}
+                    </p>
+                    <p className="text-xs text-blue-600 truncate">
+                      {onedriveStatus.data?.userEmail || "已連接"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* 文件列表 */}
+                {onedriveListFiles.data?.files && onedriveListFiles.data.files.length > 0 && (
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-xs font-medium text-gray-600 mb-2">
+                      根目錄檔案（{onedriveListFiles.data.files.length} 個）
+                    </p>
+                    <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                      {onedriveListFiles.data.files.slice(0, 10).map((file) => (
+                        <div key={file.id} className="flex items-center gap-2 text-xs text-gray-600">
+                          {file.type === "folder" ? (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="#F59E0B" stroke="none"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                          ) : (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="#6B7280" stroke="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8" fill="none" stroke="white" strokeWidth="2"/></svg>
+                          )}
+                          <span className="truncate">{file.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 操作按鈕 */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleScanKnowledge}
+                    disabled={onedriveScanKnowledge.isPending}
+                    className="flex-1 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl disabled:opacity-50 active:scale-95 transition-transform flex items-center justify-center gap-1.5"
+                  >
+                    {onedriveScanKnowledge.isPending ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                          <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
+                        </svg>
+                        掃描中
+                      </>
+                    ) : (
+                      <>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                        </svg>
+                        掃描知識庫
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={handleOnedriveDisconnect}
+                    className="px-4 py-2.5 border border-gray-200 text-gray-600 text-sm rounded-xl active:scale-95 transition-transform"
+                  >
+                    斷開
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-gray-500 text-center py-2">
+                  尚未連接 OneDrive
+                </p>
+                <button
+                  onClick={handleOnedriveConnect}
+                  disabled={onedriveConnect.isPending}
+                  className="w-full py-3 bg-[#0078D4] text-white text-sm font-medium rounded-xl disabled:opacity-50 active:scale-95 transition-transform flex items-center justify-center gap-2"
+                >
+                  {onedriveConnect.isPending ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                        <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
+                      </svg>
+                      取得授權中
+                    </>
+                  ) : (
+                    <>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6.5 20C4.01 20 2 17.99 2 15.5C2 13.24 3.66 11.37 5.83 11.04C5.64 10.56 5.5 10.05 5.5 9.5C5.5 7.01 7.51 5 10 5C11.78 5 13.32 6.01 14.1 7.49C14.56 7.18 15.11 7 15.7 7C17.52 7 19 8.48 19 10.3C19 10.45 18.99 10.6 18.97 10.75C21.22 11.14 23 13.14 23 15.5C23 17.99 20.99 20 18.5 20H6.5Z"/>
+                      </svg>
+                      連接 OneDrive
+                    </>
+                  )}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
 
         {/* 公司簡介 */}
         <div className="bg-white mx-4 mt-4 mb-6 rounded-2xl border border-gray-100 overflow-hidden">

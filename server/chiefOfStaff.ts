@@ -343,6 +343,30 @@ export async function chat(
 
 // ============ 任務系統 ============
 
+// 審批狀態
+export type ApprovalStatus = "pending" | "approved" | "rejected";
+
+// 審批記錄
+export interface ApprovalRecord {
+  id: string;
+  taskId: string;
+  stageIndex: number;
+  stageName: string;
+  requestedAt: Date;
+  respondedAt?: Date;
+  status: ApprovalStatus;
+  approverId: string;
+  approverName: string;
+  comment?: string;
+  aiSummary?: string;     // AI 產出摘要
+  deliverables?: {        // 交付物
+    type: string;
+    title: string;
+    url?: string;
+    preview?: string;
+  }[];
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -362,18 +386,176 @@ export interface Task {
   createdBy: string;
   stages: {
     name: string;
-    status: "pending" | "in_progress" | "completed";
+    status: "pending" | "in_progress" | "completed" | "needs_approval";
     completedAt?: Date;
+    requiresApproval?: boolean;  // 此階段是否需要人工審批
+    approvalId?: string;         // 對應的審批記錄 ID
   }[];
   outputs?: {
     type: "document" | "report" | "analysis";
     title: string;
     url?: string;
   }[];
+  // 新增：審批相關
+  pendingApproval?: ApprovalRecord;  // 目前等待審批的記錄
+  approvalHistory?: ApprovalRecord[]; // 審批歷史
 }
 
 // 內存存儲（之後可換成資料庫）
 const tasks: Map<string, Task> = new Map();
+const approvalRecords: Map<string, ApprovalRecord> = new Map();
+
+/**
+ * 請求審批 - 當 AI 完成階段工作後調用
+ */
+export async function requestApproval(
+  taskId: string,
+  stageIndex: number,
+  aiSummary: string,
+  deliverables?: ApprovalRecord["deliverables"]
+): Promise<ApprovalRecord | null> {
+  const task = tasks.get(taskId);
+  if (!task) return null;
+  
+  const stage = task.stages[stageIndex];
+  if (!stage) return null;
+  
+  const approvalId = `approval_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+  
+  const approval: ApprovalRecord = {
+    id: approvalId,
+    taskId,
+    stageIndex,
+    stageName: stage.name,
+    requestedAt: new Date(),
+    status: "pending",
+    approverId: task.createdBy,  // 預設由任務建立者審批
+    approverName: "CJ Wang",     // TODO: 從用戶資料庫獲取
+    aiSummary,
+    deliverables,
+  };
+  
+  // 儲存審批記錄
+  approvalRecords.set(approvalId, approval);
+  
+  // 更新任務狀態
+  stage.status = "needs_approval";
+  stage.requiresApproval = true;
+  stage.approvalId = approvalId;
+  task.pendingApproval = approval;
+  task.status = "review";
+  task.updatedAt = new Date();
+  tasks.set(taskId, task);
+  
+  return approval;
+}
+
+/**
+ * 處理審批結果
+ */
+export async function handleApproval(
+  approvalId: string,
+  decision: "approved" | "rejected",
+  comment?: string
+): Promise<{
+  success: boolean;
+  task?: Task;
+  message: string;
+}> {
+  const approval = approvalRecords.get(approvalId);
+  if (!approval) {
+    return { success: false, message: "找不到此審批記錄" };
+  }
+  
+  if (approval.status !== "pending") {
+    return { success: false, message: "此審批已經處理過了" };
+  }
+  
+  const task = tasks.get(approval.taskId);
+  if (!task) {
+    return { success: false, message: "找不到對應的任務" };
+  }
+  
+  // 更新審批記錄
+  approval.status = decision;
+  approval.respondedAt = new Date();
+  approval.comment = comment;
+  approvalRecords.set(approvalId, approval);
+  
+  // 更新任務
+  const stage = task.stages[approval.stageIndex];
+  if (!stage) {
+    return { success: false, message: "階段不存在" };
+  }
+  
+  // 記錄審批歷史
+  if (!task.approvalHistory) {
+    task.approvalHistory = [];
+  }
+  task.approvalHistory.push(approval);
+  task.pendingApproval = undefined;
+  
+  if (decision === "approved") {
+    // 通過：完成當前階段，進入下一階段
+    stage.status = "completed";
+    stage.completedAt = new Date();
+    
+    // 檢查是否還有下一階段
+    if (approval.stageIndex + 1 < task.stages.length) {
+      task.currentStage = approval.stageIndex + 2; // +2 因為 currentStage 從 1 開始
+      task.stages[approval.stageIndex + 1].status = "in_progress";
+      task.status = "in_progress";
+    } else {
+      // 最後階段審批通過，任務完成
+      task.status = "completed";
+    }
+    
+    task.updatedAt = new Date();
+    tasks.set(task.id, task);
+    
+    return {
+      success: true,
+      task,
+      message: `✅ 已通過「${stage.name}」階段的審批${comment ? `\n備註：${comment}` : ""}`,
+    };
+  } else {
+    // 駁回：階段保持，等待 AI 重做
+    stage.status = "in_progress";
+    task.status = "in_progress";
+    task.updatedAt = new Date();
+    tasks.set(task.id, task);
+    
+    return {
+      success: true,
+      task,
+      message: `❌ 已駁回「${stage.name}」階段${comment ? `\n原因：${comment}` : ""}\n\nAI 將根據您的反饋重新處理。`,
+    };
+  }
+}
+
+/**
+ * 獲取待審批列表
+ */
+export function getPendingApprovals(userId?: string): ApprovalRecord[] {
+  const pending: ApprovalRecord[] = [];
+  
+  approvalRecords.forEach(record => {
+    if (record.status === "pending") {
+      if (!userId || record.approverId === userId) {
+        pending.push(record);
+      }
+    }
+  });
+  
+  return pending.sort((a, b) => b.requestedAt.getTime() - a.requestedAt.getTime());
+}
+
+/**
+ * 獲取審批記錄
+ */
+export function getApprovalRecord(approvalId: string): ApprovalRecord | undefined {
+  return approvalRecords.get(approvalId);
+}
 
 /**
  * 確認團隊並建立任務
@@ -514,23 +696,53 @@ export function updateTaskStatus(
 
 /**
  * 模擬任務進度（用於演示）
+ * 現在會在關鍵階段觸發審批請求
  */
-export function simulateTaskProgress(taskId: string): void {
+export async function simulateTaskProgress(taskId: string): Promise<{
+  task: Task | undefined;
+  needsApproval: boolean;
+  approvalId?: string;
+}> {
   const task = tasks.get(taskId);
-  if (!task || task.status === "completed") return;
+  if (!task || task.status === "completed") {
+    return { task, needsApproval: false };
+  }
 
   // 每次調用推進一個階段
   if (task.currentStage < task.totalStages) {
+    const currentStageIndex = task.currentStage - 1;
+    const currentStage = task.stages[currentStageIndex];
+    
     // 完成當前階段
-    if (task.stages[task.currentStage - 1]) {
-      task.stages[task.currentStage - 1].status = "completed";
-      task.stages[task.currentStage - 1].completedAt = new Date();
+    if (currentStage) {
+      currentStage.status = "completed";
+      currentStage.completedAt = new Date();
     }
     
     // 開始下一階段
     task.currentStage++;
-    if (task.stages[task.currentStage - 1]) {
-      task.stages[task.currentStage - 1].status = "in_progress";
+    const nextStageIndex = task.currentStage - 1;
+    const nextStage = task.stages[nextStageIndex];
+    
+    if (nextStage) {
+      nextStage.status = "in_progress";
+      
+      // 關鍵階段需要審批（例如：產出報告、審核交付）
+      const stagesNeedingApproval = ["產出報告", "審核交付", "方案審核", "最終確認"];
+      
+      if (stagesNeedingApproval.some(s => nextStage.name.includes(s))) {
+        // 模擬 AI 完成工作後請求審批
+        const aiSummary = `AI 已完成「${nextStage.name}」階段的工作。\n\n主要產出：\n• 分析報告已生成\n• 關鍵數據已整理\n• 建議方案已擬定\n\n請審閱後決定是否通過。`;
+        
+        const approval = await requestApproval(taskId, nextStageIndex, aiSummary, [
+          { type: "pdf", title: `${task.title}_報告.pdf`, preview: "PDF 報告預覽..." },
+          { type: "xlsx", title: `${task.title}_數據.xlsx`, preview: "Excel 數據表..." },
+        ]);
+        
+        if (approval) {
+          return { task: tasks.get(taskId), needsApproval: true, approvalId: approval.id };
+        }
+      }
     }
     
     // 檢查是否完成
@@ -541,4 +753,6 @@ export function simulateTaskProgress(taskId: string): void {
     task.updatedAt = new Date();
     tasks.set(taskId, task);
   }
+  
+  return { task: tasks.get(taskId), needsApproval: false };
 }
