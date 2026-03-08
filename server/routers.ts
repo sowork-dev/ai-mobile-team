@@ -40,6 +40,14 @@ import {
   CompanyContext,
 } from "./chiefOfStaff.js";
 import { crawlWebsite, recommendAgentsForBrand, CrawlResult } from "./webCrawler.js";
+import {
+  sendLineMessage,
+  sendLineFlexMessage,
+  saveLineContact,
+  getLineContact,
+  getAllLineContacts,
+  deleteLineContact,
+} from "./lineIntegration.js";
 import * as onedrive from "./onedrive.js";
 import {
   getAgentKnowledge,
@@ -1145,6 +1153,79 @@ const knowledgeBaseRouter = router({
     }),
 });
 
+// LINE Router - LINE Messaging API 整合
+const lineRouter = router({
+  // 獲取所有 LINE 聯絡人
+  contacts: publicProcedure.query(() => {
+    return getAllLineContacts();
+  }),
+
+  // 新增 / 更新 LINE 聯絡人
+  saveContact: publicProcedure
+    .input(z.object({
+      name: z.string().min(1),
+      lineUserId: z.string().min(1).regex(/^U[0-9a-f]{32}$/, "LINE User ID 格式不正確（U + 32 個十六進位）"),
+    }))
+    .mutation(({ input }) => {
+      const contact = saveLineContact(input.name, input.lineUserId);
+      return { success: true, contact };
+    }),
+
+  // 刪除 LINE 聯絡人
+  deleteContact: publicProcedure
+    .input(z.object({ name: z.string().min(1) }))
+    .mutation(({ input }) => {
+      const deleted = deleteLineContact(input.name);
+      return { success: deleted };
+    }),
+
+  // 直接發送 LINE 文字訊息
+  sendMessage: publicProcedure
+    .input(z.object({
+      contactName: z.string().min(1),
+      message: z.string().min(1),
+    }))
+    .mutation(async ({ input }) => {
+      const contact = getLineContact(input.contactName);
+      if (!contact) {
+        return {
+          success: false,
+          error: `找不到聯絡人「${input.contactName}」的 LINE User ID，請先在聯絡人設定中新增`,
+        };
+      }
+      const result = await sendLineMessage(contact.lineUserId, input.message);
+      return result;
+    }),
+
+  // 直接發送 LINE Flex 訊息
+  sendFlexMessage: publicProcedure
+    .input(z.object({
+      contactName: z.string().min(1),
+      title: z.string().min(1),
+      content: z.string().min(1),
+      buttons: z.array(z.object({
+        label: z.string(),
+        action: z.string(),
+      })).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const contact = getLineContact(input.contactName);
+      if (!contact) {
+        return {
+          success: false,
+          error: `找不到聯絡人「${input.contactName}」的 LINE User ID`,
+        };
+      }
+      const result = await sendLineFlexMessage(
+        contact.lineUserId,
+        input.title,
+        input.content,
+        input.buttons
+      );
+      return result;
+    }),
+});
+
 // Main App Router
 export const appRouter = router({
   auth: authRouter,
@@ -1159,7 +1240,8 @@ export const appRouter = router({
   manus: manusRouter,
   demo: demoRouter,
   knowledgeBase: knowledgeBaseRouter,
-  
+  line: lineRouter,
+
   // Health check
   health: publicProcedure.query(() => ({
     status: "ok",

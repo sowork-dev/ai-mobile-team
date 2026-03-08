@@ -9,7 +9,9 @@ import { fileURLToPath } from "url";
 import * as trpcExpress from "@trpc/server/adapters/express";
 import { appRouter } from "./routers.js";
 import * as onedrive from "./onedrive.js";
-import { generatePPTX, generateDOCX } from "./exportGenerators.js";
+import { generatePPTX, generateDOCX, generateXLSX } from "./exportGenerators.js";
+import { getFormatForRole } from "./formatMapping.js";
+import { validateWebhookSignature, parseWebhookEvents } from "./lineIntegration.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,6 +24,42 @@ app.use(cors({
   origin: process.env.CORS_ORIGIN || true,
   credentials: true,
 }));
+
+// ── LINE Webhook（必須在 express.json() 之前，才能取得 raw body 做 signature 驗證）──
+app.post("/webhook/line", express.raw({ type: "application/json" }), (req, res) => {
+  const signature = req.headers["x-line-signature"] as string;
+  const rawBody = req.body instanceof Buffer ? req.body.toString() : JSON.stringify(req.body);
+
+  // 使用 LINE_CHANNEL_SECRET 驗證簽名（Channel Secret: 已設定）
+  if (!validateWebhookSignature(rawBody, signature)) {
+    console.warn("LINE webhook: invalid signature, rejecting request");
+    return res.status(401).json({ error: "Invalid signature" });
+  }
+
+  let body: any;
+  try {
+    body = JSON.parse(rawBody);
+  } catch {
+    return res.status(400).json({ error: "Invalid JSON" });
+  }
+
+  const events = parseWebhookEvents(body);
+  for (const event of events) {
+    if (event.type === "message" && event.message?.type === "text") {
+      const userId = event.source?.userId;
+      const text = event.message.text;
+      console.log(`📩 LINE message from ${userId}: ${text}`);
+      // TODO: 將訊息轉入幕僚長聊天記錄
+    } else if (event.type === "follow") {
+      const userId = event.source?.userId;
+      console.log(`✅ LINE follow event from ${userId}`);
+    }
+  }
+
+  // LINE 要求 200 回應
+  res.json({ status: "ok" });
+});
+
 app.use(express.json());
 
 // Health check
@@ -71,9 +109,18 @@ app.get("/api/auth/callback/microsoft", async (req, res) => {
 
 // ── 文件導出 API ────────────────────────────────────────────────
 app.post("/api/export/pptx", async (req, res) => {
-  const { title = "報告", content = "", companyName = "SoWork AI", format = "pptx" } = req.body || {};
+  const {
+    title = "報告",
+    content = "",
+    companyName = "SoWork AI",
+    format = "pptx",
+    userRole = "",
+  } = req.body || {};
 
   try {
+    const formatConfig = getFormatForRole(userRole);
+    const maxSlides = formatConfig.pptSlides ?? 11;
+
     if (format === "docx") {
       const buffer = await generateDOCX(title, content, companyName);
       const filename = encodeURIComponent(`${title}.docx`);
@@ -83,8 +130,17 @@ app.post("/api/export/pptx", async (req, res) => {
       );
       res.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${filename}`);
       res.send(buffer);
+    } else if (format === "xlsx") {
+      const buffer = await generateXLSX(title, content, companyName);
+      const filename = encodeURIComponent(`${title}.xlsx`);
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      );
+      res.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${filename}`);
+      res.send(buffer);
     } else {
-      const buffer = await generatePPTX(title, content, companyName);
+      const buffer = await generatePPTX(title, content, companyName, { maxSlides });
       const filename = encodeURIComponent(`${title}.pptx`);
       res.setHeader(
         "Content-Type",

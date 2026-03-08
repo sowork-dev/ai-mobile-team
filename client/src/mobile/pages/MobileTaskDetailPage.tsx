@@ -8,6 +8,35 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { useI18n } from "@/i18n";
 
+type ExportFormat = "pptx" | "docx" | "xlsx";
+
+const FORMAT_OPTIONS: { id: ExportFormat; label: string }[] = [
+  { id: "pptx", label: "簡報 PPT" },
+  { id: "docx", label: "Word 報告" },
+  { id: "xlsx", label: "Excel 表格" },
+];
+
+async function downloadFile(
+  title: string,
+  content: string,
+  companyName: string,
+  format: ExportFormat
+) {
+  const res = await fetch("/api/export/pptx", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, content, companyName, format }),
+  });
+  if (!res.ok) throw new Error("下載失敗");
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${title}.${format}`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 const MOCK_TASK_DETAIL = {
   id: "1",
   title: "品牌社群貼文計畫（10 月份）",
@@ -59,7 +88,22 @@ export default function MobileTaskDetailPage() {
   const [, navigate] = useLocation();
   const { t } = useI18n();
   const [showPublish, setShowPublish] = useState(false);
+  const [formatPickerIdx, setFormatPickerIdx] = useState<number | null>(null);
+  const [downloadingIdx, setDownloadingIdx] = useState<number | null>(null);
   const task = MOCK_TASK_DETAIL;
+
+  const handleDownload = async (idx: number, format: ExportFormat) => {
+    setDownloadingIdx(idx);
+    setFormatPickerIdx(null);
+    try {
+      await downloadFile(task.title, task.content, task.agentName, format);
+      toast.success("下載完成！");
+    } catch {
+      toast.error("下載失敗，請重試");
+    } finally {
+      setDownloadingIdx(null);
+    }
+  };
 
   const PUBLISH_OPTIONS = [
     {
@@ -199,21 +243,47 @@ export default function MobileTaskDetailPage() {
           {/* 交付物下載 */}
           <div className="space-y-2">
             {task.deliverables.map((d, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 bg-gray-50 rounded-xl px-3 py-2.5"
-              >
-                <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#1C1C1E" strokeWidth="1.8" strokeLinecap="round">
-                    <path d="M8 2v8M4 6l4 4 4-4M2 12h12" />
-                  </svg>
+              <div key={i} className="relative">
+                <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-3 py-2.5">
+                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#1C1C1E" strokeWidth="1.8" strokeLinecap="round">
+                      <path d="M8 2v8M4 6l4 4 4-4M2 12h12" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-gray-900 truncate">{d.title}</p>
+                  </div>
+                  <button
+                    disabled={downloadingIdx === i}
+                    onClick={() => setFormatPickerIdx(formatPickerIdx === i ? null : i)}
+                    className="flex items-center gap-1 text-xs text-gray-900 font-medium px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg active:bg-gray-50 disabled:opacity-50"
+                  >
+                    {downloadingIdx === i ? (
+                      <div className="w-3 h-3 border-2 border-gray-600 border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        {t("taskDetail.download")}
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                          <path d="M2 4l3 3 3-3" />
+                        </svg>
+                      </>
+                    )}
+                  </button>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-gray-900 truncate">{d.title}</p>
-                </div>
-                <button className="text-xs text-gray-900 font-medium px-2.5 py-1.5 bg-gray-50 rounded-lg active:bg-gray-100">
-                  {t("taskDetail.download")}
-                </button>
+                {/* 格式選擇下拉 */}
+                {formatPickerIdx === i && (
+                  <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden min-w-[130px]">
+                    {FORMAT_OPTIONS.map((fmt) => (
+                      <button
+                        key={fmt.id}
+                        onClick={() => handleDownload(i, fmt.id)}
+                        className="w-full text-left px-4 py-2.5 text-xs text-gray-800 active:bg-gray-50 hover:bg-gray-50 font-medium"
+                      >
+                        {fmt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>

@@ -11,6 +11,7 @@ import { trpc } from "@/lib/trpc";
 import MobileHeader from "../components/MobileHeader";
 import { getDemoData } from "../demoData";
 import { useI18n } from "@/i18n";
+import { toast } from "sonner";
 
 type ContactTab = "explore" | "my-team" | "invite";
 
@@ -123,6 +124,34 @@ export default function MobileContactsPage() {
   const [activeTab, setActiveTab] = useState<ContactTab>(demoPersonaId ? "my-team" : "explore");
   const [search, setSearch] = useState("");
   const [selectedLayer, setSelectedLayer] = useState<string | undefined>(undefined);
+
+  // LINE 聯絡人管理
+  const [lineContactName, setLineContactName] = useState("");
+  const [lineContactUserId, setLineContactUserId] = useState("");
+  const { data: lineContacts, refetch: refetchLineContacts } = trpc.line.contacts.useQuery();
+  const saveLineContact = trpc.line.saveContact.useMutation({
+    onSuccess: () => {
+      toast.success(locale === "zh" ? "LINE 聯絡人已儲存" : "LINE contact saved");
+      setLineContactName("");
+      setLineContactUserId("");
+      refetchLineContacts();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+  const deleteLineContact = trpc.line.deleteContact.useMutation({
+    onSuccess: () => {
+      toast.success(locale === "zh" ? "已刪除" : "Deleted");
+      refetchLineContacts();
+    },
+  });
+
+  const handleSaveLineContact = () => {
+    if (!lineContactName.trim() || !lineContactUserId.trim()) {
+      toast.error(locale === "zh" ? "請填寫姓名和 LINE User ID" : "Please fill in name and LINE User ID");
+      return;
+    }
+    saveLineContact.mutate({ name: lineContactName.trim(), lineUserId: lineContactUserId.trim() });
+  };
 
   // 從人才庫取得 AI 員工
   const { data: talentData, isLoading } = trpc.talent.list.useQuery({
@@ -360,6 +389,81 @@ export default function MobileContactsPage() {
                 {t("contacts.copy")}
               </button>
             </div>
+          </div>
+
+          {/* LINE 聯絡人 */}
+          <div className="mt-3 bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+            <div className="flex items-center gap-2 mb-3">
+              {/* LINE logo color */}
+              <div className="w-7 h-7 bg-[#06C755] rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 1C4.14 1 1 3.64 1 6.9c0 2.06 1.2 3.88 3.03 4.97l-.47 1.74c-.05.17.14.31.29.21L6.44 12.5A7.9 7.9 0 0 0 8 12.8c3.86 0 7-2.64 7-5.9S11.86 1 8 1z" fill="white"/>
+                </svg>
+              </div>
+              <p className="text-sm font-semibold text-gray-900">
+                {locale === "zh" ? "LINE 聯絡人" : "LINE Contacts"}
+              </p>
+            </div>
+            <p className="text-xs text-gray-500 mb-3">
+              {locale === "zh"
+                ? "新增聯絡人的 LINE User ID，讓幕僚長可以代您發送 LINE 訊息"
+                : "Add LINE User IDs so your Chief of Staff can send LINE messages on your behalf"}
+            </p>
+
+            {/* 新增表單 */}
+            <div className="space-y-2 mb-3">
+              <input
+                type="text"
+                value={lineContactName}
+                onChange={(e) => setLineContactName(e.target.value)}
+                placeholder={locale === "zh" ? "聯絡人姓名（例：王小明）" : "Contact name (e.g. John)"}
+                className="w-full px-3 py-2.5 bg-gray-100 rounded-xl text-sm focus:outline-none"
+              />
+              <input
+                type="text"
+                value={lineContactUserId}
+                onChange={(e) => setLineContactUserId(e.target.value)}
+                placeholder="LINE User ID（U + 32 個字元）"
+                className="w-full px-3 py-2.5 bg-gray-100 rounded-xl text-sm focus:outline-none font-mono"
+              />
+              <button
+                onClick={handleSaveLineContact}
+                disabled={saveLineContact.isPending}
+                className="w-full py-2.5 bg-[#06C755] text-white rounded-xl text-sm font-semibold active:scale-95 transition-transform disabled:opacity-50"
+              >
+                {saveLineContact.isPending
+                  ? (locale === "zh" ? "儲存中..." : "Saving...")
+                  : (locale === "zh" ? "新增 LINE 聯絡人" : "Add LINE Contact")}
+              </button>
+            </div>
+
+            {/* 聯絡人列表 */}
+            {lineContacts && lineContacts.length > 0 && (
+              <div className="space-y-2 pt-2 border-t border-gray-100">
+                <p className="text-xs text-gray-400 font-medium">
+                  {locale === "zh" ? "已設定的聯絡人" : "Configured contacts"}
+                </p>
+                {lineContacts.map((contact) => (
+                  <div key={contact.lineUserId} className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-full bg-[#06C755]/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-[10px] font-bold text-[#06C755]">{contact.name[0]}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-800">{contact.name}</p>
+                      <p className="text-[10px] text-gray-400 font-mono truncate">{contact.lineUserId}</p>
+                    </div>
+                    <button
+                      onClick={() => deleteLineContact.mutate({ name: contact.name })}
+                      className="p-1.5 rounded-lg active:bg-gray-100"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#9CA3AF" strokeWidth="1.8" strokeLinecap="round">
+                        <path d="M2 4h10M5 4V2.5h4V4M5.5 6.5v4M8.5 6.5v4M3 4l.7 7.5h6.6L11 4" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -11,16 +11,18 @@ import { query } from "./db.js";
 import { scanKnowledgeBase, isConnected } from "./onedrive.js";
 import { getKnowledgeContext as getDbKnowledgeContext } from "./knowledgeBase.js";
 import { pushNotification } from "./taskRouting.js";
+import { sendLineMessage, getLineContact } from "./lineIntegration.js";
 
 // 意圖類型
 export type IntentType =
-  | "build_team"      // 組建團隊
-  | "assign_task"     // 派發任務
-  | "check_progress"  // 查看進度
-  | "check_todo"      // 今日待辦
-  | "knowledge_query" // 查詢知識庫
-  | "handle_approval" // 處理審批任務
-  | "general_chat"    // 一般對話
+  | "build_team"        // 組建團隊
+  | "assign_task"       // 派發任務
+  | "check_progress"    // 查看進度
+  | "check_todo"        // 今日待辦
+  | "knowledge_query"   // 查詢知識庫
+  | "handle_approval"   // 處理審批任務
+  | "send_line_message" // 發送 LINE 訊息
+  | "general_chat"      // 一般對話
   | "unknown";
 
 // 知識庫上下文緩存
@@ -143,6 +145,8 @@ async function analyzeIntent(message: string): Promise<{
   intent: IntentType;
   taskDescription?: string;
   skills?: string[];
+  lineContactName?: string;
+  lineMessage?: string;
 }> {
   const client = createClient();
   
@@ -153,9 +157,11 @@ async function analyzeIntent(message: string): Promise<{
         role: "system",
         content: `你是一個意圖分析助手。分析用戶訊息並返回 JSON 格式：
 {
-  "intent": "build_team" | "assign_task" | "check_progress" | "check_todo" | "knowledge_query" | "handle_approval" | "general_chat",
+  "intent": "build_team" | "assign_task" | "check_progress" | "check_todo" | "knowledge_query" | "handle_approval" | "send_line_message" | "general_chat",
   "taskDescription": "任務描述（如果有）",
-  "skills": ["需要的技能1", "技能2"]
+  "skills": ["需要的技能1", "技能2"],
+  "lineContactName": "LINE 聯絡人姓名（如果意圖是 send_line_message）",
+  "lineMessage": "要發送的 LINE 訊息內容（如果意圖是 send_line_message）"
 }
 
 意圖說明：
@@ -165,6 +171,7 @@ async function analyzeIntent(message: string): Promise<{
 - check_todo: 用戶想看今日待辦、任務列表
 - knowledge_query: 用戶詢問公司資料、文件、政策、規定、SOP、產品資訊等
 - handle_approval: 用戶想審批任務、查看待審批項目、通過或駁回AI產出
+- send_line_message: 用戶想傳 LINE、發 LINE 訊息、LINE 通知某人、傳訊息給某人
 - general_chat: 一般對話、問答
 
 只返回 JSON，不要其他內容。`
@@ -400,7 +407,8 @@ export async function chat(
 ): Promise<ChiefOfStaffResponse> {
   try {
     // 1. 分析意圖
-    const { intent, taskDescription, skills } = await analyzeIntent(userMessage);
+    const intentResult = await analyzeIntent(userMessage);
+    const { intent, taskDescription, skills } = intentResult;
 
     let response: ChiefOfStaffResponse = {
       intent,
@@ -409,6 +417,40 @@ export async function chat(
 
     // 2. 根據意圖處理
     switch (intent) {
+      case "send_line_message": {
+        const contactName = intentResult.lineContactName;
+        const lineMsg = intentResult.lineMessage;
+
+        if (!contactName) {
+          response.message = "請告訴我要傳 LINE 給誰，例如：「傳 LINE 給王小明說...」";
+          break;
+        }
+
+        if (!lineMsg) {
+          response.message = `好的，請告訴我要傳給 ${contactName} 的訊息內容。`;
+          break;
+        }
+
+        const contact = getLineContact(contactName);
+        if (!contact) {
+          response.message = `請先在「聯絡人」頁面的 LINE 聯絡人設定中，加入 **${contactName}** 的 LINE User ID。`;
+          response.suggestedActions = [
+            { label: "前往聯絡人設定", action: "navigate_contacts" },
+          ];
+          break;
+        }
+
+        response.message = `正在發送 LINE 訊息給 ${contactName}...`;
+        const result = await sendLineMessage(contact.lineUserId, lineMsg);
+
+        if (result.success) {
+          response.message = `✅ 已傳送 LINE 訊息給 **${contactName}**\n\n訊息內容：「${lineMsg}」`;
+        } else {
+          response.message = `❌ 發送 LINE 訊息失敗：${result.error}\n\n請確認 LINE Channel Access Token 已正確設定，且 ${contactName} 的 LINE User ID 正確。`;
+        }
+        break;
+      }
+
       case "handle_approval": {
         const pendingList = getPendingApprovals("dev-user-001");
         const count = pendingList.length;

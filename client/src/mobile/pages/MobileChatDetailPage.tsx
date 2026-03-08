@@ -22,14 +22,14 @@ interface Message {
 }
 
 interface DeliverableData {
-  type: "presentation" | "pdf" | "markdown";
+  type: "presentation" | "pdf" | "markdown" | "excel";
   title: string;
   url?: string;
   status: "generating" | "ready";
   sourceContent?: string;
 }
 
-// ── 輸出格式選單（聊天版，僅 3 個）────────────────────────────
+// ── 輸出格式選單（聊天版）────────────────────────────────────
 const OUTPUT_FORMATS = [
   {
     id: "presentation",
@@ -43,12 +43,22 @@ const OUTPUT_FORMATS = [
   },
   {
     id: "pdf",
-    label: "PDF 報告",
+    label: "Word 報告",
     icon: (
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M10 2H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V6z" />
         <path d="M10 2v4h4" />
         <path d="M6 9h6M6 12h4" />
+      </svg>
+    ),
+  },
+  {
+    id: "excel",
+    label: "Excel 表格",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="2" width="14" height="14" rx="1.5" />
+        <path d="M2 7h14M2 11h14M7 2v14" />
       </svg>
     ),
   },
@@ -224,14 +234,23 @@ function MessageToolbar({
 function DeliverableCard({
   deliverable,
   agentName,
+  userRole = "",
 }: {
   deliverable: DeliverableData;
   agentName: string;
+  userRole?: string;
 }) {
   const [downloading, setDownloading] = useState(false);
 
+  const getApiFormat = () => {
+    if (deliverable.type === "presentation") return "pptx";
+    if (deliverable.type === "excel") return "xlsx";
+    return "docx";
+  };
+
   const handleDownload = async () => {
-    const format = deliverable.type === "presentation" ? "pptx" : "docx";
+    const format = getApiFormat();
+    const ext = format;
     setDownloading(true);
     try {
       const res = await fetch("/api/export/pptx", {
@@ -242,6 +261,7 @@ function DeliverableCard({
           content: deliverable.sourceContent || "",
           companyName: agentName,
           format,
+          userRole,
         }),
       });
       if (!res.ok) throw new Error("下載失敗");
@@ -249,7 +269,7 @@ function DeliverableCard({
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${deliverable.title}.${format}`;
+      a.download = `${deliverable.title}.${ext}`;
       a.click();
       URL.revokeObjectURL(url);
       toast.success("下載完成！");
@@ -270,15 +290,21 @@ function DeliverableCard({
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
       </svg>
     ),
+    excel: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="2" width="20" height="20" rx="2" /><path d="M2 9h20M2 15h20M9 2v20" />
+      </svg>
+    ),
     markdown: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" />
       </svg>
     ),
   };
-  const typeLabels = {
+  const typeLabels: Record<string, string> = {
     presentation: "簡報 PPT",
-    pdf: "PDF 報告",
+    pdf: "Word 報告",
+    excel: "Excel 表格",
     markdown: "Markdown 檔案",
   };
 
@@ -481,7 +507,8 @@ export default function MobileChatDetailPage() {
   const handleOutputFormat = (format: string, sourceContent = "") => {
     const labels: Record<string, string> = {
       presentation: "簡報 PPT",
-      pdf: "PDF 報告",
+      pdf: "Word 報告",
+      excel: "Excel 表格",
       markdown: "Markdown 檔案",
     };
     toast.success(`正在生成 ${labels[format]}...`);
@@ -619,7 +646,13 @@ export default function MobileChatDetailPage() {
               </div>
 
               {/* 交付物卡片 */}
-              {msg.deliverable && <DeliverableCard deliverable={msg.deliverable} agentName={agentName} />}
+              {msg.deliverable && (
+                <DeliverableCard
+                  deliverable={msg.deliverable}
+                  agentName={agentName}
+                  userRole={getAgentRole(conversationId)}
+                />
+              )}
 
               {/* AI 訊息下方智能功能列 */}
               {msg.role === "assistant" && !msg.isStreaming && (

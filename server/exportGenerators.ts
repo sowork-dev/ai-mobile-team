@@ -11,6 +11,7 @@ import {
   AlignmentType,
   Packer,
 } from "docx";
+import ExcelJS from "exceljs";
 
 // ── 顏色常數（pptxgenjs 不帶 #）─────────────────────────────────
 const NAVY = "1B2B4B";
@@ -29,7 +30,8 @@ interface SlideData {
 function parseMdToSlides(
   title: string,
   content: string,
-  companyName: string
+  companyName: string,
+  maxSlides = 12
 ): SlideData[] {
   const slides: SlideData[] = [];
 
@@ -114,19 +116,20 @@ function parseMdToSlides(
     );
   }
 
-  return slides.slice(0, 12);
+  return slides.slice(0, maxSlides);
 }
 
 // ── PPTX 生成（BCG/McKinsey 顧問風格）──────────────────────────
 export async function generatePPTX(
   title: string,
   content: string,
-  companyName: string
+  companyName: string,
+  options?: { maxSlides?: number }
 ): Promise<Buffer> {
   const pptx = new pptxgen();
   pptx.layout = "LAYOUT_WIDE"; // 13.33" × 7.5"
 
-  const slides = parseMdToSlides(title, content, companyName);
+  const slides = parseMdToSlides(title, content, companyName, options?.maxSlides ?? 12);
 
   for (const data of slides) {
     const slide = pptx.addSlide();
@@ -407,4 +410,177 @@ export async function generateDOCX(
   });
 
   return Packer.toBuffer(doc);
+}
+
+// ── XLSX 生成（財務/數據報表格式）───────────────────────────────
+
+interface XLSXRow {
+  headers: string[];
+  rows: string[][];
+  sheetName?: string;
+}
+
+/**
+ * 解析內容為試算表資料結構
+ * 支援 JSON 格式（headers + rows）及 Markdown 表格
+ */
+function parseContentToXLSX(title: string, content: string): XLSXRow[] {
+  // 嘗試解析 JSON 格式
+  try {
+    const parsed = JSON.parse(content);
+    if (parsed.headers && parsed.rows) {
+      return [{ headers: parsed.headers, rows: parsed.rows, sheetName: title }];
+    }
+    if (Array.isArray(parsed)) {
+      return parsed.map((sheet: XLSXRow, i: number) => ({
+        headers: sheet.headers || [],
+        rows: sheet.rows || [],
+        sheetName: sheet.sheetName || `Sheet${i + 1}`,
+      }));
+    }
+  } catch {
+    // 非 JSON，繼續解析 Markdown
+  }
+
+  // 解析 Markdown 表格或列表
+  const sheets: XLSXRow[] = [];
+  let current: XLSXRow | null = null;
+  let sectionTitle = title;
+
+  for (const raw of content.split("\n")) {
+    const line = raw.trim();
+    if (!line) continue;
+
+    if (line.startsWith("## ") || line.startsWith("# ")) {
+      if (current && (current.headers.length > 0 || current.rows.length > 0)) {
+        sheets.push(current);
+      }
+      sectionTitle = line.replace(/^#+\s+/, "");
+      current = { headers: [], rows: [], sheetName: sectionTitle.slice(0, 31) };
+    } else if (line.includes("|")) {
+      // Markdown 表格行
+      const cells = line.split("|").map(c => c.trim()).filter(Boolean);
+      if (cells.every(c => /^-+$/.test(c))) continue; // 分隔行
+      if (!current) current = { headers: [], rows: [], sheetName: sectionTitle.slice(0, 31) };
+      if (current.headers.length === 0) {
+        current.headers = cells;
+      } else {
+        current.rows.push(cells);
+      }
+    } else if (/^[-*]\s+/.test(line) || /^\d+\.\s+/.test(line)) {
+      if (!current) current = { headers: [], rows: [], sheetName: sectionTitle.slice(0, 31) };
+      if (current.headers.length === 0) {
+        current.headers = ["項目", "內容"];
+      }
+      const text = line.replace(/^[-*\d.]+\s+/, "").replace(/\*\*/g, "");
+      const [label, ...rest] = text.split("：");
+      current.rows.push([label, rest.join("：") || ""]);
+    }
+  }
+
+  if (current && (current.headers.length > 0 || current.rows.length > 0)) {
+    sheets.push(current);
+  }
+
+  // 若仍無結構，建立一個單欄摘要表
+  if (sheets.length === 0) {
+    const lines = content
+      .split("\n")
+      .map(l => l.trim())
+      .filter(l => l && !l.startsWith("#"));
+    sheets.push({
+      headers: ["內容摘要"],
+      rows: lines.slice(0, 500).map(l => [l.replace(/\*\*/g, "")]),
+      sheetName: title.slice(0, 31),
+    });
+  }
+
+  return sheets;
+}
+
+export async function generateXLSX(
+  title: string,
+  content: string,
+  companyName: string
+): Promise<Buffer> {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = companyName;
+  workbook.created = new Date();
+
+  const headerFill: ExcelJS.Fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: "FF1B2B4B" }, // NAVY
+  };
+  const headerFont: Partial<ExcelJS.Font> = {
+    name: "Arial",
+    size: 11,
+    bold: true,
+    color: { argb: "FFFFFFFF" },
+  };
+  const bodyFont: Partial<ExcelJS.Font> = {
+    name: "Arial",
+    size: 10,
+    color: { argb: "FF1C1C1C" },
+  };
+  const altFill: ExcelJS.Fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: "FFF5F7FA" },
+  };
+  const borderStyle: Partial<ExcelJS.Borders> = {
+    bottom: { style: "thin", color: { argb: "FFE5E7EB" } },
+  };
+
+  const sheets = parseContentToXLSX(title, content);
+
+  for (const sheetData of sheets) {
+    const sheetName = (sheetData.sheetName || "Sheet1").slice(0, 31);
+    const ws = workbook.addWorksheet(sheetName);
+
+    // 標題行
+    if (sheetData.headers.length > 0) {
+      const headerRow = ws.addRow(sheetData.headers);
+      headerRow.eachCell((cell) => {
+        cell.fill = headerFill;
+        cell.font = headerFont;
+        cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+        cell.border = borderStyle;
+      });
+      headerRow.height = 24;
+    }
+
+    // 資料行
+    sheetData.rows.forEach((row, idx) => {
+      const dataRow = ws.addRow(row);
+      dataRow.eachCell((cell) => {
+        cell.font = bodyFont;
+        cell.alignment = { vertical: "middle", wrapText: true };
+        cell.border = borderStyle;
+        if (idx % 2 === 1) cell.fill = altFill;
+      });
+      dataRow.height = 20;
+    });
+
+    // 自動調整欄寬
+    ws.columns.forEach((col) => {
+      let maxLen = 10;
+      col.eachCell?.({ includeEmpty: false }, (cell) => {
+        const len = String(cell.value ?? "").length;
+        if (len > maxLen) maxLen = len;
+      });
+      col.width = Math.min(maxLen + 4, 50);
+    });
+
+    // 凍結標題行
+    ws.views = [{ state: "frozen", ySplit: 1 }];
+  }
+
+  // 若沒有工作表（不應發生）補一個空的
+  if (workbook.worksheets.length === 0) {
+    workbook.addWorksheet("Sheet1");
+  }
+
+  const arrayBuffer = await workbook.xlsx.writeBuffer();
+  return Buffer.from(arrayBuffer);
 }
