@@ -8,6 +8,7 @@ import { Switch, Route, Redirect, useLocation } from "wouter";
 import { useAuth } from "../_core/hooks/useAuth";
 
 // Mobile Pages
+import MobileLandingPage from "./pages/MobileLandingPage";
 import MobileDemoPage from "./pages/MobileDemoPage";
 import MobileContactsPage from "./pages/MobileContactsPage";
 import MobileChatPage from "./pages/MobileChatPage";
@@ -56,14 +57,17 @@ export default function MobileApp() {
     );
   }
 
-  // 免登入演示頁面
+  // 檢查是否使用演示模式
+  const useDemoMode = typeof window !== "undefined" && localStorage.getItem("useDemoData") === "true";
+  
+  // 演示頁面路由
   if (location === "/demo") {
     return <MobileDemoPage />;
   }
 
-  if (!user) {
-    // 未登入時顯示演示頁面而不是登入頁
-    return <MobileDemoPage />;
+  // 未登入且非演示模式 → 顯示登入首頁
+  if (!user && !useDemoMode) {
+    return <MobileLandingPage />;
   }
 
   return (
