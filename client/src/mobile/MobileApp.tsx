@@ -67,9 +67,14 @@ export default function MobileApp() {
     return <MobileDemoPage />;
   }
 
-  // 未登入或沒有選擇公司 → 顯示登入頁（讓用戶選擇公司體驗或登入帳號）
-  if (!useDemoMode) {
+  // 未登入且非演示模式 → 顯示登入頁
+  if (!user && !useDemoMode) {
     return <MobileLoginPage />;
+  }
+
+  // 已登入但沒有選擇公司體驗 → 顯示公司選擇頁（登入頁的公司選擇模式）
+  if (user && !useDemoMode) {
+    return <MobileLoginPage showOnlyCompanySelector />;
   }
 
   return (

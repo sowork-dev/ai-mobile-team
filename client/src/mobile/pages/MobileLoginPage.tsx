@@ -44,7 +44,11 @@ const DEMO_PERSONAS = [
   },
 ];
 
-export default function MobileLoginPage() {
+interface MobileLoginPageProps {
+  showOnlyCompanySelector?: boolean;
+}
+
+export default function MobileLoginPage({ showOnlyCompanySelector = false }: MobileLoginPageProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -85,6 +89,39 @@ export default function MobileLoginPage() {
     localStorage.setItem("demoCompanySize", persona.size);
     window.location.href = "/app";
   };
+
+  // 已登入但沒選公司時，只顯示公司選擇器
+  if (showOnlyCompanySelector) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
+        <div className="mb-8 flex flex-col items-center">
+          <div className="w-16 h-16 bg-gray-900 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <path d="M8 20L16 8L24 20" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M10 17h12" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">選擇體驗身份</h1>
+          <p className="text-sm text-gray-500 mt-1">選擇一家公司開始體驗</p>
+        </div>
+        <div className="w-full max-w-sm space-y-3">
+          {DEMO_PERSONAS.map((persona) => (
+            <button
+              key={persona.id}
+              onClick={() => handleDemoSelect(persona)}
+              className="w-full flex items-center gap-3 p-4 border-2 border-gray-900 rounded-2xl hover:bg-gray-50 active:scale-95 transition-all shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+            >
+              <span className="text-2xl">{persona.icon}</span>
+              <div className="text-left">
+                <div className="font-semibold text-gray-900 text-sm">{persona.company}</div>
+                <div className="text-xs text-gray-500">{persona.industry} · {persona.size}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
