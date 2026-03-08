@@ -10,20 +10,8 @@ export default function MobileLandingPage() {
   const [showLogin, setShowLogin] = useState(false);
 
   const handleDemo = () => {
-    // 設定演示模式
-    localStorage.setItem("useDemoData", "true");
-    localStorage.setItem("companySettings", JSON.stringify({
-      companyName: "創智科技",
-      industry: "B2B SaaS",
-      companySize: "50-100人",
-      isDemo: true,
-    }));
-    localStorage.setItem("demoUser", JSON.stringify({
-      id: "demo-user",
-      name: "體驗用戶",
-      email: "demo@example.com",
-    }));
-    navigate("/app/chat");
+    // 導向 Persona 選擇頁面
+    navigate("/demo");
   };
 
   const handleLogin = () => {
@@ -114,25 +102,22 @@ export default function MobileLandingPage() {
           </button>
         </div>
 
-        {/* 演示公司預覽 */}
+        {/* 演示客戶預覽 */}
         <div className="mt-8 w-full max-w-sm">
-          <p className="text-white/40 text-xs mb-3">體驗模式包含</p>
-          <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                <span className="text-lg">🏢</span>
+          <p className="text-white/40 text-xs mb-3">可選擇的 Demo 客戶身份</p>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {[
+              { icon: "🏢", name: "廣告集團" },
+              { icon: "💄", name: "美妝集團" },
+              { icon: "📊", name: "管理顧問" },
+              { icon: "💰", name: "私募基金" },
+              { icon: "🚀", name: "科技公司" },
+            ].map((item, i) => (
+              <div key={i} className="flex-shrink-0 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-center">
+                <p className="text-lg mb-0.5">{item.icon}</p>
+                <p className="text-white/60 text-xs whitespace-nowrap">{item.name}</p>
               </div>
-              <div className="text-left">
-                <p className="text-white font-medium">創智科技</p>
-                <p className="text-white/50 text-xs">52 人 · 7 部門 · 14 AI 員工</p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-1">
-              <span className="text-xs bg-white/10 text-white/70 px-2 py-0.5 rounded">產品部</span>
-              <span className="text-xs bg-white/10 text-white/70 px-2 py-0.5 rounded">業務部</span>
-              <span className="text-xs bg-white/10 text-white/70 px-2 py-0.5 rounded">行銷部</span>
-              <span className="text-xs bg-white/10 text-white/70 px-2 py-0.5 rounded">+4</span>
-            </div>
+            ))}
           </div>
         </div>
       </div>
@@ -171,7 +156,7 @@ export default function MobileLandingPage() {
               <button
                 onClick={() => {
                   setShowLogin(false);
-                  handleDemo();
+                  navigate("/demo");
                 }}
                 className="w-full py-4 bg-orange-50 text-orange-600 rounded-xl font-medium"
               >

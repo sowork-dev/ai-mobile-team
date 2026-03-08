@@ -37,12 +37,13 @@ import {
   Task,
   ApprovalRecord,
   ApprovalStatus,
+  CompanyContext,
 } from "./chiefOfStaff.js";
 import { crawlWebsite, recommendAgentsForBrand, CrawlResult } from "./webCrawler.js";
 import * as onedrive from "./onedrive.js";
 import { executeAction, ActionType, ActionResult } from "./actionExecutor.js";
 import { generateProfessionalPPT, getManusTaskStatus, waitForTaskCompletion } from "./manus.js";
-import { DEMO_COMPANY, DEMO_DEPARTMENTS, DEMO_MEETINGS, DEMO_TASKS, DEMO_AGENTS, getAgentsByDepartment, getMeetingsByDepartment, getDemoTasks } from "./seedData.js";
+import { DEMO_COMPANY, DEMO_DEPARTMENTS, DEMO_MEETINGS, DEMO_TASKS, DEMO_AGENTS, getAgentsByDepartment, getMeetingsByDepartment, getDemoTasks, getAllPersonas, getDemoPersona } from "./seedData.js";
 
 const t = initTRPC.create({
   transformer: superjson,
@@ -545,9 +546,19 @@ const chiefOfStaffRouter = router({
         role: z.enum(["user", "assistant"]),
         content: z.string(),
       })).optional(),
+      companyContext: z.object({
+        company: z.string(),
+        industry: z.string(),
+        challenge: z.string(),
+        decisionMaker: z.string().optional(),
+      }).optional(),
     }))
     .mutation(async ({ input }) => {
-      const response = await chiefOfStaffChat(input.message, input.history);
+      const response = await chiefOfStaffChat(
+        input.message,
+        input.history,
+        input.companyContext as CompanyContext | undefined
+      );
       return response;
     }),
     
@@ -1008,6 +1019,14 @@ const demoRouter = router({
       }
       return DEMO_AGENTS;
     }),
+
+  // 獲取所有 Persona
+  personas: publicProcedure.query(() => getAllPersonas()),
+
+  // 獲取單個 Persona
+  persona: publicProcedure
+    .input(z.object({ personaId: z.string() }))
+    .query(({ input }) => getDemoPersona(input.personaId) ?? null),
 });
 
 // Main App Router

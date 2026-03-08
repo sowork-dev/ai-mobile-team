@@ -1,235 +1,270 @@
 /**
- * 免登入演示頁面 — 創智科技 (52人) 體驗
- * 讓用戶一進來就能看到 AI旗艦隊 的運作
+ * Demo 選擇頁面 — 5 大目標客戶 Persona
+ * 讓銷售/演示人員以特定客戶身份體驗平台
  */
 import { useState } from "react";
-import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 
 export default function MobileDemoPage() {
-  const [, navigate] = useLocation();
-  const [selectedDept, setSelectedDept] = useState<string | null>(null);
-  
-  // 獲取演示數據
-  const { data: company } = trpc.demo.company.useQuery();
-  const { data: departments } = trpc.demo.departments.useQuery();
-  const { data: tasks } = trpc.demo.tasks.useQuery({ filter: "all" });
-  const { data: agents } = trpc.demo.agents.useQuery(
-    selectedDept ? { departmentId: selectedDept } : undefined
-  );
-  const { data: meetings } = trpc.demo.meetings.useQuery(
-    selectedDept ? { departmentId: selectedDept } : undefined
-  );
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-4 sticky top-0 z-10">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-rose-500 flex items-center justify-center">
-              <span className="text-white text-lg">🚀</span>
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-gray-900">AI旗艦隊</h1>
-              <p className="text-xs text-gray-500">體驗模式</p>
-            </div>
-          </div>
-          <button
-            onClick={() => navigate("/app")}
-            className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium"
-          >
-            開始使用
-          </button>
-        </div>
+  const { data: personas, isLoading } = trpc.demo.personas.useQuery();
+
+  const selectedPersona = personas?.find(p => p.id === selectedId);
+
+  const handleSelectPersona = (personaId: string) => {
+    setSelectedId(personaId);
+  };
+
+  const handleEnterDemo = () => {
+    if (!selectedPersona) return;
+
+    // 儲存 demo 模式與選擇的 Persona
+    localStorage.setItem("useDemoData", "true");
+    localStorage.setItem("demoPersonaId", selectedPersona.id);
+    localStorage.setItem("companySettings", JSON.stringify({
+      companyName: selectedPersona.company,
+      industry: selectedPersona.industry,
+      companySize: `${selectedPersona.teamSize}人`,
+      challenge: selectedPersona.challenge,
+      decisionMaker: `${selectedPersona.decisionMaker.name}, ${selectedPersona.decisionMaker.role}`,
+      isDemo: true,
+    }));
+    localStorage.setItem("demoUser", JSON.stringify({
+      id: `demo-${selectedPersona.id}`,
+      name: selectedPersona.decisionMaker.name,
+      email: selectedPersona.decisionMaker.email,
+      role: selectedPersona.decisionMaker.role,
+    }));
+
+    // 進入主應用
+    window.location.href = "/app";
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
       </div>
+    );
+  }
 
-      {/* 公司概覽 */}
-      <div className="p-4">
-        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-5 text-white mb-4">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-              <span className="text-2xl">🏢</span>
-            </div>
-            <div>
-              <h2 className="text-xl font-bold">{company?.name || "創智科技"}</h2>
-              <p className="text-white/80 text-sm">{company?.nameEn || "InnoTech Solutions"}</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-3 mt-4">
-            <div className="bg-white/10 rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold">{company?.headcount || 52}</p>
-              <p className="text-xs text-white/70">員工人數</p>
-            </div>
-            <div className="bg-white/10 rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold">{departments?.length || 7}</p>
-              <p className="text-xs text-white/70">部門</p>
-            </div>
-            <div className="bg-white/10 rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold">{agents?.length || 14}</p>
-              <p className="text-xs text-white/70">AI 員工</p>
-            </div>
-          </div>
+  // 詳情視圖
+  if (selectedPersona) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex flex-col">
+        {/* Header */}
+        <div className="flex items-center gap-3 px-4 py-4">
+          <button
+            onClick={() => setSelectedId(null)}
+            className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-white"
+          >
+            ←
+          </button>
+          <span className="text-white font-medium">選擇體驗身份</span>
         </div>
 
-        {/* 部門列表 */}
-        <h3 className="text-sm font-medium text-gray-500 mb-3">選擇部門</h3>
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          {departments?.map((dept: any) => (
-            <button
-              key={dept.id}
-              onClick={() => setSelectedDept(selectedDept === dept.id ? null : dept.id)}
-              className={`p-4 rounded-xl text-left transition-all ${
-                selectedDept === dept.id
-                  ? "bg-orange-500 text-white shadow-lg"
-                  : "bg-white border border-gray-100 shadow-sm"
-              }`}
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xl">{dept.icon}</span>
-                <span className="font-medium">{dept.name}</span>
+        <div className="flex-1 overflow-y-auto px-4 pb-32">
+          {/* 公司資訊卡 */}
+          <div className={`bg-gradient-to-br ${selectedPersona.colorFrom} ${selectedPersona.colorTo} rounded-2xl p-5 mb-4`}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center text-3xl">
+                {selectedPersona.icon}
               </div>
-              <p className={`text-xs ${selectedDept === dept.id ? "text-white/80" : "text-gray-500"}`}>
-                {dept.headcount} 人
-              </p>
-            </button>
-          ))}
-        </div>
-
-        {/* 選中部門的詳情 */}
-        {selectedDept && (
-          <>
-            {/* AI 員工 */}
-            <h3 className="text-sm font-medium text-gray-500 mb-3">
-              {departments?.find((d: any) => d.id === selectedDept)?.name} AI 員工
-            </h3>
-            <div className="flex gap-3 overflow-x-auto pb-3 mb-6">
-              {agents?.map((agent: any) => (
-                <div
-                  key={agent.id}
-                  className="flex-shrink-0 w-24 bg-white rounded-xl p-3 text-center shadow-sm border border-gray-100"
-                >
-                  <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-gray-100 flex items-center justify-center text-2xl">
-                    {agent.avatar}
-                  </div>
-                  <p className="font-medium text-sm truncate">{agent.name}</p>
-                  <p className="text-xs text-gray-500 truncate">{agent.title}</p>
-                </div>
-              ))}
+              <div>
+                <h2 className="text-white text-xl font-bold">{selectedPersona.company}</h2>
+                <span className="text-white/70 text-sm">{selectedPersona.industry} · {selectedPersona.teamSize.toLocaleString()} 人</span>
+              </div>
             </div>
 
-            {/* 例行會議 */}
-            <h3 className="text-sm font-medium text-gray-500 mb-3">例行會議</h3>
-            <div className="space-y-3 mb-6">
-              {meetings?.map((meeting: any) => (
-                <div
-                  key={meeting.id}
-                  className="bg-white rounded-xl p-4 shadow-sm border border-gray-100"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium">{meeting.title}</h4>
-                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                      {meeting.schedule}
-                    </span>
+            {/* 決策者 */}
+            <div className="bg-white/15 rounded-xl p-3 mb-3">
+              <p className="text-white/60 text-xs mb-1">體驗身份</p>
+              <p className="text-white font-semibold">{selectedPersona.decisionMaker.name}</p>
+              <p className="text-white/80 text-sm">{selectedPersona.decisionMaker.role}</p>
+            </div>
+
+            {/* 挑戰 */}
+            <div className="bg-white/10 rounded-xl p-3 mb-3">
+              <p className="text-white/60 text-xs mb-1">核心挑戰</p>
+              <p className="text-white text-sm leading-relaxed">{selectedPersona.challenge}</p>
+            </div>
+
+            {/* 預期效益 */}
+            <div className="bg-white/10 rounded-xl p-3">
+              <p className="text-white/60 text-xs mb-1">預期效益</p>
+              <p className="text-white text-sm leading-relaxed">✅ {selectedPersona.expectedBenefit}</p>
+            </div>
+          </div>
+
+          {/* AI 團隊建議 */}
+          <h3 className="text-white/60 text-xs font-medium uppercase tracking-wide mb-3">建議 AI 團隊</h3>
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            {selectedPersona.recommendedAgents.map((agent, i) => (
+              <div key={i} className="bg-white/8 border border-white/10 rounded-xl p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xl">{agent.avatar}</span>
+                  <div>
+                    <p className="text-white text-sm font-medium leading-tight">{agent.name}</p>
+                    <p className="text-white/50 text-xs leading-tight">{agent.title}</p>
                   </div>
-                  <div className="flex flex-wrap gap-1">
-                    {meeting.outputs.map((output: string, i: number) => (
-                      <span
-                        key={i}
-                        className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded"
-                      >
-                        {output}
+                </div>
+                <p className="text-white/60 text-xs">{agent.reason}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* 典型任務範例 */}
+          <h3 className="text-white/60 text-xs font-medium uppercase tracking-wide mb-3">典型任務範例</h3>
+          <div className="space-y-2">
+            {selectedPersona.sampleTasks.map((task, i) => (
+              <div key={i} className="bg-white/8 border border-white/10 rounded-xl p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-white text-sm font-medium">{task.title}</p>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    task.status === "completed"
+                      ? "bg-green-500/20 text-green-400"
+                      : task.status === "in_progress"
+                      ? "bg-blue-500/20 text-blue-400"
+                      : "bg-white/10 text-white/50"
+                  }`}>
+                    {task.status === "completed" ? "✅ 完成" : task.status === "in_progress" ? "🔄 進行中" : "待啟動"}
+                  </span>
+                </div>
+                <p className="text-white/50 text-xs">{task.description}</p>
+                {task.outputs && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {task.outputs.map((o, j) => (
+                      <span key={j} className="text-xs bg-white/10 text-white/60 px-2 py-0.5 rounded">
+                        {o.type === "pdf" ? "📄" : o.type === "ppt" ? "📽️" : o.type === "xls" ? "📊" : "📝"} {o.name}
                       </span>
                     ))}
                   </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* 進行中的任務 */}
-        <h3 className="text-sm font-medium text-gray-500 mb-3">任務看板</h3>
-        <div className="space-y-3">
-          {tasks?.map((task: any) => (
-            <div
-              key={task.id}
-              className="bg-white rounded-xl p-4 shadow-sm border border-gray-100"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-medium">{task.title}</h4>
-                <span className={`text-xs px-2 py-1 rounded-full ${
-                  task.status === "completed"
-                    ? "bg-green-100 text-green-700"
-                    : task.status === "in_progress"
-                    ? "bg-blue-100 text-blue-700"
-                    : "bg-yellow-100 text-yellow-700"
-                }`}>
-                  {task.status === "completed" ? "✅ 已完成" 
-                    : task.status === "in_progress" ? "🔄 進行中" 
-                    : "👀 待審核"}
-                </span>
+                )}
               </div>
-              
-              {task.stages && (
-                <div className="flex gap-1 mb-2">
-                  {task.stages.map((stage: any, i: number) => (
-                    <div
-                      key={i}
-                      className={`h-1.5 flex-1 rounded-full ${
-                        stage.status === "completed"
-                          ? "bg-green-500"
-                          : stage.status === "in_progress"
-                          ? "bg-blue-500"
-                          : "bg-gray-200"
-                      }`}
-                    />
-                  ))}
-                </div>
-              )}
-              
-              {task.outputs && (
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {task.outputs.map((output: any, i: number) => (
-                    <span
-                      key={i}
-                      className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded flex items-center gap-1"
-                    >
-                      {output.type === "pdf" && "📄"}
-                      {output.type === "xls" && "📊"}
-                      {output.type === "ppt" && "📽️"}
-                      {output.type === "doc" && "📝"}
-                      {output.name}
-                    </span>
-                  ))}
-                </div>
-              )}
-              
-              <div className="flex items-center gap-2 mt-3">
-                <span className="text-xs text-gray-500">團隊：</span>
-                {task.assignedAgents?.map((agent: string, i: number) => (
-                  <span key={i} className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded">
-                    {agent}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
-        {/* CTA */}
-        <div className="mt-8 p-5 bg-gradient-to-br from-orange-500 to-rose-500 rounded-2xl text-white text-center">
-          <h3 className="text-lg font-bold mb-2">準備好了嗎？</h3>
-          <p className="text-sm text-white/80 mb-4">
-            讓 AI旗艦隊 為你的公司組建最強團隊
-          </p>
+        {/* 固定底部 CTA */}
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-slate-900/95 backdrop-blur border-t border-white/10">
           <button
-            onClick={() => navigate("/app")}
-            className="w-full py-3 bg-white text-orange-600 rounded-xl font-bold"
+            onClick={handleEnterDemo}
+            className={`w-full py-4 bg-gradient-to-r ${selectedPersona.colorFrom} ${selectedPersona.colorTo} text-white rounded-2xl font-bold text-base shadow-lg active:scale-[0.98] transition-transform`}
           >
-            免費開始使用
+            以 {selectedPersona.decisionMaker.name} 身份體驗
+          </button>
+          <p className="text-center text-white/30 text-xs mt-2">
+            {selectedPersona.budget} · 體驗模式，不需登入
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // 選擇列表視圖
+  return (
+    <div className="min-h-screen bg-slate-900 flex flex-col">
+      {/* Header */}
+      <div className="px-4 pt-6 pb-4">
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="9" stroke="white" strokeWidth="1.5"/>
+                <circle cx="12" cy="12" r="3" fill="white"/>
+                <path d="M12 3v4M12 17v4M3 12h4M17 12h4" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <span className="text-white font-bold">AI旗艦隊</span>
+          </div>
+          <button
+            onClick={() => window.location.href = "/api/auth/login"}
+            className="text-amber-400 text-sm font-medium"
+          >
+            登入 →
           </button>
         </div>
+        <div className="mt-5 mb-2">
+          <h1 className="text-2xl font-bold text-white">選擇體驗身份</h1>
+          <p className="text-white/50 text-sm mt-1">選擇最接近你的客戶類型，立即體驗</p>
+        </div>
+      </div>
+
+      {/* Persona 卡片列表 */}
+      <div className="flex-1 overflow-y-auto px-4 pb-8 space-y-3">
+        {personas?.map((persona) => (
+          <button
+            key={persona.id}
+            onClick={() => handleSelectPersona(persona.id)}
+            className="w-full text-left"
+          >
+            <div className={`bg-gradient-to-br ${persona.colorFrom} ${persona.colorTo} rounded-2xl p-4`}>
+              <div className="flex items-start gap-3">
+                {/* Icon */}
+                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">
+                  {persona.icon}
+                </div>
+
+                {/* 公司資訊 */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-white font-bold text-base leading-tight">{persona.company}</h3>
+                  </div>
+                  <span className="inline-block text-xs bg-white/20 text-white/90 px-2 py-0.5 rounded-full mb-2">
+                    {persona.industry} · {persona.teamSize.toLocaleString()} 人
+                  </span>
+
+                  {/* 挑戰 */}
+                  <p className="text-white/80 text-sm leading-snug mb-2">
+                    {persona.challenge}
+                  </p>
+
+                  {/* 效益 */}
+                  <div className="bg-white/15 rounded-lg px-3 py-1.5">
+                    <p className="text-white text-xs font-medium">✅ {persona.expectedBenefit}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* AI 團隊預覽 */}
+              <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-white/20">
+                <span className="text-white/50 text-xs">AI 團隊：</span>
+                {persona.recommendedAgents.slice(0, 3).map((agent, i) => (
+                  <span key={i} className="text-sm">{agent.avatar}</span>
+                ))}
+                {persona.recommendedAgents.length > 3 && (
+                  <span className="text-white/50 text-xs">+{persona.recommendedAgents.length - 3}</span>
+                )}
+                <span className="ml-auto text-white/70 text-sm">查看詳情 →</span>
+              </div>
+            </div>
+          </button>
+        ))}
+
+        {/* 分隔線 */}
+        <div className="flex items-center gap-3 py-2">
+          <div className="flex-1 h-px bg-white/10" />
+          <span className="text-white/30 text-xs">或</span>
+          <div className="flex-1 h-px bg-white/10" />
+        </div>
+
+        {/* 通用體驗入口 */}
+        <button
+          onClick={() => {
+            localStorage.setItem("useDemoData", "true");
+            localStorage.setItem("companySettings", JSON.stringify({
+              companyName: "創智科技",
+              industry: "B2B SaaS",
+              companySize: "50-100人",
+              isDemo: true,
+            }));
+            window.location.href = "/app";
+          }}
+          className="w-full py-4 bg-white/8 border border-white/15 rounded-2xl text-white/70 font-medium text-sm"
+        >
+          使用預設範例公司體驗
+        </button>
       </div>
     </div>
   );

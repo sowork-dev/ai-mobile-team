@@ -267,6 +267,14 @@ async function recommendAgents(
   }
 }
 
+// 公司背景上下文
+export interface CompanyContext {
+  company: string;
+  industry: string;
+  challenge: string;
+  decisionMaker?: string;
+}
+
 /**
  * 生成幕僚長回應
  */
@@ -276,6 +284,7 @@ async function generateResponse(
   context?: {
     recommendations?: AgentRecommendation[];
     taskDescription?: string;
+    companyContext?: CompanyContext;
   }
 ): Promise<string> {
   const client = createClient();
@@ -289,8 +298,20 @@ async function generateResponse(
 - 主動提供下一步建議
 - 使用繁體中文`;
 
+  // 根據公司背景客製化回應
+  if (context?.companyContext) {
+    const { company, industry, challenge, decisionMaker } = context.companyContext;
+    systemPrompt += `\n\n當前服務客戶：
+- 公司：${company}
+- 行業：${industry}
+- 核心挑戰：${challenge}
+${decisionMaker ? `- 決策者：${decisionMaker}` : ""}
+
+請使用${industry}行業的專業術語，針對上述挑戰提供具體建議。`;
+  }
+
   let contextInfo = "";
-  
+
   if (intent === "build_team" && context?.recommendations) {
     contextInfo = `\n\n已為用戶推薦了以下 AI 員工：
 ${context.recommendations.map(r => `- ${r.name}（${r.title}）：${r.reason}`).join("\n")}`;
@@ -347,7 +368,8 @@ ${knowledgeContext || "（知識庫尚未連接，請先連接 OneDrive）"}`;
  */
 export async function chat(
   userMessage: string,
-  conversationHistory?: { role: "user" | "assistant"; content: string }[]
+  conversationHistory?: { role: "user" | "assistant"; content: string }[],
+  companyContext?: CompanyContext
 ): Promise<ChiefOfStaffResponse> {
   try {
     // 1. 分析意圖
@@ -367,11 +389,12 @@ export async function chat(
           taskDescription || userMessage,
           skills
         );
-        
+
         response.recommendations = recommendations;
         response.message = await generateResponse(userMessage, intent, {
           recommendations,
           taskDescription,
+          companyContext,
         });
         
         // 建議操作
@@ -384,7 +407,7 @@ export async function chat(
       }
 
       case "check_progress": {
-        response.message = await generateResponse(userMessage, intent);
+        response.message = await generateResponse(userMessage, intent, { companyContext });
         response.suggestedActions = [
           { label: "查看所有進行中任務", action: "view_tasks", params: { status: "active" } },
           { label: "查看已完成任務", action: "view_tasks", params: { status: "completed" } },
@@ -393,7 +416,7 @@ export async function chat(
       }
 
       case "check_todo": {
-        response.message = await generateResponse(userMessage, intent);
+        response.message = await generateResponse(userMessage, intent, { companyContext });
         response.suggestedActions = [
           { label: "查看今日待辦", action: "view_todo" },
           { label: "新增任務", action: "create_task" },
@@ -413,7 +436,7 @@ export async function chat(
       }
 
       default: {
-        response.message = await generateResponse(userMessage, intent);
+        response.message = await generateResponse(userMessage, intent, { companyContext });
       }
     }
 
