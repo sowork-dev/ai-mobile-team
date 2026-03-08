@@ -13,7 +13,7 @@ export const locales = {
       tasks: "任務",
       profile: "我的",
     },
-    
+
     // Contacts Page
     contacts: {
       title: "聯絡人",
@@ -36,15 +36,31 @@ export const locales = {
       inviteBtn: "邀請",
       shareLink: "或分享邀請連結",
       copy: "複製",
+      executing: "執行中",
+      online: "在線",
+      l1Label: "L1 高管",
+      l2Label: "L2 專家",
+      l3Label: "L3 經理",
+      l4Label: "L4 執行",
+      l5Label: "L5 助理",
     },
-    
+
     // Chat Page
     chat: {
       title: "聊天",
       noMessages: "沒有對話",
       startNew: "開始新對話",
+      groups: "品牌群組",
+      direct: "私訊",
+      search: "搜尋...",
+      noGroups: "尚無品牌群組",
+      goToSettings: "前往企業設定建立",
+      tapToChat: "點擊開始對話",
+      noDirectMessages: "尚無私訊",
+      startConversation: "找 AI 員工開始對話",
+      now: "剛剛",
     },
-    
+
     // Assistant Page (幕僚長)
     assistant: {
       title: "幕僚長",
@@ -52,8 +68,30 @@ export const locales = {
       send: "發送",
       thinking: "思考中...",
       welcome: "您好！我是您的幕僚長，有什麼可以幫您的？",
+      knowledgeBase: "知識庫",
+      statusOnline: "在線",
+      todaySummary: "今日 AI 工作摘要",
+      tasksCompleted: "任務已完成",
+      timeSaved: "節省時間",
+      quickStart: "快速開始",
+      messagePlaceholder: "訊息",
+      recommendedTeam: "推薦團隊成員",
+      primaryTag: "主責",
+      noSlackNeeded: "不再需要",
+      firstTaskPrompt: "派發第一個任務，開始計算你節省的時間",
+      errorResponse: "抱歉，我暫時無法處理這個請求。請稍後再試。",
+      teamError: "抱歉，建立任務時發生錯誤。請稍後再試。",
+      defaultWelcome: "您好，我是您的幕僚長。\n\n我可以協助您：\n• 組建最佳團隊\n• 派發任務給 AI 同事\n• 追蹤專案進度\n• 提供決策建議\n\n請問今天有什麼需要我協助的？",
+      quickAction1: "組建團隊",
+      quickAction1Prompt: "我需要組建一個團隊來處理行銷專案",
+      quickAction2: "派發任務",
+      quickAction2Prompt: "我要派發一個任務",
+      quickAction3: "今日待辦",
+      quickAction3Prompt: "查看我今天的待辦事項",
+      quickAction4: "查看進度",
+      quickAction4Prompt: "查看目前任務的進度",
     },
-    
+
     // Tasks Page
     tasks: {
       title: "任務",
@@ -63,8 +101,24 @@ export const locales = {
       completed: "已完成",
       noTasks: "沒有任務",
       createTask: "建立任務",
+      createNew: "建立新任務",
+      filterByRole: "依角色篩選",
+      firstTaskHint: "點擊上方按鈕建立第一個任務",
+      unassigned: "未分配",
+      chooseTemplate: "選擇任務模板",
+      startTask: "開始任務",
+      backToTemplates: "返回選擇其他模板",
+      executionStages: "執行階段",
+      agentReady: "AI 員工已就緒",
+      approvalRequired: "需要審批",
+      rejectReason: "請輸入駁回原因（選填）",
+      confirmReject: "確認駁回",
+      approve: "✓ 通過",
+      reject: "✗ 駁回",
+      active: "進行中",
+      now: "剛剛",
     },
-    
+
     // Profile Page
     profile: {
       title: "我的",
@@ -73,7 +127,83 @@ export const locales = {
       logout: "登出",
       version: "版本",
     },
-    
+
+    // Login Page
+    login: {
+      selectIdentity: "選擇體驗身份",
+      selectCompany: "選擇一家公司開始體驗",
+      tagline: "你的 AI 行銷團隊",
+      googleLogin: "使用 Google 帳號登入",
+      nameLabel: "姓名",
+      namePlaceholder: "請輸入您的姓名",
+      emailLabel: "電子郵件",
+      passwordLabel: "密碼",
+      passwordPlaceholder: "請輸入密碼",
+      processing: "處理中...",
+      loginBtn: "登入",
+      registerBtn: "建立帳號",
+      noAccount: "還沒有帳號？",
+      signUp: "立即註冊",
+      hasAccount: "已有帳號？",
+      backToLogin: "返回登入",
+      or: "或",
+      demoLabel: "選擇公司身份，免帳號體驗",
+      nameRequired: "請輸入姓名",
+      operationFailed: "操作失敗，請重試",
+    },
+
+    // Task Detail Page
+    taskDetail: {
+      completed: "已完成",
+      download: "下載",
+      publish: "發布",
+      taskContent: "任務內容",
+      publishTitle: "發布 / 輸出",
+      canvaLabel: "Canva 設計",
+      canvaDesc: "匯出到 Canva 製作視覺",
+      invideoLabel: "InVideo 影片",
+      invideoDesc: "生成社群影片",
+      facebookLabel: "發布到 Facebook",
+      facebookDesc: "直接發布到粉絲專頁",
+      instagramLabel: "發布到 Instagram",
+      instagramDesc: "直接發布到 IG 帳號",
+      scheduleLabel: "排程發布",
+      scheduleDesc: "設定自動發布時間",
+      forwardLabel: "轉傳給同事",
+      forwardDesc: "分享給團隊成員",
+    },
+
+    // Company Settings Page
+    company: {
+      save: "儲存設定",
+      saving: "儲存中...",
+      saveSuccess: "儲存成功！",
+      disconnect: "斷開",
+      scanning: "掃描中",
+      scanKnowledge: "掃描知識庫",
+      authorizing: "取得授權中",
+      connectOnedrive: "連接 OneDrive",
+      notConnected: "尚未連接 OneDrive",
+      addBrand: "新增品牌",
+      noBrands: "尚未設定品牌",
+      addBrandHint: "點擊「自動抓取」或手動新增",
+      autoCreateGroups: "儲存後將為每個品牌自動建立群組",
+      fetchWebsite: "抓取",
+      fetchingWebsite: "抓取中",
+      companyNameLabel: "公司名稱",
+      industryLabel: "產業類別",
+      companySizeLabel: "公司規模",
+      addressLabel: "公司地址",
+      websiteLabel: "公司網站",
+      contactNameLabel: "聯絡人姓名",
+      contactPhoneLabel: "聯絡電話",
+      descriptionLabel: "公司簡介",
+      brandsLabel: "品牌與產品",
+      brandNamePlaceholder: "品牌名稱",
+      productsLabel: "產品（逗號分隔）",
+      fillRequired: "請填寫必填欄位",
+    },
+
     // Common
     common: {
       loading: "載入中...",
@@ -87,7 +217,7 @@ export const locales = {
       back: "返回",
     },
   },
-  
+
   en: {
     // Tab Bar
     tabs: {
@@ -97,7 +227,7 @@ export const locales = {
       tasks: "Tasks",
       profile: "Profile",
     },
-    
+
     // Contacts Page
     contacts: {
       title: "Contacts",
@@ -120,15 +250,31 @@ export const locales = {
       inviteBtn: "Invite",
       shareLink: "Or share invite link",
       copy: "Copy",
+      executing: "Executing",
+      online: "Online",
+      l1Label: "L1 Executive",
+      l2Label: "L2 Expert",
+      l3Label: "L3 Manager",
+      l4Label: "L4 Executor",
+      l5Label: "L5 Assistant",
     },
-    
+
     // Chat Page
     chat: {
       title: "Chat",
       noMessages: "No conversations",
       startNew: "Start new conversation",
+      groups: "Groups",
+      direct: "Direct",
+      search: "Search...",
+      noGroups: "No groups yet",
+      goToSettings: "Create in Company Settings",
+      tapToChat: "Tap to start chatting",
+      noDirectMessages: "No messages yet",
+      startConversation: "Start a conversation",
+      now: "Just now",
     },
-    
+
     // Assistant Page
     assistant: {
       title: "AI Assistant",
@@ -136,8 +282,30 @@ export const locales = {
       send: "Send",
       thinking: "Thinking...",
       welcome: "Hello! I'm your AI assistant. How can I help you?",
+      knowledgeBase: "Knowledge Base",
+      statusOnline: "Online",
+      todaySummary: "Today's AI Summary",
+      tasksCompleted: "Tasks Completed",
+      timeSaved: "Time Saved",
+      quickStart: "Quick Start",
+      messagePlaceholder: "Message",
+      recommendedTeam: "Recommended Team",
+      primaryTag: "Lead",
+      noSlackNeeded: "No longer needed",
+      firstTaskPrompt: "Assign your first task to start tracking time saved",
+      errorResponse: "Sorry, I'm unable to process this request. Please try again later.",
+      teamError: "Sorry, an error occurred creating the task. Please try again.",
+      defaultWelcome: "Hello, I'm your AI Chief of Staff.\n\nI can help you:\n• Build the best team\n• Assign tasks to AI colleagues\n• Track project progress\n• Provide strategic advice\n\nHow can I assist you today?",
+      quickAction1: "Build Team",
+      quickAction1Prompt: "I need to build a team to handle a marketing project",
+      quickAction2: "Assign Task",
+      quickAction2Prompt: "I want to assign a task",
+      quickAction3: "Today's Todos",
+      quickAction3Prompt: "Show me my todos for today",
+      quickAction4: "View Progress",
+      quickAction4Prompt: "Check the progress of current tasks",
     },
-    
+
     // Tasks Page
     tasks: {
       title: "Tasks",
@@ -147,8 +315,24 @@ export const locales = {
       completed: "Completed",
       noTasks: "No tasks",
       createTask: "Create Task",
+      createNew: "Create New Task",
+      filterByRole: "Filter by Role",
+      firstTaskHint: "Click the button above to create your first task",
+      unassigned: "Unassigned",
+      chooseTemplate: "Choose Template",
+      startTask: "Start Task",
+      backToTemplates: "Back to templates",
+      executionStages: "Execution Stages",
+      agentReady: "AI Agent Ready",
+      approvalRequired: "Approval Required",
+      rejectReason: "Rejection reason (optional)",
+      confirmReject: "Confirm Reject",
+      approve: "✓ Approve",
+      reject: "✗ Reject",
+      active: "Active",
+      now: "Just now",
     },
-    
+
     // Profile Page
     profile: {
       title: "Profile",
@@ -157,7 +341,83 @@ export const locales = {
       logout: "Logout",
       version: "Version",
     },
-    
+
+    // Login Page
+    login: {
+      selectIdentity: "Select Demo Profile",
+      selectCompany: "Select a company to start",
+      tagline: "Your AI Marketing Team",
+      googleLogin: "Sign in with Google",
+      nameLabel: "Name",
+      namePlaceholder: "Enter your name",
+      emailLabel: "Email",
+      passwordLabel: "Password",
+      passwordPlaceholder: "Enter your password",
+      processing: "Processing...",
+      loginBtn: "Sign In",
+      registerBtn: "Create Account",
+      noAccount: "Don't have an account?",
+      signUp: "Sign Up",
+      hasAccount: "Already have an account?",
+      backToLogin: "Back to Sign In",
+      or: "or",
+      demoLabel: "Try as a company, no account needed",
+      nameRequired: "Please enter your name",
+      operationFailed: "Operation failed, please try again",
+    },
+
+    // Task Detail Page
+    taskDetail: {
+      completed: "Completed",
+      download: "Download",
+      publish: "Publish",
+      taskContent: "Task Content",
+      publishTitle: "Publish / Export",
+      canvaLabel: "Canva Design",
+      canvaDesc: "Export to Canva for visuals",
+      invideoLabel: "InVideo",
+      invideoDesc: "Generate social videos",
+      facebookLabel: "Post to Facebook",
+      facebookDesc: "Post directly to your page",
+      instagramLabel: "Post to Instagram",
+      instagramDesc: "Post directly to your IG",
+      scheduleLabel: "Schedule Post",
+      scheduleDesc: "Set auto-publish time",
+      forwardLabel: "Forward to Colleagues",
+      forwardDesc: "Share with team members",
+    },
+
+    // Company Settings Page
+    company: {
+      save: "Save Settings",
+      saving: "Saving...",
+      saveSuccess: "Saved!",
+      disconnect: "Disconnect",
+      scanning: "Scanning",
+      scanKnowledge: "Scan Knowledge Base",
+      authorizing: "Authorizing...",
+      connectOnedrive: "Connect OneDrive",
+      notConnected: "OneDrive not connected",
+      addBrand: "Add Brand",
+      noBrands: "No brands configured",
+      addBrandHint: "Auto-fetch or add manually",
+      autoCreateGroups: "Groups will be auto-created for each brand on save",
+      fetchWebsite: "Fetch",
+      fetchingWebsite: "Fetching",
+      companyNameLabel: "Company Name",
+      industryLabel: "Industry",
+      companySizeLabel: "Company Size",
+      addressLabel: "Address",
+      websiteLabel: "Website",
+      contactNameLabel: "Contact Name",
+      contactPhoneLabel: "Phone",
+      descriptionLabel: "Company Description",
+      brandsLabel: "Brands & Products",
+      brandNamePlaceholder: "Brand name",
+      productsLabel: "Products (comma separated)",
+      fillRequired: "Please fill in required fields",
+    },
+
     // Common
     common: {
       loading: "Loading...",

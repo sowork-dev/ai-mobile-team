@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+import { useI18n } from "@/i18n";
 
 const MOCK_TASK_DETAIL = {
   id: "1",
@@ -53,98 +54,98 @@ const MOCK_TASK_DETAIL = {
   ],
 };
 
-// 發布選單選項
-const PUBLISH_OPTIONS = [
-  {
-    id: "canva",
-    label: "Canva 設計",
-    desc: "匯出到 Canva 製作視覺",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="2" width="16" height="16" rx="3" />
-        <path d="M7 10h6M10 7v6" />
-      </svg>
-    ),
-    color: "text-gray-700",
-    bg: "bg-gray-50",
-  },
-  {
-    id: "invideo",
-    label: "InVideo 影片",
-    desc: "生成社群影片",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M13 10L8 6v8l5-4z" />
-        <rect x="2" y="3" width="16" height="14" rx="2" />
-      </svg>
-    ),
-    color: "text-gray-700",
-    bg: "bg-gray-50",
-  },
-  {
-    id: "facebook",
-    label: "發布到 Facebook",
-    desc: "直接發布到粉絲專頁",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0z" />
-        <path d="M12 8h-2a1 1 0 0 0-1 1v2H7l.5 2.5H9V18h2.5v-4.5H14L13.5 11H12V9a1 1 0 0 1 1-1h1V8z" />
-      </svg>
-    ),
-    color: "text-gray-800",
-    bg: "bg-gray-50",
-  },
-  {
-    id: "instagram",
-    label: "發布到 Instagram",
-    desc: "直接發布到 IG 帳號",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="2" width="16" height="16" rx="4" />
-        <circle cx="10" cy="10" r="3.5" />
-        <circle cx="14.5" cy="5.5" r="0.5" fill="currentColor" />
-      </svg>
-    ),
-    color: "text-gray-700",
-    bg: "bg-gray-50",
-  },
-  {
-    id: "schedule",
-    label: "排程發布",
-    desc: "設定自動發布時間",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="10" cy="10" r="8" />
-        <path d="M10 5v5l3 3" />
-      </svg>
-    ),
-    color: "text-gray-700",
-    bg: "bg-gray-50",
-  },
-  {
-    id: "forward",
-    label: "轉傳給同事",
-    desc: "分享給團隊成員",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 12v3a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3" />
-        <path d="M10 3v9M6 7l4-4 4 4" />
-      </svg>
-    ),
-    color: "text-gray-600",
-    bg: "bg-gray-100",
-  },
-];
-
 export default function MobileTaskDetailPage() {
   const { taskId } = useParams<{ taskId: string }>();
   const [, navigate] = useLocation();
+  const { t } = useI18n();
   const [showPublish, setShowPublish] = useState(false);
   const task = MOCK_TASK_DETAIL;
 
+  const PUBLISH_OPTIONS = [
+    {
+      id: "canva",
+      label: t("taskDetail.canvaLabel"),
+      desc: t("taskDetail.canvaDesc"),
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="2" width="16" height="16" rx="3" />
+          <path d="M7 10h6M10 7v6" />
+        </svg>
+      ),
+      color: "text-gray-700",
+      bg: "bg-gray-50",
+    },
+    {
+      id: "invideo",
+      label: t("taskDetail.invideoLabel"),
+      desc: t("taskDetail.invideoDesc"),
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M13 10L8 6v8l5-4z" />
+          <rect x="2" y="3" width="16" height="14" rx="2" />
+        </svg>
+      ),
+      color: "text-gray-700",
+      bg: "bg-gray-50",
+    },
+    {
+      id: "facebook",
+      label: t("taskDetail.facebookLabel"),
+      desc: t("taskDetail.facebookDesc"),
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0z" />
+          <path d="M12 8h-2a1 1 0 0 0-1 1v2H7l.5 2.5H9V18h2.5v-4.5H14L13.5 11H12V9a1 1 0 0 1 1-1h1V8z" />
+        </svg>
+      ),
+      color: "text-gray-800",
+      bg: "bg-gray-50",
+    },
+    {
+      id: "instagram",
+      label: t("taskDetail.instagramLabel"),
+      desc: t("taskDetail.instagramDesc"),
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="2" width="16" height="16" rx="4" />
+          <circle cx="10" cy="10" r="3.5" />
+          <circle cx="14.5" cy="5.5" r="0.5" fill="currentColor" />
+        </svg>
+      ),
+      color: "text-gray-700",
+      bg: "bg-gray-50",
+    },
+    {
+      id: "schedule",
+      label: t("taskDetail.scheduleLabel"),
+      desc: t("taskDetail.scheduleDesc"),
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="10" cy="10" r="8" />
+          <path d="M10 5v5l3 3" />
+        </svg>
+      ),
+      color: "text-gray-700",
+      bg: "bg-gray-50",
+    },
+    {
+      id: "forward",
+      label: t("taskDetail.forwardLabel"),
+      desc: t("taskDetail.forwardDesc"),
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 12v3a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3" />
+          <path d="M10 3v9M6 7l4-4 4 4" />
+        </svg>
+      ),
+      color: "text-gray-600",
+      bg: "bg-gray-100",
+    },
+  ];
+
   const handlePublish = (optionId: string) => {
     const option = PUBLISH_OPTIONS.find(o => o.id === optionId);
-    toast.success(`正在連接 ${option?.label}...`);
+    toast.success(`Connecting to ${option?.label}...`);
     setShowPublish(false);
   };
 
@@ -171,7 +172,7 @@ export default function MobileTaskDetailPage() {
             <path d="M2 9v2a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V9" />
             <path d="M7 2v7M4 5l3-3 3 3" />
           </svg>
-          發布
+          {t("taskDetail.publish")}
         </button>
       </div>
 
@@ -191,7 +192,7 @@ export default function MobileTaskDetailPage() {
             </div>
             <div className="ml-auto flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-gray-500" />
-              <span className="text-xs text-gray-700 font-medium">已完成</span>
+              <span className="text-xs text-gray-700 font-medium">{t("taskDetail.completed")}</span>
             </div>
           </div>
 
@@ -211,7 +212,7 @@ export default function MobileTaskDetailPage() {
                   <p className="text-xs font-semibold text-gray-900 truncate">{d.title}</p>
                 </div>
                 <button className="text-xs text-gray-900 font-medium px-2.5 py-1.5 bg-gray-50 rounded-lg active:bg-gray-100">
-                  下載
+                  {t("taskDetail.download")}
                 </button>
               </div>
             ))}
@@ -220,7 +221,7 @@ export default function MobileTaskDetailPage() {
 
         {/* 任務內容（Markdown 渲染） */}
         <div className="bg-white mt-2 px-4 py-4">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">任務內容</p>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">{t("taskDetail.taskContent")}</p>
           <div className="prose prose-sm max-w-none text-gray-800">
             <ReactMarkdown
               components={{
@@ -249,7 +250,7 @@ export default function MobileTaskDetailPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-              <h3 className="font-semibold text-gray-900">發布 / 輸出</h3>
+              <h3 className="font-semibold text-gray-900">{t("taskDetail.publishTitle")}</h3>
               <button onClick={() => setShowPublish(false)} className="w-8 h-8 flex items-center justify-center rounded-full active:bg-gray-100">
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#6B7280" strokeWidth="2" strokeLinecap="round">
                   <path d="M4 4l10 10M14 4L4 14" />

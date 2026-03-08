@@ -10,6 +10,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import MobileHeader from "../components/MobileHeader";
 import { getDemoData } from "../demoData";
+import { useI18n } from "@/i18n";
 
 type ContactTab = "explore" | "my-team" | "invite";
 
@@ -30,6 +31,8 @@ const SKILL_COLORS = [
 ];
 
 function AgentCard({ agent, onChat, onAdd, onCardClick }: { agent: any; onChat: () => void; onAdd: () => void; onCardClick: () => void }) {
+  const { locale, t } = useI18n();
+
   // expertise 可能是陣列或需要解析
   const skills = Array.isArray(agent.expertise)
     ? agent.expertise.slice(0, 3)
@@ -37,15 +40,15 @@ function AgentCard({ agent, onChat, onAdd, onCardClick }: { agent: any; onChat: 
 
   // Layer 標籤
   const layerLabels: Record<number, string> = {
-    1: "L1 高管",
-    2: "L2 專家", 
-    3: "L3 經理",
-    4: "L4 執行",
-    5: "L5 助理",
+    1: t("contacts.l1Label"),
+    2: t("contacts.l2Label"),
+    3: t("contacts.l3Label"),
+    4: t("contacts.l4Label"),
+    5: t("contacts.l5Label"),
   };
 
   return (
-    <div 
+    <div
       className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden cursor-pointer active:bg-gray-50 transition-colors"
       onClick={onCardClick}
     >
@@ -99,13 +102,13 @@ function AgentCard({ agent, onChat, onAdd, onCardClick }: { agent: any; onChat: 
           onClick={(e) => { e.stopPropagation(); onChat(); }}
           className="flex-1 py-2 bg-gray-900 text-white rounded-xl text-xs font-semibold active:scale-95 transition-transform shadow-sm shadow-gray-100 cursor-pointer"
         >
-          開始對話
+          {t("contacts.startChat")}
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onAdd(); }}
           className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-xl text-xs font-semibold active:scale-95 transition-transform cursor-pointer"
         >
-          加入團隊
+          {t("contacts.addToTeam")}
         </button>
       </div>
     </div>
@@ -114,6 +117,7 @@ function AgentCard({ agent, onChat, onAdd, onCardClick }: { agent: any; onChat: 
 
 export default function MobileContactsPage() {
   const [, navigate] = useLocation();
+  const { locale, t } = useI18n();
   const demoPersonaId = localStorage.getItem("demoPersonaId");
   const demoTeamData = demoPersonaId ? getDemoData(demoPersonaId) : null;
   const [activeTab, setActiveTab] = useState<ContactTab>(demoPersonaId ? "my-team" : "explore");
@@ -126,7 +130,7 @@ export default function MobileContactsPage() {
     layer: selectedLayer ? parseInt(selectedLayer) : undefined,
     search: search || undefined,
   });
-  
+
   const agentsData = talentData?.talents || [];
 
   const filteredAgents = agentsData.filter((a: any) => {
@@ -140,16 +144,22 @@ export default function MobileContactsPage() {
   });
 
   const layers = [
-    { id: undefined, label: "全部" },
-    { id: "strategy", label: "策略" },
-    { id: "execution", label: "執行" },
-    { id: "training", label: "培訓" },
+    { id: undefined, label: t("contacts.all") },
+    { id: "strategy", label: t("contacts.strategy") },
+    { id: "execution", label: t("contacts.execution") },
+    { id: "training", label: t("contacts.training") },
+  ];
+
+  const tabs = [
+    { id: "explore", label: t("contacts.explore") },
+    { id: "my-team", label: t("contacts.myTeam") },
+    { id: "invite", label: t("contacts.invite") },
   ];
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
       <MobileHeader
-        title="聯絡人"
+        title={t("contacts.title")}
         rightAction={
           <button className="w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#111827" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -163,11 +173,7 @@ export default function MobileContactsPage() {
       {/* Tab 切換 */}
       <div className="flex-shrink-0 bg-white border-b border-gray-100 px-4">
         <div className="flex gap-0">
-          {[
-            { id: "explore", label: "探索" },
-            { id: "my-team", label: "我的團隊" },
-            { id: "invite", label: "邀請同事" },
-          ].map((tab) => (
+          {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as ContactTab)}
@@ -197,7 +203,7 @@ export default function MobileContactsPage() {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="搜尋 AI 員工..."
+                placeholder={t("contacts.search")}
                 className="w-full pl-9 pr-4 py-2 bg-gray-100 rounded-xl text-sm focus:outline-none"
               />
             </div>
@@ -226,7 +232,7 @@ export default function MobileContactsPage() {
               ))
             ) : filteredAgents.length === 0 ? (
               <div className="text-center py-12 text-gray-400">
-                <p className="text-sm">找不到符合條件的 AI 員工</p>
+                <p className="text-sm">{t("contacts.noResults")}</p>
               </div>
             ) : (
               filteredAgents.map((agent: any) => (
@@ -236,8 +242,11 @@ export default function MobileContactsPage() {
                   onCardClick={() => navigate(`/agent/${agent.slug || agent.id}`)}
                   onChat={() => navigate(`/chat/${agent.slug || agent.id}`)}
                   onAdd={() => {
-                    // TODO: 加入我的團隊
-                    alert(`已將 ${agent.name} 加入您的團隊！`);
+                    alert(
+                      locale === "zh"
+                        ? `已將 ${agent.name} 加入您的團隊！`
+                        : `Added ${agent.name} to your team!`
+                    );
                   }}
                 />
               ))
@@ -256,40 +265,43 @@ export default function MobileContactsPage() {
               const avatarContent = isDemoAgent ? (member as any).avatar : (member as any).avatar;
               const avatarBg = isDemoAgent ? "from-gray-700 to-gray-900" : (member as any).avatarBg || "from-gray-700 to-gray-900";
               return (
-              <button
-                key={member.id}
-                onClick={() => navigate(`/chat/${member.id}`)}
-                className="w-full flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5 border border-gray-100 shadow-sm active:bg-gray-50 transition-colors"
-              >
-                <div className="relative">
-                  <div
-                    className={`w-11 h-11 rounded-full bg-gradient-to-br ${avatarBg} flex items-center justify-center text-white font-bold text-sm`}
-                  >
-                    {avatarContent}
+                <button
+                  key={member.id}
+                  onClick={() => navigate(`/chat/${member.id}`)}
+                  className="w-full flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5 border border-gray-100 shadow-sm active:bg-gray-50 transition-colors"
+                >
+                  <div className="relative">
+                    <div
+                      className={`w-11 h-11 rounded-full bg-gradient-to-br ${avatarBg} flex items-center justify-center text-white font-bold text-sm`}
+                    >
+                      {avatarContent}
+                    </div>
+                    {isOnline && (
+                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-gray-700 rounded-full border-2 border-white" />
+                    )}
+                    {isDemoAgent && (member as any).status === "executing" && (
+                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#E8611A] rounded-full border-2 border-white animate-pulse" />
+                    )}
                   </div>
-                  {isOnline && (
-                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-gray-700 rounded-full border-2 border-white" />
-                  )}
-                  {isDemoAgent && (member as any).status === "executing" && (
-                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#E8611A] rounded-full border-2 border-white animate-pulse" />
-                  )}
-                </div>
-                <div className="flex-1 text-left">
-                  <div className="flex items-center gap-1.5">
-                    <p className="font-semibold text-gray-900 text-sm">{member.name}</p>
-                    <span className="text-[10px] bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded-full font-medium">AI</span>
+                  <div className="flex-1 text-left">
+                    <div className="flex items-center gap-1.5">
+                      <p className="font-semibold text-gray-900 text-sm">{member.name}</p>
+                      <span className="text-[10px] bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded-full font-medium">AI</span>
+                    </div>
+                    <p className="text-xs text-gray-500">{member.title}</p>
+                    {isDemoAgent && (
+                      <p className="text-[10px] text-gray-400 mt-0.5">
+                        {(member as any).status === "executing"
+                          ? `⚡ ${t("contacts.executing")}`
+                          : `● ${t("contacts.online")}`
+                        }
+                      </p>
+                    )}
                   </div>
-                  <p className="text-xs text-gray-500">{member.title}</p>
-                  {isDemoAgent && (
-                    <p className="text-[10px] text-gray-400 mt-0.5">
-                      {(member as any).status === "executing" ? "⚡ 執行中" : "● 在線"}
-                    </p>
-                  )}
-                </div>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#D1D5DB" strokeWidth="2" strokeLinecap="round">
-                  <path d="M6 4l4 4-4 4" />
-                </svg>
-              </button>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#D1D5DB" strokeWidth="2" strokeLinecap="round">
+                    <path d="M6 4l4 4-4 4" />
+                  </svg>
+                </button>
               );
             })}
 
@@ -304,8 +316,8 @@ export default function MobileContactsPage() {
                 </svg>
               </div>
               <div className="flex-1 text-left">
-                <p className="font-semibold text-gray-800 text-sm">建立工作群組</p>
-                <p className="text-xs text-gray-700">將 AI 員工組成專屬團隊</p>
+                <p className="font-semibold text-gray-800 text-sm">{t("contacts.createGroup")}</p>
+                <p className="text-xs text-gray-700">{t("contacts.createGroupDesc")}</p>
               </div>
             </button>
           </div>
@@ -323,29 +335,29 @@ export default function MobileContactsPage() {
                 <path d="M22 11v6M25 14h-6" />
               </svg>
             </div>
-            <h3 className="font-semibold text-gray-900 mb-1">邀請真實同事</h3>
-            <p className="text-sm text-gray-500 mb-5">邀請您的同事加入 SoWork AI Team，一起協作</p>
+            <h3 className="font-semibold text-gray-900 mb-1">{t("contacts.inviteTitle")}</h3>
+            <p className="text-sm text-gray-500 mb-5">{t("contacts.inviteDesc")}</p>
             <div className="flex gap-2">
               <input
                 type="email"
-                placeholder="輸入同事的電子郵件"
+                placeholder={t("contacts.emailPlaceholder")}
                 className="flex-1 px-4 py-2.5 bg-gray-100 rounded-xl text-sm focus:outline-none"
               />
               <button className="px-4 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold active:scale-95 transition-transform">
-                邀請
+                {t("contacts.inviteBtn")}
               </button>
             </div>
           </div>
 
           {/* 分享連結 */}
           <div className="mt-3 bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-            <p className="text-sm font-semibold text-gray-900 mb-3">或分享邀請連結</p>
+            <p className="text-sm font-semibold text-gray-900 mb-3">{t("contacts.shareLink")}</p>
             <div className="flex gap-2">
               <div className="flex-1 bg-gray-100 rounded-xl px-3 py-2.5 text-xs text-gray-500 truncate">
                 https://app.sowork.ai/invite/abc123
               </div>
               <button className="px-3 py-2.5 bg-gray-100 rounded-xl text-xs font-medium text-gray-700 active:bg-gray-200">
-                複製
+                {t("contacts.copy")}
               </button>
             </div>
           </div>

@@ -1,7 +1,7 @@
 /**
  * 幕僚長頁面 - AI 幕僚長主介面
  * 這是用戶與幕僚長對話的主要入口
- * 
+ *
  * UI 設計規範：
  * - Apple SF Symbols 風格圖標
  * - 品牌色: #E8611A (橘色)
@@ -11,6 +11,7 @@ import { useState, useRef, useEffect } from "react";
 import MobileHeader from "../components/MobileHeader";
 import { trpc } from "@/lib/trpc";
 import { getDemoData } from "../demoData";
+import { useI18n } from "@/i18n";
 
 // 推薦的 AI 員工
 interface AgentRecommendation {
@@ -40,6 +41,7 @@ interface Message {
 
 export default function MobileAssistantPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { locale, t } = useI18n();
 
   const demoPersonaId = localStorage.getItem("demoPersonaId");
   const demoAssistant = demoPersonaId ? getDemoData(demoPersonaId) : null;
@@ -52,14 +54,11 @@ export default function MobileAssistantPage() {
   const completedCount = demoAssistant?.assistantContext.completedToday ?? (completedTasks?.length ?? 0);
   const timeSavedHours = demoAssistant?.assistantContext.timeSavedHours ?? (completedCount * 2);
 
-  const defaultWelcome =
-    "您好，我是您的幕僚長。\n\n我可以協助您：\n• 組建最佳團隊\n• 派發任務給 AI 同事\n• 追蹤專案進度\n• 提供決策建議\n\n請問今天有什麼需要我協助的？";
-
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
       role: "assistant",
-      content: demoAssistant?.assistantContext.welcomeMessage ?? defaultWelcome,
+      content: demoAssistant?.assistantContext.welcomeMessage ?? t("assistant.defaultWelcome"),
       timestamp: new Date(),
     },
   ]);
@@ -116,7 +115,7 @@ export default function MobileAssistantPage() {
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
-      
+
       if (response.recommendations) {
         setSelectedAgents(response.recommendations.map(r => r.id));
       }
@@ -126,7 +125,7 @@ export default function MobileAssistantPage() {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "抱歉，我暫時無法處理這個請求。請稍後再試。",
+        content: t("assistant.errorResponse"),
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -140,25 +139,23 @@ export default function MobileAssistantPage() {
     if (action.action === "confirm_team" && selectedAgents.length > 0) {
       setIsLoading(true);
       try {
-        // 從最近的用戶消息提取任務描述
         const userMessages = messages.filter(m => m.role === "user");
         const lastUserMessage = userMessages[userMessages.length - 1]?.content || "";
-        
+
         const result = await confirmTeamMutation.mutateAsync({
           agentIds: selectedAgents,
-          taskTitle: lastUserMessage.slice(0, 30) || "新任務",
+          taskTitle: lastUserMessage.slice(0, 30) || (locale === "zh" ? "新任務" : "New Task"),
           taskDescription: lastUserMessage,
         });
-        
-        // 顯示成功消息，並添加跳轉按鈕
+
         const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
           content: result.message,
           timestamp: new Date(),
           suggestedActions: [
-            { label: "查看任務詳情", action: "view_task", params: { taskId: result.taskId } },
-            { label: "繼續對話", action: "continue" },
+            { label: locale === "zh" ? "查看任務詳情" : "View Task", action: "view_task", params: { taskId: result.taskId } },
+            { label: locale === "zh" ? "繼續對話" : "Continue", action: "continue" },
           ],
         };
         setMessages((prev) => [...prev, assistantMessage]);
@@ -168,7 +165,7 @@ export default function MobileAssistantPage() {
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content: "抱歉，建立任務時發生錯誤。請稍後再試。",
+          content: t("assistant.teamError"),
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, errorMessage]);
@@ -176,10 +173,9 @@ export default function MobileAssistantPage() {
         setIsLoading(false);
       }
     } else if (action.action === "view_task" && action.params?.taskId) {
-      // 跳轉到任務頁面
       window.location.href = `/app/tasks/${action.params.taskId}`;
     } else if (action.action === "change_team") {
-      handleSend("請推薦其他人選");
+      handleSend(locale === "zh" ? "請推薦其他人選" : "Please recommend other candidates");
     } else if (action.action === "continue") {
       // 不做任何事，讓用戶繼續輸入
     } else {
@@ -189,18 +185,18 @@ export default function MobileAssistantPage() {
 
   // 切換選擇 AI 員工
   const toggleAgentSelection = (id: number) => {
-    setSelectedAgents(prev => 
-      prev.includes(id) 
+    setSelectedAgents(prev =>
+      prev.includes(id)
         ? prev.filter(a => a !== id)
         : [...prev, id]
     );
   };
 
   const defaultQuickActionDefs = [
-    { label: "組建團隊", prompt: "我需要組建一個團隊來處理行銷專案" },
-    { label: "派發任務", prompt: "我要派發一個任務" },
-    { label: "今日待辦", prompt: "查看我今天的待辦事項" },
-    { label: "查看進度", prompt: "查看目前任務的進度" },
+    { label: t("assistant.quickAction1"), prompt: t("assistant.quickAction1Prompt") },
+    { label: t("assistant.quickAction2"), prompt: t("assistant.quickAction2Prompt") },
+    { label: t("assistant.quickAction3"), prompt: t("assistant.quickAction3Prompt") },
+    { label: t("assistant.quickAction4"), prompt: t("assistant.quickAction4Prompt") },
   ];
 
   const quickActionDefs = demoAssistant?.assistantContext.quickActions ?? defaultQuickActionDefs;
@@ -211,7 +207,6 @@ export default function MobileAssistantPage() {
     </svg>
   );
 
-  // 快速操作按鈕 - Apple SF Symbols 風格（單色、克制）
   const quickActions = quickActionDefs.map((qa, i) => ({
     label: qa.label,
     prompt: qa.prompt,
@@ -233,55 +228,50 @@ export default function MobileAssistantPage() {
 
   return (
     <div className="flex flex-col h-full bg-white">
-      {/* Header - Apple 風格（簡潔、克制） */}
+      {/* Header */}
       <div className="flex-shrink-0 bg-white/95 backdrop-blur-lg border-b border-gray-200/60 px-4 py-3 sticky top-0 z-10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            {/* 小型品牌圖標 - 只有這裡用橘色 */}
             <div className="w-8 h-8 rounded-lg bg-[#E8611A] flex items-center justify-center">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
                 <circle cx="12" cy="8" r="3.5" />
                 <path d="M5 20c0-3.5 3.5-5.5 7-5.5s7 2 7 5.5" />
               </svg>
             </div>
-            <span className="text-base font-medium text-[#1C1C1E]">幕僚長</span>
+            <span className="text-base font-medium text-[#1C1C1E]">{t("assistant.title")}</span>
           </div>
-          {/* 右側按鈕組 */}
           <div className="flex items-center gap-3">
-            {/* 知識庫按鈕 */}
-            <button 
+            <button
               onClick={() => window.location.href = "/app/company-settings"}
               className="flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 rounded-lg active:bg-blue-100 transition-colors"
-              title="連接知識庫"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 19.5A2.5 2.5 0 0 1 1.5 17V4.5A2.5 2.5 0 0 1 4 2h8.5L17 6.5V17a2.5 2.5 0 0 1-2.5 2.5H4z" transform="scale(1.2) translate(-1,-1)" />
                 <path d="M12 2v5h5" transform="scale(1.2) translate(-1,-1)" />
               </svg>
-              <span className="text-xs text-blue-600 font-medium">知識庫</span>
+              <span className="text-xs text-blue-600 font-medium">{t("assistant.knowledgeBase")}</span>
             </button>
-            {/* 狀態 - 低調的灰色 */}
             <div className="flex items-center gap-1">
               <div className="w-1.5 h-1.5 rounded-full bg-[#34C759]" />
-              <span className="text-xs text-[#8E8E93]">在線</span>
+              <span className="text-xs text-[#8E8E93]">{t("assistant.statusOnline")}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 今日 AI 工作摘要 — ROI Widget */}
+      {/* 今日 AI 工作摘要 */}
       {messages.length <= 1 && (
         <div className="flex-shrink-0 mx-4 mt-4 mb-1 bg-gradient-to-r from-[#1C1C1E] to-[#3A3A3C] rounded-2xl p-4">
-          <p className="text-[11px] text-white/50 mb-2 tracking-wide uppercase">今日 AI 工作摘要</p>
+          <p className="text-[11px] text-white/50 mb-2 tracking-wide uppercase">{t("assistant.todaySummary")}</p>
           <div className="flex items-center gap-4">
             <div className="flex-1">
               <p className="text-2xl font-bold text-white">{completedCount}</p>
-              <p className="text-[12px] text-white/60 mt-0.5">任務已完成</p>
+              <p className="text-[12px] text-white/60 mt-0.5">{t("assistant.tasksCompleted")}</p>
             </div>
             <div className="w-px h-10 bg-white/20" />
             <div className="flex-1">
               <p className="text-2xl font-bold text-[#34C759]">{timeSavedHours}h</p>
-              <p className="text-[12px] text-white/60 mt-0.5">節省時間</p>
+              <p className="text-[12px] text-white/60 mt-0.5">{t("assistant.timeSaved")}</p>
             </div>
             <div className="w-px h-10 bg-white/20" />
             <div className="flex-1 text-right">
@@ -291,19 +281,19 @@ export default function MobileAssistantPage() {
                 </svg>
                 <p className="text-[12px] text-[#30D158] font-medium">Slack</p>
               </div>
-              <p className="text-[11px] text-white/40 mt-0.5">不再需要</p>
+              <p className="text-[11px] text-white/40 mt-0.5">{t("assistant.noSlackNeeded")}</p>
             </div>
           </div>
           {completedCount === 0 && (
-            <p className="text-[11px] text-white/40 mt-2">派發第一個任務，開始計算你節省的時間</p>
+            <p className="text-[11px] text-white/40 mt-2">{t("assistant.firstTaskPrompt")}</p>
           )}
         </div>
       )}
 
-      {/* 快速操作區 - Apple 風格（單色、簡潔） */}
+      {/* 快速操作區 */}
       {messages.length <= 1 && (
         <div className="flex-shrink-0 px-4 py-5">
-          <p className="text-xs text-[#8E8E93] mb-3 tracking-wide">快速開始</p>
+          <p className="text-xs text-[#8E8E93] mb-3 tracking-wide">{t("assistant.quickStart")}</p>
           <div className="grid grid-cols-2 gap-3">
             {quickActions.map((action) => (
               <button
@@ -319,12 +309,11 @@ export default function MobileAssistantPage() {
         </div>
       )}
 
-      {/* 對話區域 - Apple iMessage 風格 */}
+      {/* 對話區域 */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
         {messages.map((msg) => (
           <div key={msg.id} className="space-y-2">
             <div className={`flex gap-2.5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-              {/* 幕僚長頭像 - 小型、低調 */}
               {msg.role === "assistant" && (
                 <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#E8611A] flex items-center justify-center">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
@@ -348,7 +337,7 @@ export default function MobileAssistantPage() {
                     msg.role === "user" ? "text-white/60" : "text-[#8E8E93]"
                   }`}
                 >
-                  {msg.timestamp.toLocaleTimeString("zh-TW", {
+                  {msg.timestamp.toLocaleTimeString(locale === "zh" ? "zh-TW" : "en-US", {
                     hour: "2-digit",
                     minute: "2-digit",
                   })}
@@ -356,14 +345,14 @@ export default function MobileAssistantPage() {
               </div>
             </div>
 
-            {/* AI 員工推薦卡片 - Apple 風格 */}
+            {/* AI 員工推薦卡片 */}
             {msg.recommendations && msg.recommendations.length > 0 && (
               <div className="ml-9 space-y-2">
                 <p className="text-xs text-[#8E8E93] flex items-center gap-1.5">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
                   </svg>
-                  推薦團隊成員
+                  {t("assistant.recommendedTeam")}
                 </p>
                 {msg.recommendations.map((agent) => (
                   <button
@@ -375,7 +364,6 @@ export default function MobileAssistantPage() {
                         : "bg-[#F2F2F7] text-[#1C1C1E]"
                     }`}
                   >
-                    {/* 頭像 */}
                     <div className="w-10 h-10 rounded-full flex items-center justify-center text-base font-medium bg-white/20 overflow-hidden">
                       {agent.avatar ? (
                         <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover" />
@@ -385,17 +373,16 @@ export default function MobileAssistantPage() {
                         </span>
                       )}
                     </div>
-                    {/* 資訊 */}
                     <div className="flex-1 text-left min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span className="font-medium text-sm truncate">{agent.name}</span>
                         {agent.role === "primary" && (
                           <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                            selectedAgents.includes(agent.id) 
-                              ? "bg-white/20 text-white" 
+                            selectedAgents.includes(agent.id)
+                              ? "bg-white/20 text-white"
                               : "bg-[#E8611A]/10 text-[#E8611A]"
                           }`}>
-                            主責
+                            {t("assistant.primaryTag")}
                           </span>
                         )}
                       </div>
@@ -403,10 +390,9 @@ export default function MobileAssistantPage() {
                         {agent.title}
                       </p>
                     </div>
-                    {/* 選中標記 */}
                     <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                      selectedAgents.includes(agent.id) 
-                        ? "border-white bg-white" 
+                      selectedAgents.includes(agent.id)
+                        ? "border-white bg-white"
                         : "border-[#C7C7CC]"
                     }`}>
                       {selectedAgents.includes(agent.id) && (
@@ -420,7 +406,7 @@ export default function MobileAssistantPage() {
               </div>
             )}
 
-            {/* 建議操作按鈕 - Apple 風格 */}
+            {/* 建議操作按鈕 */}
             {msg.suggestedActions && msg.suggestedActions.length > 0 && (
               <div className="ml-9 flex flex-wrap gap-2">
                 {msg.suggestedActions.map((action, idx) => (
@@ -441,7 +427,7 @@ export default function MobileAssistantPage() {
           </div>
         ))}
 
-        {/* Loading 動畫 - Apple 風格 */}
+        {/* Loading 動畫 */}
         {isLoading && (
           <div className="flex gap-2.5 justify-start">
             <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#E8611A] flex items-center justify-center">
@@ -459,11 +445,11 @@ export default function MobileAssistantPage() {
             </div>
           </div>
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
 
-      {/* 輸入區域 - Apple iMessage 風格 */}
+      {/* 輸入區域 */}
       <div className="flex-shrink-0 px-4 py-3 bg-white border-t border-[#C6C6C8]">
         <div className="flex items-center gap-2">
           <input
@@ -471,7 +457,7 @@ export default function MobileAssistantPage() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="訊息"
+            placeholder={t("assistant.messagePlaceholder")}
             className="flex-1 px-4 py-2 bg-[#F2F2F7] rounded-full text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30 placeholder:text-[#8E8E93]"
           />
           <button

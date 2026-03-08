@@ -378,6 +378,34 @@ export function markNotificationRead(notificationId: string): void {
   }
 }
 
+// 直接推送通知（供 chiefOfStaff 等模組使用）
+export function pushNotification(params: {
+  type: NotificationType;
+  title: string;
+  message: string;
+  taskId: string;
+  taskTitle: string;
+  fromAI?: { id: number; name: string };
+  toUserId?: string;
+  actionRequired: boolean;
+  actionUrl?: string;
+}): void {
+  const notification: Notification = {
+    id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    type: params.type,
+    title: params.title,
+    message: params.message,
+    taskId: params.taskId,
+    taskTitle: params.taskTitle,
+    fromAI: params.fromAI,
+    toUserId: params.toUserId,
+    createdAt: new Date(),
+    actionRequired: params.actionRequired,
+    actionUrl: params.actionUrl,
+  };
+  notifications.push(notification);
+}
+
 // 通知真人審批
 export async function notifyHumanApprover(task: TaskInstance, stage: number): Promise<Notification> {
   const stageData = task.stages.find(s => s.id === stage);

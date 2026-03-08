@@ -30,7 +30,7 @@ export default function MobileChatPage() {
     const diffMs = now.getTime() - d.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     
-    if (diffMins < 1) return locale === "zh" ? "剛剛" : "Now";
+    if (diffMins < 1) return t("chat.now");
     if (diffMins < 60) return `${diffMins}m`;
     if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h`;
     return d.toLocaleDateString("zh-TW", { month: "short", day: "numeric" });
@@ -45,7 +45,7 @@ export default function MobileChatPage() {
   return (
     <div className="flex flex-col h-full bg-white">
       <MobileHeader
-        title={locale === "zh" ? "聊天" : "Chats"}
+        title={t("chat.title")}
         rightAction={
           <button
             onClick={() => navigate("/chat/new")}
@@ -69,7 +69,7 @@ export default function MobileChatPage() {
               : "bg-[#F2F2F7] text-[#3C3C43]"
           }`}
         >
-          {locale === "zh" ? "品牌群組" : "Groups"}
+          {t("chat.groups")}
         </button>
         <button
           onClick={() => setActiveTab("direct")}
@@ -79,7 +79,7 @@ export default function MobileChatPage() {
               : "bg-[#F2F2F7] text-[#3C3C43]"
           }`}
         >
-          {locale === "zh" ? "私訊" : "Direct"}
+          {t("chat.direct")}
         </button>
       </div>
 
@@ -94,7 +94,7 @@ export default function MobileChatPage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={locale === "zh" ? "搜尋..." : "Search..."}
+            placeholder={t("chat.search")}
             className="w-full pl-10 pr-4 py-2.5 bg-[#F2F2F7] rounded-xl text-[15px] focus:outline-none placeholder:text-[#8E8E93]"
           />
         </div>
@@ -116,12 +116,12 @@ export default function MobileChatPage() {
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
                 <path d="M16 3.13a4 4 0 0 1 0 7.75" />
               </svg>
-              <p className="mt-3 text-sm">{locale === "zh" ? "尚無品牌群組" : "No groups yet"}</p>
+              <p className="mt-3 text-sm">{t("chat.noGroups")}</p>
               <button
                 onClick={() => navigate("/profile/company")}
                 className="mt-3 text-sm text-[#007AFF] font-medium"
               >
-                {locale === "zh" ? "前往企業設定建立" : "Create in Company Settings"}
+                {t("chat.goToSettings")}
               </button>
             </div>
           ) : (
@@ -161,7 +161,7 @@ export default function MobileChatPage() {
                         ? (group as any).lastMessage
                         : group.members?.length > 0
                           ? `${group.members.map((m: any) => m.name).slice(0, 2).join(", ")}${group.members.length > 2 ? ` +${group.members.length - 2}` : ""}`
-                          : locale === "zh" ? "點擊開始對話" : "Tap to start chatting"
+                          : t("chat.tapToChat")
                       }
                     </p>
                   </div>
@@ -180,12 +180,12 @@ export default function MobileChatPage() {
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
-            <p className="mt-3 text-sm">{locale === "zh" ? "尚無私訊" : "No messages yet"}</p>
+            <p className="mt-3 text-sm">{t("chat.noDirectMessages")}</p>
             <button
               onClick={() => navigate("/contacts")}
               className="mt-3 text-sm text-[#007AFF] font-medium"
             >
-              {locale === "zh" ? "找 AI 員工開始對話" : "Start a conversation"}
+              {t("chat.startConversation")}
             </button>
           </div>
         )}

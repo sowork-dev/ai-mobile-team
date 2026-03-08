@@ -10,6 +10,7 @@ import OpenAI from "openai";
 import { query } from "./db.js";
 import { scanKnowledgeBase, isConnected } from "./onedrive.js";
 import { getKnowledgeContext as getDbKnowledgeContext } from "./knowledgeBase.js";
+import { pushNotification } from "./taskRouting.js";
 
 // 意圖類型
 export type IntentType =
@@ -591,7 +592,7 @@ export async function requestApproval(
   
   // 儲存審批記錄
   approvalRecords.set(approvalId, approval);
-  
+
   // 更新任務狀態
   stage.status = "needs_approval";
   stage.requiresApproval = true;
@@ -600,7 +601,23 @@ export async function requestApproval(
   task.status = "pending_approval";
   task.updatedAt = new Date();
   tasks.set(taskId, task);
-  
+
+  // 發送 app 內通知給審批者
+  const fromAI = task.assignedAgents[0]
+    ? { id: task.assignedAgents[0].id, name: task.assignedAgents[0].name }
+    : { id: 0, name: "AI 員工" };
+  pushNotification({
+    type: "approval_required",
+    title: `需要您審批：${task.title}`,
+    message: `${fromAI.name} 已完成「${stage.name}」，請審閱後決定是否通過。`,
+    taskId,
+    taskTitle: task.title,
+    fromAI,
+    toUserId: task.createdBy,
+    actionRequired: true,
+    actionUrl: "/tasks",
+  });
+
   return approval;
 }
 
@@ -649,11 +666,15 @@ export async function handleApproval(
   task.approvalHistory.push(approval);
   task.pendingApproval = undefined;
   
+  const fromAI = task.assignedAgents[0]
+    ? { id: task.assignedAgents[0].id, name: task.assignedAgents[0].name }
+    : { id: 0, name: "AI 員工" };
+
   if (decision === "approved") {
     // 通過：完成當前階段，進入下一階段
     stage.status = "completed";
     stage.completedAt = new Date();
-    
+
     // 檢查是否還有下一階段
     if (approval.stageIndex + 1 < task.stages.length) {
       task.currentStage = approval.stageIndex + 2; // +2 因為 currentStage 從 1 開始
@@ -663,10 +684,23 @@ export async function handleApproval(
       // 最後階段審批通過，任務完成
       task.status = "completed";
     }
-    
+
     task.updatedAt = new Date();
     tasks.set(task.id, task);
-    
+
+    // 通知任務創建者審批結果
+    pushNotification({
+      type: "approval_result",
+      title: `審批通過：${task.title}`,
+      message: `「${stage.name}」已通過審批，${fromAI.name} 正在繼續執行下一步。`,
+      taskId: task.id,
+      taskTitle: task.title,
+      fromAI,
+      toUserId: task.createdBy,
+      actionRequired: false,
+      actionUrl: "/tasks",
+    });
+
     return {
       success: true,
       task,
@@ -678,7 +712,20 @@ export async function handleApproval(
     task.status = "in_progress";
     task.updatedAt = new Date();
     tasks.set(task.id, task);
-    
+
+    // 通知任務創建者駁回結果
+    pushNotification({
+      type: "approval_result",
+      title: `審批駁回：${task.title}`,
+      message: `「${stage.name}」已被駁回${comment ? `，原因：${comment}` : ""}。AI 將重新處理。`,
+      taskId: task.id,
+      taskTitle: task.title,
+      fromAI,
+      toUserId: task.createdBy,
+      actionRequired: false,
+      actionUrl: "/tasks",
+    });
+
     return {
       success: true,
       task,

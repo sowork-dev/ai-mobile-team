@@ -2,7 +2,6 @@
  * 通知中心組件
  * 顯示任務狀態更新、審批請求等通知
  */
-import { useState } from "react";
 import { useI18n } from "@/i18n";
 
 interface Notification {
@@ -13,8 +12,8 @@ interface Notification {
   taskId: string;
   taskTitle: string;
   fromAI?: { id: number; name: string };
-  createdAt: string;
-  readAt?: string;
+  createdAt: Date | string;
+  readAt?: Date | string;
   actionRequired: boolean;
 }
 
@@ -76,8 +75,8 @@ export default function NotificationCenter({
     }
   };
   
-  const formatTime = (dateStr: string) => {
-    const date = new Date(dateStr);
+  const formatTime = (dateStr: Date | string) => {
+    const date = new Date(dateStr as string);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);

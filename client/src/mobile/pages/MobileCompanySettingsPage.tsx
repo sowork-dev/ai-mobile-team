@@ -38,7 +38,7 @@ const COMPANY_SIZE_OPTIONS = [
 
 export default function MobileCompanySettingsPage() {
   const [, navigate] = useLocation();
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
   const [isSaving, setIsSaving] = useState(false);
   const [_hasChanges, setHasChanges] = useState(false);
   
@@ -83,19 +83,19 @@ export default function MobileCompanySettingsPage() {
     const newErrors: Partial<Record<keyof CompanyInfo, string>> = {};
     
     if (!formData.companyName.trim()) {
-      newErrors.companyName = "請輸入公司名稱";
+      newErrors.companyName = locale === "zh" ? "請輸入公司名稱" : "Please enter company name";
     }
     if (!formData.industry) {
-      newErrors.industry = "請選擇產業類別";
+      newErrors.industry = locale === "zh" ? "請選擇產業類別" : "Please select an industry";
     }
     if (!formData.companySize) {
-      newErrors.companySize = "請選擇公司規模";
+      newErrors.companySize = locale === "zh" ? "請選擇公司規模" : "Please select company size";
     }
     if (!formData.contactName.trim()) {
-      newErrors.contactName = "請輸入聯絡人姓名";
+      newErrors.contactName = locale === "zh" ? "請輸入聯絡人姓名" : "Please enter contact name";
     }
     if (!formData.contactPhone.trim()) {
-      newErrors.contactPhone = "請輸入聯絡電話";
+      newErrors.contactPhone = locale === "zh" ? "請輸入聯絡電話" : "Please enter phone number";
     }
     
     setErrors(newErrors);
@@ -110,7 +110,7 @@ export default function MobileCompanySettingsPage() {
   // 從網站抓取品牌和產品（真正的 Web 爬取）
   const fetchBrandsFromWebsite = async () => {
     if (!formData.website.trim()) {
-      toast.error("請先輸入公司網站");
+      toast.error(locale === "zh" ? "請先輸入公司網站" : "Please enter the website first");
       return;
     }
 
@@ -123,19 +123,19 @@ export default function MobileCompanySettingsPage() {
     try {
       new URL(url);
     } catch {
-      toast.error("請輸入有效的網址");
+      toast.error(locale === "zh" ? "請輸入有效的網址" : "Please enter a valid URL");
       return;
     }
 
     setIsFetchingBrands(true);
-    toast.info("正在分析網站內容...");
+    toast.info(locale === "zh" ? "正在分析網站內容..." : "Analyzing website content...");
 
     try {
       // 呼叫真正的 Web 爬取 API
       const result = await crawlMutation.mutateAsync({ url });
       
       if (!result.success) {
-        toast.error(result.error || "分析失敗");
+        toast.error(result.error || (locale === "zh" ? "分析失敗" : "Analysis failed"));
         return;
       }
 
@@ -150,13 +150,13 @@ export default function MobileCompanySettingsPage() {
           description: prev.description || result.description || "",
         }));
         setHasChanges(true);
-        toast.success(`找到 ${result.brands.length} 個品牌！儲存後將自動建立群組`);
+        toast.success(locale === "zh" ? `找到 ${result.brands.length} 個品牌！儲存後將自動建立群組` : `Found ${result.brands.length} brands! Groups will be created on save`);
       } else {
-        toast.warning("未找到品牌資訊，請手動新增");
+        toast.warning(locale === "zh" ? "未找到品牌資訊，請手動新增" : "No brands found, please add manually");
       }
     } catch (error: any) {
       console.error("Crawl error:", error);
-      toast.error(error.message || "抓取失敗，請稍後再試");
+      toast.error(error.message || (locale === "zh" ? "抓取失敗，請稍後再試" : "Fetch failed, please try again"));
     } finally {
       setIsFetchingBrands(false);
     }
@@ -224,7 +224,7 @@ export default function MobileCompanySettingsPage() {
       // 監聽 popup 送回的 message
       const handler = (e: MessageEvent) => {
         if (e.data?.type === "onedrive-connected") {
-          toast.success("OneDrive 連接成功！");
+          toast.success(locale === "zh" ? "OneDrive 連接成功！" : "OneDrive connected!");
           onedriveStatus.refetch();
           onedriveListFiles.refetch();
           window.removeEventListener("message", handler);
@@ -232,25 +232,25 @@ export default function MobileCompanySettingsPage() {
       };
       window.addEventListener("message", handler);
     } catch (err: any) {
-      toast.error("無法取得授權網址：" + (err.message || "請稍後再試"));
+      toast.error((locale === "zh" ? "無法取得授權網址：" : "Cannot get auth URL: ") + (err.message || (locale === "zh" ? "請稍後再試" : "Please try again")));
     }
   };
 
   // 掃描 OneDrive 知識庫
   const handleScanKnowledge = async () => {
     try {
-      toast.info("正在掃描 OneDrive 知識庫...");
+      toast.info(locale === "zh" ? "正在掃描 OneDrive 知識庫..." : "Scanning OneDrive knowledge base...");
       const result = await onedriveScanKnowledge.mutateAsync({});
-      toast.success(`掃描完成！找到 ${result.count} 個文件`);
+      toast.success(locale === "zh" ? `掃描完成！找到 ${result.count} 個文件` : `Scan complete! Found ${result.count} files`);
     } catch (err: any) {
-      toast.error("掃描失敗：" + (err.message || "請確認 OneDrive 已連接"));
+      toast.error((locale === "zh" ? "掃描失敗：" : "Scan failed: ") + (err.message || (locale === "zh" ? "請確認 OneDrive 已連接" : "Please confirm OneDrive is connected")));
     }
   };
 
   // 斷開 OneDrive
   const handleOnedriveDisconnect = async () => {
     await onedriveDisconnect.mutateAsync({});
-    toast.success("已斷開 OneDrive 連接");
+    toast.success(locale === "zh" ? "已斷開 OneDrive 連接" : "OneDrive disconnected");
     onedriveStatus.refetch();
   };
   // ── /OneDrive ──────────────────────────────────────────────────────────────
@@ -260,7 +260,7 @@ export default function MobileCompanySettingsPage() {
 
   const handleSave = async () => {
     if (!validate()) {
-      toast.error("請填寫必填欄位");
+      toast.error(t("company.fillRequired"));
       return;
     }
 
@@ -272,17 +272,17 @@ export default function MobileCompanySettingsPage() {
       
       // 2. 如果有品牌，自動建立群組並推薦 AI 員工
       if (formData.brands.length > 0) {
-        toast.info("正在為品牌建立群組...");
+        toast.info(locale === "zh" ? "正在為品牌建立群組..." : "Creating brand groups...");
         
         const result = await createGroupsMutation.mutateAsync({
           brands: formData.brands,
         });
         
         if (result.success) {
-          toast.success(`已建立 ${result.groups.length} 個品牌群組，並推薦了 AI 員工！`);
+          toast.success(locale === "zh" ? `已建立 ${result.groups.length} 個品牌群組，並推薦了 AI 員工！` : `Created ${result.groups.length} brand groups with AI agent recommendations!`);
         }
       } else {
-        toast.success("企業資料已儲存！");
+        toast.success(locale === "zh" ? "企業資料已儲存！" : "Company info saved!");
       }
       
       setHasChanges(false);
@@ -294,7 +294,7 @@ export default function MobileCompanySettingsPage() {
       }, 1500);
     } catch (error: any) {
       console.error("Save error:", error);
-      toast.error("儲存失敗：" + (error.message || "請稍後再試"));
+      toast.error((locale === "zh" ? "儲存失敗：" : "Save failed: ") + (error.message || (locale === "zh" ? "請稍後再試" : "Please try again")));
     } finally {
       setIsSaving(false);
     }
@@ -321,7 +321,7 @@ export default function MobileCompanySettingsPage() {
             {/* 公司名稱 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                公司名稱 <span className="text-red-500">*</span>
+                {t("company.companyNameLabel")} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -338,14 +338,14 @@ export default function MobileCompanySettingsPage() {
             {/* 產業類別 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                產業類別 <span className="text-red-500">*</span>
+                {t("company.industryLabel")} <span className="text-red-500">*</span>
               </label>
               <select
                 value={formData.industry}
                 onChange={(e) => updateField("industry", e.target.value)}
                 className={`w-full px-3 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 transition-colors appearance-none ${errors.industry ? "border-red-400" : "border-gray-200"}`}
               >
-                <option value="">請選擇產業</option>
+                <option value="">{locale === "zh" ? "請選擇產業" : "Select industry"}</option>
                 {INDUSTRY_OPTIONS.map(opt => (
                   <option key={opt} value={opt}>{opt}</option>
                 ))}
@@ -358,7 +358,7 @@ export default function MobileCompanySettingsPage() {
             {/* 公司規模 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                公司規模 <span className="text-red-500">*</span>
+                {t("company.companySizeLabel")} <span className="text-red-500">*</span>
               </label>
               <div className="flex flex-wrap gap-2">
                 {COMPANY_SIZE_OPTIONS.map(size => (
@@ -383,7 +383,7 @@ export default function MobileCompanySettingsPage() {
             {/* 公司地址 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                公司地址
+                {t("company.addressLabel")}
               </label>
               <input
                 type="text"
@@ -397,7 +397,7 @@ export default function MobileCompanySettingsPage() {
             {/* 公司網站 + 自動抓取 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                公司網站
+                {t("company.websiteLabel")}
               </label>
               <div className="flex gap-2">
                 <input
@@ -418,14 +418,14 @@ export default function MobileCompanySettingsPage() {
                         <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
                         <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
                       </svg>
-                      抓取中
+                      {t("company.fetchingWebsite")}
                     </>
                   ) : (
                     <>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
                       </svg>
-                      抓取
+                      {t("company.fetchWebsite")}
                     </>
                   )}
                 </button>
@@ -434,7 +434,7 @@ export default function MobileCompanySettingsPage() {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" />
                 </svg>
-                輸入網址後點「抓取」，自動建立品牌與產品，並為每個品牌建立群組
+                {locale === "zh" ? "輸入網址後點「抓取」，自動建立品牌與產品，並為每個品牌建立群組" : "Enter URL and click \"Fetch\" to auto-create brands, products, and groups"}
               </p>
             </div>
           </div>
@@ -452,13 +452,13 @@ export default function MobileCompanySettingsPage() {
             {/* 聯絡人姓名 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                聯絡人姓名 <span className="text-red-500">*</span>
+                {t("company.contactNameLabel")} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={formData.contactName}
                 onChange={(e) => updateField("contactName", e.target.value)}
-                placeholder="請輸入姓名"
+                placeholder={locale === "zh" ? "請輸入姓名" : "Enter name"}
                 className={`w-full px-3 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 transition-colors ${errors.contactName ? "border-red-400" : "border-gray-200"}`}
               />
               {errors.contactName && (
@@ -469,7 +469,7 @@ export default function MobileCompanySettingsPage() {
             {/* 聯絡電話 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                聯絡電話 <span className="text-red-500">*</span>
+                {t("company.contactPhoneLabel")} <span className="text-red-500">*</span>
               </label>
               <input
                 type="tel"
@@ -494,7 +494,7 @@ export default function MobileCompanySettingsPage() {
               </h2>
               {formData.brands.length > 0 && (
                 <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                  {formData.brands.length} 個品牌
+                  {formData.brands.length} {locale === "zh" ? "個品牌" : "brands"}
                 </span>
               )}
             </div>
@@ -503,7 +503,7 @@ export default function MobileCompanySettingsPage() {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M20 6L9 17l-5-5" />
                 </svg>
-                儲存後將為每個品牌自動建立群組
+                {t("company.autoCreateGroups")}
               </p>
             )}
           </div>
@@ -517,8 +517,8 @@ export default function MobileCompanySettingsPage() {
                     <line x1="7" y1="7" x2="7.01" y2="7"/>
                   </svg>
                 </div>
-                <p className="text-sm text-gray-500">尚未設定品牌</p>
-                <p className="text-xs text-gray-400 mt-1">點擊「自動抓取」或手動新增</p>
+                <p className="text-sm text-gray-500">{t("company.noBrands")}</p>
+                <p className="text-xs text-gray-400 mt-1">{t("company.addBrandHint")}</p>
               </div>
             ) : (
               formData.brands.map((brand, index) => (
@@ -528,7 +528,7 @@ export default function MobileCompanySettingsPage() {
                       type="text"
                       value={brand.name}
                       onChange={(e) => updateBrandName(index, e.target.value)}
-                      placeholder="品牌名稱"
+                      placeholder={t("company.brandNamePlaceholder")}
                       className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
                     />
                     <button
@@ -541,7 +541,7 @@ export default function MobileCompanySettingsPage() {
                     </button>
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1">產品（逗號分隔）</label>
+                    <label className="block text-xs text-gray-500 mb-1">{t("company.productsLabel")}</label>
                     <input
                       type="text"
                       value={brand.products.join(", ")}
@@ -570,7 +570,7 @@ export default function MobileCompanySettingsPage() {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M12 5v14M5 12h14" />
               </svg>
-              新增品牌
+              {t("company.addBrand")}
             </button>
           </div>
         </div>
@@ -588,12 +588,12 @@ export default function MobileCompanySettingsPage() {
               </h2>
               {isOnedriveConnected && (
                 <span className="ml-auto text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full font-medium">
-                  已連接
+                  {locale === "zh" ? "已連接" : "Connected"}
                 </span>
               )}
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              連接 OneDrive 後，AI 員工可掃描您的文件作為知識庫
+              {locale === "zh" ? "連接 OneDrive 後，AI 員工可掃描您的文件作為知識庫" : "Connect OneDrive so AI agents can scan your documents as knowledge base"}
             </p>
           </div>
 
@@ -609,10 +609,10 @@ export default function MobileCompanySettingsPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-blue-900">
-                      {onedriveStatus.data?.userName || "Microsoft 帳號"}
+                      {onedriveStatus.data?.userName || (locale === "zh" ? "Microsoft 帳號" : "Microsoft Account")}
                     </p>
                     <p className="text-xs text-blue-600 truncate">
-                      {onedriveStatus.data?.userEmail || "已連接"}
+                      {onedriveStatus.data?.userEmail || (locale === "zh" ? "已連接" : "Connected")}
                     </p>
                   </div>
                 </div>
@@ -621,7 +621,7 @@ export default function MobileCompanySettingsPage() {
                 {onedriveListFiles.data?.files && onedriveListFiles.data.files.length > 0 && (
                   <div className="bg-gray-50 rounded-xl p-3">
                     <p className="text-xs font-medium text-gray-600 mb-2">
-                      根目錄檔案（{onedriveListFiles.data.files.length} 個）
+                      {locale === "zh" ? `根目錄檔案（${onedriveListFiles.data.files.length} 個）` : `Root files (${onedriveListFiles.data.files.length})`}
                     </p>
                     <div className="space-y-1.5 max-h-36 overflow-y-auto">
                       {onedriveListFiles.data.files.slice(0, 10).map((file) => (
@@ -651,14 +651,14 @@ export default function MobileCompanySettingsPage() {
                           <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
                           <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
                         </svg>
-                        掃描中
+                        {t("company.scanning")}
                       </>
                     ) : (
                       <>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
                         </svg>
-                        掃描知識庫
+                        {t("company.scanKnowledge")}
                       </>
                     )}
                   </button>
@@ -666,14 +666,14 @@ export default function MobileCompanySettingsPage() {
                     onClick={handleOnedriveDisconnect}
                     className="px-4 py-2.5 border border-gray-200 text-gray-600 text-sm rounded-xl active:scale-95 transition-transform"
                   >
-                    斷開
+                    {t("company.disconnect")}
                   </button>
                 </div>
               </>
             ) : (
               <>
                 <p className="text-sm text-gray-500 text-center py-2">
-                  尚未連接 OneDrive
+                  {t("company.notConnected")}
                 </p>
                 <button
                   onClick={handleOnedriveConnect}
@@ -686,14 +686,14 @@ export default function MobileCompanySettingsPage() {
                         <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
                         <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
                       </svg>
-                      取得授權中
+                      {t("company.authorizing")}
                     </>
                   ) : (
                     <>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
                         <path d="M6.5 20C4.01 20 2 17.99 2 15.5C2 13.24 3.66 11.37 5.83 11.04C5.64 10.56 5.5 10.05 5.5 9.5C5.5 7.01 7.51 5 10 5C11.78 5 13.32 6.01 14.1 7.49C14.56 7.18 15.11 7 15.7 7C17.52 7 19 8.48 19 10.3C19 10.45 18.99 10.6 18.97 10.75C21.22 11.14 23 13.14 23 15.5C23 17.99 20.99 20 18.5 20H6.5Z"/>
                       </svg>
-                      連接 OneDrive
+                      {t("company.connectOnedrive")}
                     </>
                   )}
                 </button>
@@ -714,7 +714,7 @@ export default function MobileCompanySettingsPage() {
             <textarea
               value={formData.description}
               onChange={(e) => updateField("description", e.target.value)}
-              placeholder="簡述您的公司業務、產品或服務..."
+              placeholder={locale === "zh" ? "簡述您的公司業務、產品或服務..." : "Briefly describe your company's business, products, or services..."}
               rows={4}
               className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 transition-colors resize-none"
             />
@@ -741,7 +741,7 @@ export default function MobileCompanySettingsPage() {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 6L9 17l-5-5" />
               </svg>
-              儲存成功！
+              {t("company.saveSuccess")}
             </span>
           ) : isSaving ? (
             <span className="flex items-center justify-center gap-2">
@@ -749,10 +749,10 @@ export default function MobileCompanySettingsPage() {
                 <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
                 <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
               </svg>
-              儲存中...
+              {t("company.saving")}
             </span>
           ) : (
-            locale === "zh" ? "儲存設定" : "Save Settings"
+            t("company.save")
           )}
         </button>
       </div>

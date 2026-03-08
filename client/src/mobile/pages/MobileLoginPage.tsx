@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { useI18n } from "@/i18n";
 
 const DEMO_PERSONAS = [
   {
@@ -49,6 +50,7 @@ interface MobileLoginPageProps {
 }
 
 export default function MobileLoginPage({ showOnlyCompanySelector = false }: MobileLoginPageProps) {
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -67,12 +69,12 @@ export default function MobileLoginPage({ showOnlyCompanySelector = false }: Mob
       if (mode === "login") {
         await loginMutation.mutateAsync({ email, password });
       } else {
-        if (!name) { toast.error("請輸入姓名"); setIsLoading(false); return; }
+        if (!name) { toast.error(t("login.nameRequired")); setIsLoading(false); return; }
         await registerMutation.mutateAsync({ email, password, name });
       }
       window.location.reload();
     } catch (err: any) {
-      toast.error(err?.message || "操作失敗，請重試");
+      toast.error(err?.message || t("login.operationFailed"));
     } finally {
       setIsLoading(false);
     }
@@ -101,8 +103,8 @@ export default function MobileLoginPage({ showOnlyCompanySelector = false }: Mob
               <path d="M10 17h12" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">選擇體驗身份</h1>
-          <p className="text-sm text-gray-500 mt-1">選擇一家公司開始體驗</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t("login.selectIdentity")}</h1>
+          <p className="text-sm text-gray-500 mt-1">{t("login.selectCompany")}</p>
         </div>
         <div className="w-full max-w-sm space-y-3">
           {DEMO_PERSONAS.map((persona) => (
@@ -135,7 +137,7 @@ export default function MobileLoginPage({ showOnlyCompanySelector = false }: Mob
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-gray-900">SoWork AI Team</h1>
-          <p className="text-sm text-gray-500 mt-1">你的 AI 行銷團隊</p>
+          <p className="text-sm text-gray-500 mt-1">{t("login.tagline")}</p>
         </div>
 
         {/* 入口 1：帳號登入 */}
@@ -157,25 +159,25 @@ export default function MobileLoginPage({ showOnlyCompanySelector = false }: Mob
                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
               </svg>
             )}
-            使用 Google 帳號登入
+            {t("login.googleLogin")}
           </button>
 
           {/* Email/密碼表單 */}
           <form onSubmit={handleSubmit} className="mt-3 space-y-3">
             {mode === "register" && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">姓名</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("login.nameLabel")}</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="請輸入您的姓名"
+                  placeholder={t("login.namePlaceholder")}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-gray-50"
                 />
               </div>
             )}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">電子郵件</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("login.emailLabel")}</label>
               <input
                 type="email"
                 value={email}
@@ -186,12 +188,12 @@ export default function MobileLoginPage({ showOnlyCompanySelector = false }: Mob
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">密碼</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("login.passwordLabel")}</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="請輸入密碼"
+                placeholder={t("login.passwordPlaceholder")}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-gray-50"
                 autoComplete={mode === "login" ? "current-password" : "new-password"}
               />
@@ -204,9 +206,9 @@ export default function MobileLoginPage({ showOnlyCompanySelector = false }: Mob
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  處理中...
+                  {t("login.processing")}
                 </span>
-              ) : mode === "login" ? "登入" : "建立帳號"}
+              ) : mode === "login" ? t("login.loginBtn") : t("login.registerBtn")}
             </button>
           </form>
 
@@ -214,16 +216,16 @@ export default function MobileLoginPage({ showOnlyCompanySelector = false }: Mob
           <div className="mt-4 text-center">
             {mode === "login" ? (
               <p className="text-sm text-gray-500">
-                還沒有帳號？{" "}
+                {t("login.noAccount")}{" "}
                 <button onClick={() => setMode("register")} className="text-gray-900 font-semibold">
-                  立即註冊
+                  {t("login.signUp")}
                 </button>
               </p>
             ) : (
               <p className="text-sm text-gray-500">
-                已有帳號？{" "}
+                {t("login.hasAccount")}{" "}
                 <button onClick={() => setMode("login")} className="text-gray-900 font-semibold">
-                  返回登入
+                  {t("login.backToLogin")}
                 </button>
               </p>
             )}
@@ -233,13 +235,13 @@ export default function MobileLoginPage({ showOnlyCompanySelector = false }: Mob
         {/* 分隔線 */}
         <div className="w-full max-w-sm flex items-center gap-3 my-6">
           <div className="flex-1 h-px bg-gray-200" />
-          <span className="text-xs text-gray-400 font-medium">或</span>
+          <span className="text-xs text-gray-400 font-medium">{t("login.or")}</span>
           <div className="flex-1 h-px bg-gray-200" />
         </div>
 
         {/* 入口 2：免帳號 Demo 體驗 */}
         <div className="w-full max-w-sm">
-          <p className="text-xs font-medium text-gray-400 text-center mb-3">選擇公司身份，免帳號體驗</p>
+          <p className="text-xs font-medium text-gray-400 text-center mb-3">{t("login.demoLabel")}</p>
           <div className="space-y-2">
             {DEMO_PERSONAS.map((persona) => (
               <button

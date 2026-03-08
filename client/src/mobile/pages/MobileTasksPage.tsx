@@ -9,6 +9,7 @@ import { useI18n } from "@/i18n";
 import { taskTemplates, TaskTemplate, TaskStage, categoryLabels } from "../components/TaskTemplates";
 import { trpc } from "@/lib/trpc";
 import { getDemoData } from "../demoData";
+import NotificationCenter from "../components/NotificationCenter";
 
 type TaskStatus = "pending" | "in_progress" | "pending_approval" | "completed";
 
@@ -68,6 +69,7 @@ export default function MobileTasksPage() {
   const [roleFilter, setRoleFilter] = useState<UserRole>("all");
   const [approvalComment, setApprovalComment] = useState("");
   const [rejectingApprovalId, setRejectingApprovalId] = useState<string | null>(null);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   // 檢查是否使用演示資料
   const useDemoData = localStorage.getItem("useDemoData") === "true";
@@ -108,6 +110,19 @@ export default function MobileTasksPage() {
       refetchTasks();
       refetchApprovals();
     },
+  });
+
+  // 通知相關
+  const { data: unreadData, refetch: refetchUnread } = trpc.notification.unreadCount.useQuery(
+    undefined,
+    { refetchInterval: 5000 }
+  );
+  const { data: notificationsData, refetch: refetchNotifications } = trpc.notification.list.useQuery(
+    undefined,
+    { enabled: showNotifications }
+  );
+  const markReadMutation = trpc.notification.markRead.useMutation({
+    onSuccess: () => { refetchUnread(); refetchNotifications(); },
   });
 
   // 獲取選中模板的 AI 員工配對
@@ -205,7 +220,25 @@ export default function MobileTasksPage() {
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
-      <MobileHeader title={t("tasks.title")} />
+      <MobileHeader
+        title={t("tasks.title")}
+        rightAction={
+          <button
+            onClick={() => { setShowNotifications(true); refetchNotifications(); }}
+            className="relative w-9 h-9 flex items-center justify-center active:bg-gray-100 rounded-full transition-colors"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111827" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            {(unreadData?.count ?? 0) > 0 && (
+              <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center">
+                {unreadData!.count > 9 ? "9+" : unreadData!.count}
+              </span>
+            )}
+          </button>
+        }
+      />
 
       {/* 新增任務按鈕 - 單色設計 */}
       <div className="flex-shrink-0 bg-white border-b border-gray-100 px-4 py-3">
@@ -396,7 +429,7 @@ export default function MobileTasksPage() {
                       ))}
                     </div>
                     <span className="text-xs text-gray-500">
-                      {primaryAgent?.name || "未分配"}
+                      {primaryAgent?.name || t("tasks.unassigned")}
                       {task.assignedAgents.length > 1 && ` +${task.assignedAgents.length - 1}`}
                     </span>
                   </div>
@@ -420,7 +453,7 @@ export default function MobileTasksPage() {
         ) : tasksLoading ? (
           <div className="text-center py-12">
             <div className="w-8 h-8 mx-auto mb-4 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin" />
-            <p className="text-gray-500 text-sm">載入中...</p>
+            <p className="text-gray-500 text-sm">{t("common.loading")}</p>
           </div>
         ) : (
           ((useDemoData ? demoTasks : realTasks) || [])
@@ -499,7 +532,7 @@ export default function MobileTasksPage() {
                       ))}
                     </div>
                     <span className="text-xs text-gray-500">
-                      {primaryAgent?.name || "未分配"}
+                      {primaryAgent?.name || t("tasks.unassigned")}
                       {(task.assignedAgents?.length || 0) > 1 && ` +${task.assignedAgents.length - 1}`}
                     </span>
                   </div>
@@ -679,6 +712,25 @@ export default function MobileTasksPage() {
             )}
           </div>
         </div>
+      )}
+
+      {/* 通知中心 */}
+      {showNotifications && (
+        <NotificationCenter
+          notifications={notificationsData?.notifications ?? []}
+          onClose={() => setShowNotifications(false)}
+          onNotificationClick={(notification) => {
+            markReadMutation.mutate({ notificationId: notification.id });
+            setShowNotifications(false);
+            // 如果是需要審批的通知，捲動到待審批區域
+            if (notification.type === "approval_required") {
+              refetchApprovals();
+            }
+          }}
+          onMarkAllRead={() => {
+            markReadMutation.mutate({ markAllRead: true });
+          }}
+        />
       )}
     </div>
   );

@@ -9,6 +9,7 @@ import { fileURLToPath } from "url";
 import * as trpcExpress from "@trpc/server/adapters/express";
 import { appRouter } from "./routers.js";
 import * as onedrive from "./onedrive.js";
+import { generatePPTX, generateDOCX } from "./exportGenerators.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -65,6 +66,36 @@ app.get("/api/auth/callback/microsoft", async (req, res) => {
   } catch (error) {
     console.error("OAuth callback error:", error);
     res.status(500).send("連接失敗：" + (error as Error).message);
+  }
+});
+
+// ── 文件導出 API ────────────────────────────────────────────────
+app.post("/api/export/pptx", async (req, res) => {
+  const { title = "報告", content = "", companyName = "SoWork AI", format = "pptx" } = req.body || {};
+
+  try {
+    if (format === "docx") {
+      const buffer = await generateDOCX(title, content, companyName);
+      const filename = encodeURIComponent(`${title}.docx`);
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      );
+      res.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${filename}`);
+      res.send(buffer);
+    } else {
+      const buffer = await generatePPTX(title, content, companyName);
+      const filename = encodeURIComponent(`${title}.pptx`);
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+      );
+      res.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${filename}`);
+      res.send(buffer);
+    }
+  } catch (err) {
+    console.error("Export error:", err);
+    res.status(500).json({ error: "文件生成失敗", detail: (err as Error).message });
   }
 });
 

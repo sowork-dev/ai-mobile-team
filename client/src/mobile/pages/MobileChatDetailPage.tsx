@@ -26,6 +26,7 @@ interface DeliverableData {
   title: string;
   url?: string;
   status: "generating" | "ready";
+  sourceContent?: string;
 }
 
 // ── 輸出格式選單（聊天版，僅 3 個）────────────────────────────
@@ -123,7 +124,7 @@ function MessageToolbar({
 }: {
   message: Message;
   onSaveAsTask: () => void;
-  onOutputFormat: (format: string) => void;
+  onOutputFormat: (format: string, sourceContent: string) => void;
   onClose: () => void;
 }) {
   const [showFormats, setShowFormats] = useState(false);
@@ -206,7 +207,7 @@ function MessageToolbar({
           {OUTPUT_FORMATS.map((fmt) => (
             <button
               key={fmt.id}
-              onClick={() => { onOutputFormat(fmt.id); onClose(); }}
+              onClick={() => { onOutputFormat(fmt.id, message.content); onClose(); }}
               className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 active:bg-gray-50"
             >
               <span className="text-gray-500">{fmt.icon}</span>
@@ -220,7 +221,44 @@ function MessageToolbar({
 }
 
 // ── 交付物卡片 ────────────────────────────────────────────────
-function DeliverableCard({ deliverable }: { deliverable: DeliverableData }) {
+function DeliverableCard({
+  deliverable,
+  agentName,
+}: {
+  deliverable: DeliverableData;
+  agentName: string;
+}) {
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    const format = deliverable.type === "presentation" ? "pptx" : "docx";
+    setDownloading(true);
+    try {
+      const res = await fetch("/api/export/pptx", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: deliverable.title,
+          content: deliverable.sourceContent || "",
+          companyName: agentName,
+          format,
+        }),
+      });
+      if (!res.ok) throw new Error("下載失敗");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${deliverable.title}.${format}`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("下載完成！");
+    } catch {
+      toast.error("下載失敗，請重試");
+    } finally {
+      setDownloading(false);
+    }
+  };
   const typeIcons: Record<string, React.ReactNode> = {
     presentation: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -255,11 +293,19 @@ function DeliverableCard({ deliverable }: { deliverable: DeliverableData }) {
         {deliverable.status === "generating" ? (
           <div className="w-5 h-5 border-2 border-gray-600 border-t-transparent rounded-full animate-spin" />
         ) : (
-          <button className="flex items-center gap-1 text-xs text-gray-900 font-medium px-2.5 py-1.5 bg-gray-50 rounded-lg active:bg-gray-100">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M6 1v7M2 5l4 4 4-4M1 10h10" />
-            </svg>
-            下載
+          <button
+            onClick={handleDownload}
+            disabled={downloading}
+            className="flex items-center gap-1 text-xs text-gray-900 font-medium px-2.5 py-1.5 bg-gray-50 rounded-lg active:bg-gray-100 disabled:opacity-50"
+          >
+            {downloading ? (
+              <div className="w-3 h-3 border-2 border-gray-600 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M6 1v7M2 5l4 4 4-4M1 10h10" />
+              </svg>
+            )}
+            {downloading ? "生成中..." : "下載"}
           </button>
         )}
       </div>
@@ -432,7 +478,7 @@ export default function MobileChatDetailPage() {
     setActiveToolbar(null);
   };
 
-  const handleOutputFormat = (format: string) => {
+  const handleOutputFormat = (format: string, sourceContent = "") => {
     const labels: Record<string, string> = {
       presentation: "簡報 PPT",
       pdf: "PDF 報告",
@@ -444,6 +490,7 @@ export default function MobileChatDetailPage() {
       type: format as any,
       title: `${getAgentName(conversationId)} 的分析報告`,
       status: "generating",
+      sourceContent,
     };
     const delivMsg: Message = {
       id: Date.now().toString(),
@@ -565,14 +612,14 @@ export default function MobileChatDetailPage() {
                   <MessageToolbar
                     message={msg}
                     onSaveAsTask={() => handleSaveAsTask(msg)}
-                    onOutputFormat={handleOutputFormat}
+                    onOutputFormat={(fmt, src) => handleOutputFormat(fmt, src)}
                     onClose={() => setActiveToolbar(null)}
                   />
                 )}
               </div>
 
               {/* 交付物卡片 */}
-              {msg.deliverable && <DeliverableCard deliverable={msg.deliverable} />}
+              {msg.deliverable && <DeliverableCard deliverable={msg.deliverable} agentName={agentName} />}
 
               {/* AI 訊息下方智能功能列 */}
               {msg.role === "assistant" && !msg.isStreaming && (
