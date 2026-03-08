@@ -17,9 +17,15 @@ export default function MobileProfilePage() {
   const handleLogout = async () => {
     try {
       await logoutMutation.mutateAsync();
-      window.location.href = "/app";
     } catch {
-      toast.error("登出失敗");
+      // ignore errors, still clear local state
+    } finally {
+      localStorage.removeItem("demoPersonaId");
+      localStorage.removeItem("demoCompanyName");
+      localStorage.removeItem("demoCompanySize");
+      localStorage.removeItem("useDemoData");
+      localStorage.removeItem("companySettings");
+      window.location.href = "/login";
     }
   };
 
