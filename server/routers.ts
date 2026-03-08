@@ -42,6 +42,7 @@ import { crawlWebsite, recommendAgentsForBrand, CrawlResult } from "./webCrawler
 import * as onedrive from "./onedrive.js";
 import { executeAction, ActionType, ActionResult } from "./actionExecutor.js";
 import { generateProfessionalPPT, getManusTaskStatus, waitForTaskCompletion } from "./manus.js";
+import { DEMO_COMPANY, DEMO_DEPARTMENTS, DEMO_MEETINGS, DEMO_TASKS, DEMO_AGENTS, getAgentsByDepartment, getMeetingsByDepartment, getDemoTasks } from "./seedData.js";
 
 const t = initTRPC.create({
   transformer: superjson,
@@ -966,6 +967,49 @@ const manusRouter = router({
     }),
 });
 
+// Demo Router - 免登入體驗種子數據
+const demoRouter = router({
+  // 獲取演示公司資料
+  company: publicProcedure.query(() => DEMO_COMPANY),
+  
+  // 獲取部門列表
+  departments: publicProcedure.query(() => DEMO_DEPARTMENTS),
+  
+  // 獲取例行會議
+  meetings: publicProcedure
+    .input(z.object({ departmentId: z.string().optional() }).optional())
+    .query(({ input }) => {
+      if (input?.departmentId) {
+        return getMeetingsByDepartment(input.departmentId);
+      }
+      return DEMO_MEETINGS;
+    }),
+  
+  // 獲取演示任務
+  tasks: publicProcedure
+    .input(z.object({ 
+      filter: z.enum(["all", "active", "completed"]).optional(),
+      departmentId: z.string().optional(),
+    }).optional())
+    .query(({ input }) => {
+      let tasks = getDemoTasks(input?.filter);
+      if (input?.departmentId) {
+        tasks = tasks.filter(t => t.department === input.departmentId);
+      }
+      return tasks;
+    }),
+  
+  // 獲取 AI 員工
+  agents: publicProcedure
+    .input(z.object({ departmentId: z.string().optional() }).optional())
+    .query(({ input }) => {
+      if (input?.departmentId) {
+        return getAgentsByDepartment(input.departmentId);
+      }
+      return DEMO_AGENTS;
+    }),
+});
+
 // Main App Router
 export const appRouter = router({
   auth: authRouter,
@@ -978,6 +1022,7 @@ export const appRouter = router({
   company: companyRouter,
   onedrive: onedriveRouter,
   manus: manusRouter,
+  demo: demoRouter,
   
   // Health check
   health: publicProcedure.query(() => ({
