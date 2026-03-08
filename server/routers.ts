@@ -40,6 +40,7 @@ import {
 } from "./chiefOfStaff.js";
 import { crawlWebsite, recommendAgentsForBrand, CrawlResult } from "./webCrawler.js";
 import * as onedrive from "./onedrive.js";
+import { executeAction, ActionType, ActionResult } from "./actionExecutor.js";
 
 const t = initTRPC.create({
   transformer: superjson,
@@ -471,6 +472,22 @@ const taskRouter = router({
         pendingApproval: [], // 等我審批的任務
         aiHandling: [], // AI 正在處理的任務
       };
+    }),
+    
+  // 執行訊息旁的快捷動作
+  executeAction: publicProcedure
+    .input(z.object({
+      actionId: z.string(),
+      messageContent: z.string(),
+      agentRole: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const result = await executeAction(
+        input.actionId as any,
+        input.messageContent,
+        { agentRole: input.agentRole }
+      );
+      return result;
     }),
 });
 
