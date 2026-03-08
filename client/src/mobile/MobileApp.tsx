@@ -24,6 +24,7 @@ import MobileTaskExecutionPage from "./pages/MobileTaskExecutionPage";
 import MobileCompanySettingsPage from "./pages/MobileCompanySettingsPage";
 import MobileGroupChatPage from "./pages/MobileGroupChatPage";
 import MobileCreateGroupPage from "./pages/MobileCreateGroupPage";
+import MobileContentCalendarPage from "./pages/MobileContentCalendarPage";
 
 // Mobile Components
 import MobileTabBar from "./components/MobileTabBar";
@@ -44,7 +45,8 @@ export default function MobileApp() {
     location === "/onboarding" ||
     location.startsWith("/onboarding") ||
     location === "/task/new" ||
-    location === "/company-settings";
+    location === "/company-settings" ||
+    location === "/calendar";
 
   if (loading) {
     return (
@@ -65,9 +67,9 @@ export default function MobileApp() {
     return <MobileDemoPage />;
   }
 
-  // 未登入且非演示模式 → 顯示登入首頁
+  // 未登入且非演示模式 → 顯示登入頁
   if (!user && !useDemoMode) {
-    return <MobileLandingPage />;
+    return <MobileLoginPage />;
   }
 
   return (
@@ -90,6 +92,7 @@ export default function MobileApp() {
           <Route path="/group/:groupId" component={MobileGroupDetailPage} />
           <Route path="/profile" component={MobileProfilePage} />
           <Route path="/company-settings" component={MobileCompanySettingsPage} />
+          <Route path="/calendar" component={MobileContentCalendarPage} />
           <Route component={() => <Redirect to="/chat" />} />
         </Switch>
       </div>

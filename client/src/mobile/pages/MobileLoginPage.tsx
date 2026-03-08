@@ -1,16 +1,60 @@
 /**
  * Mobile 登入頁面
- * 支援 Email/密碼 和 Google OAuth 登入
+ * 支援 Email/密碼、Google OAuth 和 Demo 身份選擇登入
  */
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+
+const DEMO_PERSONAS = [
+  {
+    id: "groupm-digital",
+    email: "groupm@demo.sowork.ai",
+    icon: "🏢",
+    company: "GroupM Digital",
+    industry: "廣告集團",
+    pain: "全球品牌 24hr 即時響應，創意人員嚴重不足",
+  },
+  {
+    id: "loreal-apac",
+    email: "loreal@demo.sowork.ai",
+    icon: "💄",
+    company: "L'Oréal Asia Pacific",
+    industry: "美妝集團",
+    pain: "12 個亞太市場在地化，速度跟不上社群節奏",
+  },
+  {
+    id: "bcg-taipei",
+    email: "bcg@demo.sowork.ai",
+    icon: "📊",
+    company: "BCG Taipei",
+    industry: "管理顧問",
+    pain: "提案品質高但時間壓力大，初級顧問產出不穩定",
+  },
+  {
+    id: "hillhouse-capital",
+    email: "hillhouse@demo.sowork.ai",
+    icon: "💰",
+    company: "Hillhouse Capital",
+    industry: "私募基金",
+    pain: "50+ 投資組合公司需行銷支援，Platform Team 只有 10 人",
+  },
+  {
+    id: "microsoft-taiwan",
+    email: "microsoft@demo.sowork.ai",
+    icon: "🚀",
+    company: "Microsoft Taiwan",
+    industry: "科技",
+    pain: "多條產品線都需行銷內容，資源嚴重分散",
+  },
+];
 
 export default function MobileLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [demoLoadingId, setDemoLoadingId] = useState<string | null>(null);
   const [mode, setMode] = useState<"login" | "register">("login");
   const [name, setName] = useState("");
 
@@ -38,13 +82,24 @@ export default function MobileLoginPage() {
 
   const handleGoogleLogin = () => {
     setIsGoogleLoading(true);
-    // 導向後端 Google OAuth 路由，登入成功後 redirect 回 /app
     window.location.href = "/api/auth/google?redirect=/app";
+  };
+
+  const handleDemoLogin = async (persona: typeof DEMO_PERSONAS[0]) => {
+    setDemoLoadingId(persona.id);
+    try {
+      localStorage.setItem("demoPersonaId", persona.id);
+      localStorage.setItem("useDemoData", "true");
+      await loginMutation.mutateAsync({ email: persona.email, password: "demo123" });
+      window.location.reload();
+    } catch {
+      // 即使 login API 未完整實作，demo 模式仍可進入
+      window.location.reload();
+    }
   };
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Header */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 pb-8">
         {/* Logo */}
         <div className="mb-8 flex flex-col items-center">
@@ -69,7 +124,6 @@ export default function MobileLoginPage() {
             {isGoogleLoading ? (
               <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
             ) : (
-              /* Google SVG Logo */
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -81,7 +135,44 @@ export default function MobileLoginPage() {
           </button>
         </div>
 
-        {/* 分隔線 */}
+        {/* Demo 身份選擇 */}
+        <div className="w-full max-w-sm mb-4">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex-1 h-px bg-gray-200" />
+            <span className="text-xs text-gray-400 font-medium">或體驗 Demo 身份</span>
+            <div className="flex-1 h-px bg-gray-200" />
+          </div>
+
+          <div className="space-y-2">
+            {DEMO_PERSONAS.map((persona) => (
+              <button
+                key={persona.id}
+                type="button"
+                onClick={() => handleDemoLogin(persona)}
+                disabled={demoLoadingId !== null}
+                className="w-full flex items-center gap-3 px-3.5 py-3 bg-gray-50 border border-gray-100 rounded-xl text-left hover:bg-gray-100 active:scale-[0.98] transition-all disabled:opacity-50"
+              >
+                <span className="text-xl flex-shrink-0">{persona.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-gray-900 truncate">{persona.company}</span>
+                    <span className="text-[10px] font-medium text-gray-500 bg-gray-200 rounded-full px-1.5 py-0.5 flex-shrink-0">{persona.industry}</span>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-0.5 truncate">{persona.pain}</p>
+                </div>
+                {demoLoadingId === persona.id ? (
+                  <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0 text-gray-300">
+                    <path d="M5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Email 登入分隔 */}
         <div className="w-full max-w-sm flex items-center gap-3 mb-4">
           <div className="flex-1 h-px bg-gray-200" />
           <span className="text-xs text-gray-400 font-medium">或</span>
