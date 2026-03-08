@@ -8,6 +8,7 @@
  */
 import OpenAI from "openai";
 import { query } from "./db.js";
+import { scanKnowledgeBase, isConnected } from "./onedrive.js";
 
 // 意圖類型
 export type IntentType = 
@@ -15,8 +16,13 @@ export type IntentType =
   | "assign_task"     // 派發任務
   | "check_progress"  // 查看進度
   | "check_todo"      // 今日待辦
+  | "knowledge_query" // 查詢知識庫
   | "general_chat"    // 一般對話
   | "unknown";
+
+// 知識庫上下文緩存
+let knowledgeCache: { docs: Array<{ name: string; content: string }>; timestamp: number } | null = null;
+const CACHE_TTL = 5 * 60 * 1000; // 5 分鐘緩存
 
 // AI 員工推薦
 export interface AgentRecommendation {
@@ -75,6 +81,42 @@ function getModelName(): string {
 }
 
 /**
+ * 獲取知識庫上下文
+ */
+async function getKnowledgeContext(userId: string = "dev-user-001"): Promise<string> {
+  // 檢查連接狀態
+  if (!isConnected(userId)) {
+    return "";
+  }
+  
+  // 使用緩存
+  const now = Date.now();
+  if (knowledgeCache && (now - knowledgeCache.timestamp) < CACHE_TTL) {
+    return formatKnowledgeDocs(knowledgeCache.docs);
+  }
+  
+  try {
+    const docs = await scanKnowledgeBase(userId);
+    knowledgeCache = {
+      docs: docs.map(d => ({ name: d.name, content: d.content.slice(0, 2000) })), // 限制每檔 2000 字
+      timestamp: now,
+    };
+    return formatKnowledgeDocs(knowledgeCache.docs);
+  } catch (error) {
+    console.error("Failed to fetch knowledge base:", error);
+    return "";
+  }
+}
+
+function formatKnowledgeDocs(docs: Array<{ name: string; content: string }>): string {
+  if (docs.length === 0) return "";
+  
+  return `\n\n=== 公司知識庫 ===\n${docs.map(d => 
+    `【${d.name}】\n${d.content}`
+  ).join("\n\n---\n\n")}\n=== 知識庫結束 ===`;
+}
+
+/**
  * 分析用戶意圖
  */
 async function analyzeIntent(message: string): Promise<{
@@ -91,7 +133,7 @@ async function analyzeIntent(message: string): Promise<{
         role: "system",
         content: `你是一個意圖分析助手。分析用戶訊息並返回 JSON 格式：
 {
-  "intent": "build_team" | "assign_task" | "check_progress" | "check_todo" | "general_chat",
+  "intent": "build_team" | "assign_task" | "check_progress" | "check_todo" | "knowledge_query" | "general_chat",
   "taskDescription": "任務描述（如果有）",
   "skills": ["需要的技能1", "技能2"]
 }
@@ -101,6 +143,7 @@ async function analyzeIntent(message: string): Promise<{
 - assign_task: 用戶想派發任務、分配工作
 - check_progress: 用戶想查看進度、追蹤狀態
 - check_todo: 用戶想看今日待辦、任務列表
+- knowledge_query: 用戶詢問公司資料、文件、政策、規定、SOP、產品資訊等
 - general_chat: 一般對話、問答
 
 只返回 JSON，不要其他內容。`
@@ -267,6 +310,39 @@ ${context.recommendations.map(r => `- ${r.name}（${r.title}）：${r.reason}`).
 }
 
 /**
+ * 生成知識庫查詢回應
+ */
+async function generateKnowledgeResponse(
+  message: string,
+  knowledgeContext: string
+): Promise<string> {
+  const client = createClient();
+
+  const systemPrompt = `你是「幕僚長」，SoWork 平台的 AI 主管助理。
+用戶正在詢問公司相關資料。請根據知識庫中的內容回答。
+
+回覆原則：
+- 如果知識庫中有相關資訊，引用並回答
+- 如果找不到相關資訊，誠實說明並建議其他方式
+- 使用繁體中文
+- 簡潔明瞭
+
+${knowledgeContext || "（知識庫尚未連接，請先連接 OneDrive）"}`;
+
+  const response = await client.chat.completions.create({
+    model: getModelName(),
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: message }
+    ],
+    temperature: 0.5,
+    max_tokens: 500,
+  });
+
+  return response.choices[0]?.message?.content || "抱歉，目前無法查詢知識庫。請確認已連接 OneDrive。";
+}
+
+/**
  * 主要對話處理函數
  */
 export async function chat(
@@ -321,6 +397,17 @@ export async function chat(
         response.suggestedActions = [
           { label: "查看今日待辦", action: "view_todo" },
           { label: "新增任務", action: "create_task" },
+        ];
+        break;
+      }
+
+      case "knowledge_query": {
+        // 獲取知識庫上下文
+        const knowledgeContext = await getKnowledgeContext("dev-user-001");
+        response.message = await generateKnowledgeResponse(userMessage, knowledgeContext);
+        response.suggestedActions = [
+          { label: "連接更多資料來源", action: "connect_onedrive" },
+          { label: "搜尋知識庫", action: "search_knowledge" },
         ];
         break;
       }
