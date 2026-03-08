@@ -4,9 +4,136 @@
  */
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { generatePositioningBookDOC, generatePositioningBookPPT } from "@/lib/positioningBookExporter";
+import {
+  generatePositioningBookDOC,
+  generatePositioningBookPPT,
+  PPT_PRESET_CONSULTANT,
+  PPT_PRESET_FULL,
+  PPT_SECTIONS,
+  type PptSection,
+} from "@/lib/positioningBookExporter";
 import { getSampleBrandData } from "@/lib/samplePositioningPlan";
 import { toast } from "sonner";
+
+type PptTemplateMode = "consultant" | "full" | "custom";
+
+interface PptPickerProps {
+  onConfirm: (sections: PptSection[]) => void;
+  onCancel: () => void;
+}
+
+function PptTemplatePicker({ onConfirm, onCancel }: PptPickerProps) {
+  const [mode, setMode] = useState<PptTemplateMode>("consultant");
+  const [custom, setCustom] = useState<Set<PptSection>>(new Set(PPT_PRESET_FULL));
+
+  const toggleSection = (key: PptSection) => {
+    setCustom(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+
+  const getSelectedSections = (): PptSection[] => {
+    if (mode === "consultant") return PPT_PRESET_CONSULTANT;
+    if (mode === "full") return PPT_PRESET_FULL;
+    return PPT_SECTIONS.map(s => s.key).filter(k => custom.has(k));
+  };
+
+  const selectedCount = getSelectedSections().length;
+
+  return (
+    <div className="fixed inset-0 bg-black/70 z-50 flex flex-col justify-end" onClick={onCancel}>
+      <div className="bg-slate-800 rounded-t-3xl px-5 py-6" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-white font-bold text-lg">PPT 模板選擇</h2>
+          <button onClick={onCancel} className="w-8 h-8 rounded-full bg-white/10 text-white/60 flex items-center justify-center text-lg">×</button>
+        </div>
+
+        {/* 模板選擇 */}
+        <div className="space-y-2 mb-4">
+          <button
+            onClick={() => setMode("consultant")}
+            className={`w-full flex items-center gap-3 p-3.5 rounded-2xl border transition-all ${
+              mode === "consultant" ? "border-amber-500/60 bg-amber-500/10" : "border-white/15 bg-white/6"
+            }`}
+          >
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${mode === "consultant" ? "border-amber-400" : "border-white/30"}`}>
+              {mode === "consultant" && <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />}
+            </div>
+            <div className="text-left">
+              <p className={`font-medium text-sm ${mode === "consultant" ? "text-amber-300" : "text-white"}`}>顧問版（8 張）</p>
+              <p className="text-white/40 text-xs mt-0.5">David (BCG) 推薦 · 封面、執行摘要、受眾、市場、優勢、定位A、驗證、結論</p>
+            </div>
+          </button>
+
+          <button
+            onClick={() => setMode("full")}
+            className={`w-full flex items-center gap-3 p-3.5 rounded-2xl border transition-all ${
+              mode === "full" ? "border-amber-500/60 bg-amber-500/10" : "border-white/15 bg-white/6"
+            }`}
+          >
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${mode === "full" ? "border-amber-400" : "border-white/30"}`}>
+              {mode === "full" && <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />}
+            </div>
+            <div className="text-left">
+              <p className={`font-medium text-sm ${mode === "full" ? "text-amber-300" : "text-white"}`}>完整版（11 張）</p>
+              <p className="text-white/40 text-xs mt-0.5">全部章節，適合深度提案</p>
+            </div>
+          </button>
+
+          <button
+            onClick={() => setMode("custom")}
+            className={`w-full flex items-center gap-3 p-3.5 rounded-2xl border transition-all ${
+              mode === "custom" ? "border-amber-500/60 bg-amber-500/10" : "border-white/15 bg-white/6"
+            }`}
+          >
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${mode === "custom" ? "border-amber-400" : "border-white/30"}`}>
+              {mode === "custom" && <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />}
+            </div>
+            <div className="text-left">
+              <p className={`font-medium text-sm ${mode === "custom" ? "text-amber-300" : "text-white"}`}>自訂章節</p>
+              <p className="text-white/40 text-xs mt-0.5">手動勾選需要的投影片</p>
+            </div>
+          </button>
+        </div>
+
+        {/* 自訂章節列表 */}
+        {mode === "custom" && (
+          <div className="bg-white/6 rounded-2xl p-3 mb-4 space-y-1 max-h-52 overflow-y-auto">
+            {PPT_SECTIONS.map(({ key, label, labelEn }) => (
+              <button
+                key={key}
+                onClick={() => toggleSection(key)}
+                className="w-full flex items-center gap-3 py-2 px-2 rounded-xl hover:bg-white/8 transition-all"
+              >
+                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                  custom.has(key) ? "border-amber-400 bg-amber-400/20" : "border-white/25"
+                }`}>
+                  {custom.has(key) && <span className="text-amber-400 text-xs">✓</span>}
+                </div>
+                <span className={`text-sm flex-1 text-left ${custom.has(key) ? "text-white" : "text-white/50"}`}>{label}</span>
+                <span className="text-white/25 text-xs">{labelEn}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        <button
+          onClick={() => onConfirm(getSelectedSections())}
+          disabled={selectedCount === 0}
+          className={`w-full py-3.5 rounded-2xl font-bold text-sm transition-all ${
+            selectedCount > 0
+              ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white active:scale-[0.98]"
+              : "bg-white/10 text-white/30 cursor-not-allowed"
+          }`}
+        >
+          匯出 {selectedCount} 張投影片
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function MobileDemoPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -16,26 +143,44 @@ export default function MobileDemoPage() {
   const selectedPersona = personas?.find(p => p.id === selectedId);
 
   const [isExporting, setIsExporting] = useState(false);
+  const [pptPickerFor, setPptPickerFor] = useState<string | null>(null); // personaId if showing picker
 
   const handleSelectPersona = (personaId: string) => {
     setSelectedId(personaId);
   };
 
   const handleDownloadOutput = async (outputType: string, personaId: string) => {
-    if (outputType !== "doc" && outputType !== "ppt") return;
+    if (outputType === "ppt") {
+      setPptPickerFor(personaId);
+      return;
+    }
+    if (outputType !== "doc") return;
     setIsExporting(true);
-    const toastId = toast.loading(
-      outputType === "doc" ? "正在生成定位書 Word 文件..." : "正在生成定位書 PPT 簡報..."
-    );
+    const toastId = toast.loading("正在生成定位書 Word 文件...");
     try {
       const { brandName, plan } = getSampleBrandData(personaId);
-      if (outputType === "doc") {
-        await generatePositioningBookDOC({ brandName, plan, clientName: brandName });
-      } else {
-        await generatePositioningBookPPT({ brandName, plan, clientName: brandName });
-      }
+      await generatePositioningBookDOC({ brandName, plan, clientName: brandName });
       toast.dismiss(toastId);
       toast.success("文件已下載！");
+    } catch (e) {
+      toast.dismiss(toastId);
+      toast.error(`匯出失敗：${e}`);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handlePptConfirm = async (sections: PptSection[]) => {
+    if (!pptPickerFor) return;
+    const personaId = pptPickerFor;
+    setPptPickerFor(null);
+    setIsExporting(true);
+    const toastId = toast.loading(`正在生成 ${sections.length} 張投影片 PPT...`);
+    try {
+      const { brandName, plan } = getSampleBrandData(personaId);
+      await generatePositioningBookPPT({ brandName, plan, clientName: brandName, pptSections: sections });
+      toast.dismiss(toastId);
+      toast.success("PPT 已下載！");
     } catch (e) {
       toast.dismiss(toastId);
       toast.error(`匯出失敗：${e}`);
@@ -206,6 +351,7 @@ export default function MobileDemoPage() {
 
   // 選擇列表視圖
   return (
+    <>
     <div className="min-h-screen bg-slate-900 flex flex-col">
       {/* Header */}
       <div className="px-4 pt-6 pb-4">
@@ -307,7 +453,26 @@ export default function MobileDemoPage() {
         >
           使用預設範例公司體驗
         </button>
+
+        {/* 傳播行事曆入口 */}
+        <button
+          onClick={() => { window.location.href = "/app/calendar"; }}
+          className="w-full py-3.5 bg-white/6 border border-white/10 rounded-2xl flex items-center justify-center gap-2 text-white/60 text-sm"
+        >
+          <span>📅</span>
+          <span>傳播行事曆管理</span>
+          <span className="text-white/30">→</span>
+        </button>
       </div>
     </div>
+
+    {/* PPT 模板選擇器 Modal */}
+    {pptPickerFor && (
+      <PptTemplatePicker
+        onConfirm={handlePptConfirm}
+        onCancel={() => setPptPickerFor(null)}
+      />
+    )}
+    </>
   );
 }

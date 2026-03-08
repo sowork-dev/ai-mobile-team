@@ -269,6 +269,51 @@ function makePageBreak(): Paragraph {
 
 // ==================== DOCX 主函數 ====================
 
+// ==================== PPT 章節定義 ====================
+
+export type PptSection =
+  | "cover"        // 封面
+  | "agenda"       // 議程
+  | "summary"      // 執行摘要
+  | "audience"     // 目標受眾
+  | "market"       // 市場空白
+  | "advantage"    // 品牌優勢
+  | "personality"  // 品牌個性
+  | "positioningA" // 定位策略 A
+  | "positioningB" // 定位策略 B
+  | "validation"   // 標語驗證
+  | "conclusion";  // 結論
+
+export interface PptSectionMeta {
+  key: PptSection;
+  label: string;
+  labelEn: string;
+}
+
+export const PPT_SECTIONS: PptSectionMeta[] = [
+  { key: "cover",        label: "封面",        labelEn: "Cover" },
+  { key: "agenda",       label: "議程",        labelEn: "Agenda" },
+  { key: "summary",      label: "執行摘要",    labelEn: "Executive Summary" },
+  { key: "audience",     label: "目標受眾",    labelEn: "Target Audience" },
+  { key: "market",       label: "市場空白",    labelEn: "Market Gap" },
+  { key: "advantage",    label: "品牌優勢",    labelEn: "Brand Advantage" },
+  { key: "personality",  label: "品牌個性",    labelEn: "Brand Personality" },
+  { key: "positioningA", label: "定位策略 A",  labelEn: "Positioning A" },
+  { key: "positioningB", label: "定位策略 B",  labelEn: "Positioning B" },
+  { key: "validation",   label: "標語驗證",    labelEn: "Tagline Validation" },
+  { key: "conclusion",   label: "結論",        labelEn: "Conclusion" },
+];
+
+/** 顧問版（8 張）：封面 + 執行摘要 + 目標受眾 + 市場空白 + 品牌優勢 + 定位策略A + 標語驗證 + 結論 */
+export const PPT_PRESET_CONSULTANT: PptSection[] = [
+  "cover", "summary", "audience", "market", "advantage", "positioningA", "validation", "conclusion",
+];
+
+/** 完整版（11 張）：全部章節 */
+export const PPT_PRESET_FULL: PptSection[] = [
+  "cover", "agenda", "summary", "audience", "market", "advantage", "personality", "positioningA", "positioningB", "validation", "conclusion",
+];
+
 export interface PositioningBookExportOptions {
   brandName: string;
   plan: PositioningPlan;
@@ -276,6 +321,7 @@ export interface PositioningBookExportOptions {
   reportDate?: Date;
   author?: string;
   clientName?: string;       // 客戶名稱（用於頁眉）
+  pptSections?: PptSection[]; // 自訂章節列表；不傳則使用完整版
 }
 
 /**
@@ -732,10 +778,11 @@ function addBottomBar(slide: PptxGenJS.Slide, brandName: string, dateStr: string
 
 /**
  * 生成專業定位書 PowerPoint 簡報
- * 16-18 張投影片，符合顧問公司提案水準
+ * 支援章節自訂；預設使用完整版 11 張投影片
  */
 export async function generatePositioningBookPPT(options: PositioningBookExportOptions): Promise<void> {
-  const { brandName, plan, reportDate = new Date(), author = "品牌定位分析師" } = options;
+  const { brandName, plan, reportDate = new Date(), author = "品牌定位分析師", pptSections = PPT_PRESET_FULL } = options;
+  const has = (s: PptSection) => pptSections.includes(s);
   const { reasoning, emotionalValueSlogan, functionalValueSlogan } = plan;
   const dateStr = reportDate.toLocaleDateString("zh-TW", { year: "numeric", month: "long", day: "numeric" });
   const { targetAudience, marketGap, brandAdvantage, brandPersonality, tagline } = reasoning;
@@ -752,7 +799,12 @@ export async function generatePositioningBookPPT(options: PositioningBookExportO
     background: { color: PPT.bg },
   });
 
+  // 總分（結論投影片用）
+  const totalA = tagline.versionA.sixStepValidation?.totalScore ?? "—";
+  const totalB = tagline.versionB.sixStepValidation?.totalScore ?? "—";
+
   // ==================== 第 1 張：封面 ====================
+  if (has("cover")) {
   const cover = pptx.addSlide();
   // 左側深藍色塊
   cover.addShape("rect", {
@@ -786,8 +838,10 @@ export async function generatePositioningBookPPT(options: PositioningBookExportO
   cover.addShape("rect", { x: 5.5, y: 3.7, w: 6.5, h: 0.04, fill: { color: PPT.divider } });
   cover.addText(dateStr, { x: 5.5, y: 3.85, w: 4, h: 0.35, fontSize: 12, color: PPT.textLight, fontFace: PPT.font });
   cover.addText(author, { x: 5.5, y: 4.2, w: 4, h: 0.35, fontSize: 12, color: PPT.textLight, fontFace: PPT.font });
+  } // end cover
 
   // ==================== 第 2 張：議程 ====================
+  if (has("agenda")) {
   const agenda = pptx.addSlide();
   agenda.background = { color: PPT.bg };
   addBottomBar(agenda, brandName, dateStr);
@@ -810,8 +864,10 @@ export async function generatePositioningBookPPT(options: PositioningBookExportO
     agenda.addText(num, { x: 0.4, y, w: 0.45, h: 0.45, fontSize: 11, bold: true, color: PPT.bg, fontFace: PPT.font, align: "center", valign: "middle" });
     agenda.addText(title, { x: 1.05, y: y + 0.04, w: 11.5, h: 0.4, fontSize: 14, color: PPT.textDark, fontFace: PPT.font, align: "left" });
   });
+  } // end agenda
 
   // ==================== 第 3 張：執行摘要 ====================
+  if (has("summary")) {
   const exec = pptx.addSlide();
   exec.background = { color: PPT.bgSlate };
   addBottomBar(exec, brandName, dateStr);
@@ -843,8 +899,10 @@ export async function generatePositioningBookPPT(options: PositioningBookExportO
     x: 0.4, y: 4.3, w: PPT.W - 0.8, h: 0.8,
     fontSize: 11, color: PPT.textMid, fontFace: PPT.font, align: "center", wrap: true,
   });
+  } // end summary
 
   // ==================== 第 4 張：目標受眾 ====================
+  if (has("audience")) {
   const audSlide = pptx.addSlide();
   audSlide.background = { color: PPT.bg };
   addBottomBar(audSlide, brandName, dateStr);
@@ -864,8 +922,10 @@ export async function generatePositioningBookPPT(options: PositioningBookExportO
   if (audDetails.length > 0) {
     addBullets(audSlide, audDetails, { y: 2.85 });
   }
+  } // end audience
 
   // ==================== 第 5 張：市場空白 ====================
+  if (has("market")) {
   const mktSlide = pptx.addSlide();
   mktSlide.background = { color: PPT.bgSlate };
   addBottomBar(mktSlide, brandName, dateStr);
@@ -886,8 +946,10 @@ export async function generatePositioningBookPPT(options: PositioningBookExportO
     mktSlide.addText(label, { x: x + 0.15, y: 1.75, w: cardW - 0.3, h: 0.35, fontSize: 10, bold: true, color: PPT.primary, fontFace: PPT.font });
     mktSlide.addText(text, { x: x + 0.15, y: 2.15, w: cardW - 0.3, h: 3.0, fontSize: 11, color: PPT.textDark, fontFace: PPT.font, wrap: true, valign: "top" });
   });
+  } // end market
 
   // ==================== 第 6 張：品牌優勢 ====================
+  if (has("advantage")) {
   const advSlide = pptx.addSlide();
   advSlide.background = { color: PPT.bg };
   addBottomBar(advSlide, brandName, dateStr);
@@ -914,8 +976,10 @@ export async function generatePositioningBookPPT(options: PositioningBookExportO
       advSlide.addText(`• ${item}`, { x: x + 0.1, y: 3.08 + j * 0.65, w: cW - 0.25, h: 0.52, fontSize: 10, color: PPT.textDark, fontFace: PPT.font, wrap: true, valign: "middle" });
     });
   });
+  } // end advantage
 
   // ==================== 第 7 張：品牌個性 ====================
+  if (has("personality")) {
   const perSlide = pptx.addSlide();
   perSlide.background = { color: PPT.bgSlate };
   addBottomBar(perSlide, brandName, dateStr);
@@ -956,8 +1020,10 @@ export async function generatePositioningBookPPT(options: PositioningBookExportO
       });
     });
   }
+  } // end personality
 
   // ==================== 第 8 張：定位策略 - 情緒 ====================
+  if (has("positioningA")) {
   const posA = pptx.addSlide();
   posA.background = { color: PPT.bg };
   addBottomBar(posA, brandName, dateStr);
@@ -981,8 +1047,10 @@ export async function generatePositioningBookPPT(options: PositioningBookExportO
     x: 0.4, y: 3.7, w: PPT.W - 0.8, h: 2.8,
     fontSize: 12, color: PPT.textDark, fontFace: PPT.font, wrap: true, valign: "top",
   });
+  } // end positioningA
 
   // ==================== 第 9 張：定位策略 - 功能 ====================
+  if (has("positioningB")) {
   const posB = pptx.addSlide();
   posB.background = { color: PPT.bgSlate };
   addBottomBar(posB, brandName, dateStr);
@@ -1005,8 +1073,10 @@ export async function generatePositioningBookPPT(options: PositioningBookExportO
     x: 0.4, y: 3.7, w: PPT.W - 0.8, h: 2.8,
     fontSize: 12, color: PPT.textDark, fontFace: PPT.font, wrap: true, valign: "top",
   });
+  } // end positioningB
 
   // ==================== 第 10 張：標語驗證 ====================
+  if (has("validation")) {
   const valSlide = pptx.addSlide();
   valSlide.background = { color: PPT.bg };
   addBottomBar(valSlide, brandName, dateStr);
@@ -1073,11 +1143,11 @@ export async function generatePositioningBookPPT(options: PositioningBookExportO
   });
 
   // 總分彙整
-  const totalA = tagline.versionA.sixStepValidation?.totalScore ?? "—";
-  const totalB = tagline.versionB.sixStepValidation?.totalScore ?? "—";
   valSlide.addShape("rect", { x: 0.4, y: 7.05, w: PPT.W - 0.8, h: 0.05, fill: { color: PPT.accent } });
+  } // end validation
 
   // ==================== 第 11 張：結論 ====================
+  if (has("conclusion")) {
   const concl = pptx.addSlide();
   concl.background = { color: PPT.primary };
   addSectionTag(concl, "CONCLUSION");
@@ -1114,6 +1184,7 @@ export async function generatePositioningBookPPT(options: PositioningBookExportO
     x: 0, y: PPT.H - 0.3, w: PPT.W, h: 0.25,
     fontSize: 8, color: "556677", fontFace: PPT.font, align: "center",
   });
+  } // end conclusion
 
   // ==================== 匯出 ====================
   await pptx.writeFile({ fileName: `${brandName}_品牌定位策略書.pptx` });
