@@ -127,15 +127,15 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
     ],
     assistantContext: {
       welcomeMessage:
-        "您好，我是 GroupM Digital 的幕僚長。\n\n您的 AI 創意團隊今天持續運作中：\n• Alex 正在主導 Q4 Pitch 的策略框架（進行到第 2 階段）\n• Maya 完成了 P&G 8 個語言廣告文案，等待您審批\n• Ryan 剛完成競品監測，發現 Adidas 大量增加短影音投放\n• Lena 正在趕製 Unilever 全球提案初稿\n\n最需要您關注：Q4 Pitch 已到策略方向確認關卡，需要您拍板後才能繼續推進。",
+        "您好，我是 GroupM Digital 的幕僚長。\n\n您的 AI 創意團隊今天持續運作中：\n• Alex 正在主導 Q4 Pitch 的策略框架（進行到第 2 階段）\n• Maya 完成了 P&G 8 個語言廣告文案，等待您審批\n• Ryan 剛完成競品監測，發現 Adidas 大量增加短影音投放\n• Lena 正在趕製 Unilever 全球提案初稿\n\n📅 剛完成：已透過 LINE 詢問 Nike 客戶 3 人的本週會議時間，共同空檔為週四 14:00，等您確認後我來發邀請。\n\n最需要您關注：Q4 Pitch 已到策略方向確認關卡，需要您拍板後才能繼續推進。",
       quickActions: [
         { label: "Q4 Pitch 進度", prompt: "Q4 全球品牌活動 Pitch 目前進度如何？需要我做什麼？" },
-        { label: "Adidas 競品動向", prompt: "Adidas 最新廣告策略有哪些值得注意的變化？" },
+        { label: "幫我約 Nike 開會", prompt: "幫我約 Nike 客戶 Annie、James、Leo 本週開線上會議" },
+        { label: "下載 Unilever PPT", prompt: "幫我把 Unilever 提案匯出成 PPT 報告" },
         { label: "P&G 文案審批", prompt: "P&G Q4 廣告文案有哪些亮點？我需要注意什麼？" },
-        { label: "組建新案", prompt: "我需要為新客戶組建一個廣告策略團隊" },
       ],
-      completedToday: 2,
-      timeSavedHours: 16,
+      completedToday: 3,
+      timeSavedHours: 18,
     },
   },
 
@@ -216,15 +216,15 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
     ],
     assistantContext: {
       welcomeMessage:
-        "您好，我是 L'Oréal Asia Pacific 的幕僚長。\n\n您的 AI 行銷團隊今天相當忙碌：\n• Iris 已完成台灣雙十一 45 則社群排程，橫跨 10/9 至 11/11\n• Zara 正在趕完最後幾個市場的在地化版本\n• Belle 完成了 Maybelline TikTok 新品策略報告\n\n最需要您關注：12 市場在地化進行中，預計今晚完成。另有新品上市社群活動尚待啟動。",
+        "您好，我是 L'Oréal Asia Pacific 的幕僚長。\n\n您的 AI 行銷團隊今天相當忙碌：\n• Iris 已完成台灣雙十一 45 則社群排程，橫跨 10/9 至 11/11\n• Zara 正在趕完最後幾個市場的在地化版本\n• Belle 完成了 Maybelline TikTok 新品策略報告\n\n🍽️ 新功能：您說「幫我約品牌長、行銷總監、通路長三人吃飯討論 Q4 計劃」，我已透過 LINE 詢問大家時間，共同空檔為週五 12:30，已幫您訂位信義區的 日式料理（inline.app）。\n\n最需要您關注：12 市場在地化進行中，預計今晚完成。",
       quickActions: [
         { label: "在地化進度", prompt: "12個市場在地化目前完成了幾個？還剩哪些？" },
-        { label: "KOL 效益報告", prompt: "Q3 KOL 合作 ROI 分析結果如何？哪個 KOL 最有效？" },
-        { label: "雙十一準備", prompt: "台灣雙十一行銷都準備好了嗎？有什麼需要我確認？" },
+        { label: "幫我訂餐廳", prompt: "幫我約品牌長和行銷總監週五午餐，找信義區日式餐廳" },
+        { label: "下載行銷報告 PDF", prompt: "把 Q3 KOL 效益分析匯出成 PDF 報告格式" },
         { label: "新品上市規劃", prompt: "新品上市社群活動要如何開始啟動？" },
       ],
-      completedToday: 2,
-      timeSavedHours: 24,
+      completedToday: 3,
+      timeSavedHours: 26,
     },
   },
 
@@ -305,15 +305,15 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
     ],
     assistantContext: {
       welcomeMessage:
-        "您好，我是 BCG Taipei 的幕僚長。\n\n您的 AI 顧問團隊今天的進度：\n• Sara 完成了 30 頁競爭力分析 Pitch 第二稿，標記了 3 個需要您確認的策略方向\n• Nina 完成東南亞市場可行性分析，建議優先進入泰、越、印三國\n• Rex 正在完成 Benchmarking 視覺化，預計明早交付\n\n優先事項：零售客戶 Alpha 的 Pitch 需要您審閱並確認策略方向，這是推進到下一階段的關卡。",
+        "您好，我是 BCG Taipei 的幕僚長。\n\n您的 AI 顧問團隊今天的進度：\n• Sara 完成了 30 頁競爭力分析 Pitch 第二稿，標記了 3 個需要您確認的策略方向\n• Nina 完成東南亞市場可行性分析，建議優先進入泰、越、印三國\n• Rex 正在完成 Benchmarking 視覺化，預計明早交付\n\n📊 新功能：東南亞市場分析報告已按您的職位（顧問）自動產出 8 頁 BCG 風格 PPT，可直接下載後交付客戶。\n\n優先事項：零售客戶 Alpha 的 Pitch 需要您審閱並確認策略方向，這是推進到下一階段的關卡。",
       quickActions: [
         { label: "審閱 Pitch 稿", prompt: "零售客戶 Alpha 的 Pitch 第二稿有哪 3 個地方需要我確認？" },
-        { label: "東南亞市場風險", prompt: "進入泰國、越南、印尼市場的主要風險和機會是什麼？" },
-        { label: "今日交付物", prompt: "今天有哪些報告已經完成？可以交付給客戶了嗎？" },
+        { label: "下載 8 頁 PPT", prompt: "把東南亞市場分析匯出成 8 頁顧問風格 PPT" },
+        { label: "幫我約客戶開會", prompt: "幫我約零售客戶 Alpha 的 CEO 和 CFO 下週做策略回顧會議" },
         { label: "新提案啟動", prompt: "我需要為新客戶啟動一個行業分析提案" },
       ],
-      completedToday: 2,
-      timeSavedHours: 20,
+      completedToday: 3,
+      timeSavedHours: 22,
     },
   },
 
@@ -394,15 +394,15 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
     ],
     assistantContext: {
       welcomeMessage:
-        "您好，我是 Hillhouse Capital 的幕僚長。\n\nPlatform Team 的 AI 今天成效：\n• Vera 完成了 Q3 LP 報告（28頁），等待您確認後發送\n• Felix 完成 5 家 Portfolio 品牌健診，C公司需要優先處理品牌問題\n• Tara 正在趕製 B2B SaaS 投資標的 GTM 計畫\n\n需要您決策：Q3 LP 報告已就緒，您確認後可立即發送給所有 LP，請優先審閱。",
+        "您好，我是 Hillhouse Capital 的幕僚長。\n\nPlatform Team 的 AI 今天成效：\n• Vera 完成了 Q3 LP 報告（28頁），等待您確認後發送\n• Felix 完成 5 家 Portfolio 品牌健診，C公司需要優先處理品牌問題\n• Tara 正在趕製 B2B SaaS 投資標的 GTM 計畫\n\n📈 新功能：Q3 财务数据已自动以您的财务职位格式汇出为 Excel 表格（含多个分析 Sheet），可直接提供给 LP 参考。\n\n需要您決策：Q3 LP 報告已就緒，您確認後可立即發送給所有 LP，請優先審閱。",
       quickActions: [
         { label: "LP 報告審閱", prompt: "Q3 LP 報告有哪些重點需要我特別注意？" },
-        { label: "GTM 計畫進度", prompt: "B2B SaaS 的 GTM 計畫目前到哪個階段？渠道策略如何？" },
-        { label: "品牌問題", prompt: "哪家 Portfolio 公司的品牌問題最嚴重？建議如何改善？" },
+        { label: "下載財務 Excel", prompt: "把 Q3 Portfolio 財務數據匯出成 Excel 報表" },
+        { label: "幫我約 LP 溝通", prompt: "幫我約三個主要 LP 下週做 Q3 電話溝通" },
         { label: "新 DD 分析", prompt: "開始一個新投資標的的 Due Diligence 分析" },
       ],
-      completedToday: 2,
-      timeSavedHours: 32,
+      completedToday: 3,
+      timeSavedHours: 34,
     },
   },
 
@@ -484,15 +484,15 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
     ],
     assistantContext: {
       welcomeMessage:
-        "您好，我是 Microsoft Taiwan 的幕僚長。\n\n您的 AI 行銷團隊今天動態：\n• Evan 完成了 Azure 10月行銷內容包（5客戶案例 + 3功能介紹）\n• Tyler 更新了競品比較 Playbook，加入最新 AI 產品對比分析\n• Max 確認了 Ignite 台灣場場地，11/19 大直威斯汀 500 人規模\n\n待處理：銷售賦能教材進行到第 2 階段，需要您確認競品定位策略。Ignite 邀請材料等待啟動。",
+        "您好，我是 Microsoft Taiwan 的幕僚長。\n\n您的 AI 行銷團隊今天動態：\n• Evan 完成了 Azure 10月行銷內容包（5客戶案例 + 3功能介紹）\n• Tyler 更新了競品比較 Playbook，加入最新 AI 產品對比分析\n• Max 確認了 Ignite 台灣場場地，11/19 大直威斯汀 500 人規模\n\n📞 新功能：您與 AWS 客戶的電話通話已自動整理成摘要——提取出 3 個待辦事項，已建立對應任務並分配給 Tyler 跟進。\n\n待處理：銷售賦能教材進行到第 2 階段，需要您確認競品定位策略。",
       quickActions: [
         { label: "競品策略確認", prompt: "Azure 對抗 AWS 和 Google Cloud 的主要差異化策略是什麼？" },
-        { label: "Ignite 活動規劃", prompt: "Ignite 台灣場活動還有哪些事情需要準備？" },
-        { label: "行銷績效摘要", prompt: "今年行銷績效最好的產品線是哪個？數據如何？" },
-        { label: "內容包亮點", prompt: "Azure 10月行銷內容包有哪些可以向團隊分享的亮點？" },
+        { label: "整理剛剛的通話", prompt: "我剛剛跟客戶通話完畢，幫我整理摘要並建立後續任務" },
+        { label: "幫我約 Ignite 媒體", prompt: "幫我約科技媒體 iThome、TechNews 三個記者下週做 Ignite 媒體說明" },
+        { label: "下載競品 PDF 報告", prompt: "把 Azure vs AWS vs Google Cloud 競品分析匯出成 PDF 報告" },
       ],
-      completedToday: 2,
-      timeSavedHours: 28,
+      completedToday: 4,
+      timeSavedHours: 30,
     },
   },
 };
