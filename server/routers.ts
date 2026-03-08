@@ -41,6 +41,7 @@ import {
 import { crawlWebsite, recommendAgentsForBrand, CrawlResult } from "./webCrawler.js";
 import * as onedrive from "./onedrive.js";
 import { executeAction, ActionType, ActionResult } from "./actionExecutor.js";
+import { generateProfessionalPPT, getManusTaskStatus, waitForTaskCompletion } from "./manus.js";
 
 const t = initTRPC.create({
   transformer: superjson,
@@ -910,6 +911,61 @@ const onedriveRouter = router({
     }),
 });
 
+// Manus Router - 專業 PPT 生成
+const manusRouter = router({
+  // 建立 PPT 生成任務
+  createPPT: publicProcedure
+    .input(z.object({
+      title: z.string(),
+      content: z.string(),
+      style: z.enum(["business", "creative", "minimal"]).optional(),
+      slides: z.number().min(3).max(30).optional(),
+      language: z.enum(["zh", "en"]).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      try {
+        const result = await generateProfessionalPPT({
+          title: input.title,
+          content: input.content,
+          style: input.style,
+          slides: input.slides,
+          language: input.language,
+        });
+        return {
+          success: true,
+          taskId: result.taskId,
+          taskUrl: result.taskUrl,
+          message: "PPT 生成任務已建立，請稍候...",
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: (error as Error).message,
+        };
+      }
+    }),
+  
+  // 查詢任務狀態
+  getTaskStatus: publicProcedure
+    .input(z.object({
+      taskId: z.string(),
+    }))
+    .query(async ({ input }) => {
+      try {
+        const status = await getManusTaskStatus(input.taskId);
+        return {
+          success: true,
+          ...status,
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: (error as Error).message,
+        };
+      }
+    }),
+});
+
 // Main App Router
 export const appRouter = router({
   auth: authRouter,
@@ -921,6 +977,7 @@ export const appRouter = router({
   chiefOfStaff: chiefOfStaffRouter,
   company: companyRouter,
   onedrive: onedriveRouter,
+  manus: manusRouter,
   
   // Health check
   health: publicProcedure.query(() => ({
