@@ -6,6 +6,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import MobileHeader from "../components/MobileHeader";
 import { useI18n } from "@/i18n";
+import { getDemoData } from "../demoData";
 
 export default function MobileChatPage() {
   const [, navigate] = useLocation();
@@ -13,8 +14,14 @@ export default function MobileChatPage() {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"groups" | "direct">("groups");
 
-  // 獲取品牌群組
-  const { data: brandGroups, isLoading: groupsLoading } = trpc.company.getBrandGroups.useQuery();
+  const demoPersonaId = localStorage.getItem("demoPersonaId");
+  const demoChatData = demoPersonaId ? getDemoData(demoPersonaId) : null;
+
+  // 獲取品牌群組（demo 模式下停用）
+  const { data: brandGroups, isLoading: groupsLoading } = trpc.company.getBrandGroups.useQuery(
+    undefined,
+    { enabled: !demoPersonaId }
+  );
 
   // 格式化時間
   const formatTime = (date: Date | string) => {
@@ -29,8 +36,9 @@ export default function MobileChatPage() {
     return d.toLocaleDateString("zh-TW", { month: "short", day: "numeric" });
   };
 
-  // 過濾群組
-  const filteredGroups = (brandGroups || []).filter(
+  // 過濾群組（demo 模式使用展示資料）
+  const displayGroups = demoChatData?.brandGroups || brandGroups || [];
+  const filteredGroups = displayGroups.filter(
     (g: any) => g.brandName.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -139,12 +147,21 @@ export default function MobileChatPage() {
                   <div className="flex-1 min-w-0 text-left">
                     <div className="flex items-center justify-between mb-0.5">
                       <span className="font-semibold text-[#1C1C1E] text-[15px]">{group.brandName}</span>
-                      <span className="text-xs text-[#8E8E93]">{formatTime(group.createdAt)}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-[#8E8E93]">{formatTime((group as any).lastMessageTime || group.createdAt)}</span>
+                        {(group as any).unread > 0 && (
+                          <span className="w-4 h-4 bg-[#E8611A] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                            {(group as any).unread}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <p className="text-[13px] text-[#8E8E93] truncate">
-                      {group.members?.length > 0 
-                        ? `${group.members.map((m: any) => m.name).slice(0, 2).join(", ")}${group.members.length > 2 ? ` +${group.members.length - 2}` : ""}`
-                        : locale === "zh" ? "點擊開始對話" : "Tap to start chatting"
+                      {(group as any).lastMessage
+                        ? (group as any).lastMessage
+                        : group.members?.length > 0
+                          ? `${group.members.map((m: any) => m.name).slice(0, 2).join(", ")}${group.members.length > 2 ? ` +${group.members.length - 2}` : ""}`
+                          : locale === "zh" ? "點擊開始對話" : "Tap to start chatting"
                       }
                     </p>
                   </div>

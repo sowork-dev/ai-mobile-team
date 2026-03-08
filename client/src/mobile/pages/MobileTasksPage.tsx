@@ -8,6 +8,7 @@ import MobileHeader from "../components/MobileHeader";
 import { useI18n } from "@/i18n";
 import { taskTemplates, TaskTemplate, TaskStage, categoryLabels } from "../components/TaskTemplates";
 import { trpc } from "@/lib/trpc";
+import { getDemoData } from "../demoData";
 
 type TaskStatus = "pending" | "in_progress" | "pending_approval" | "completed";
 
@@ -70,6 +71,8 @@ export default function MobileTasksPage() {
 
   // 檢查是否使用演示資料
   const useDemoData = localStorage.getItem("useDemoData") === "true";
+  const demoPersonaId = localStorage.getItem("demoPersonaId");
+  const personaDemoTasks = demoPersonaId ? getDemoData(demoPersonaId)?.tasks ?? null : null;
 
   // 獲取演示任務
   const { data: demoTasks } = trpc.demo.tasks.useQuery(
@@ -329,7 +332,79 @@ export default function MobileTasksPage() {
 
       {/* 任務列表 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {!realTasks || realTasks.length === 0 ? (
+        {personaDemoTasks ? (
+          // Demo 模式：顯示展示任務
+          personaDemoTasks
+            .filter((task) => {
+              if (filter === "completed") return task.status === "completed";
+              if (filter === "active") return task.status !== "completed";
+              return true;
+            })
+            .map((task) => {
+            const statusCfg = STATUS_CONFIG[task.status as TaskStatus] || STATUS_CONFIG.pending;
+            const progress = task.totalStages > 0 ? (task.currentStage / task.totalStages) * 100 : 0;
+            const primaryAgent = task.assignedAgents?.[0];
+            return (
+              <div
+                key={task.id}
+                className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-left"
+              >
+                <div className="flex items-center justify-between mb-2.5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-rose-500 flex items-center justify-center">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                      </svg>
+                    </div>
+                    <span className="text-xs text-gray-500">{formatTime(task.createdAt)}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
+                    <span className={`text-xs font-medium ${statusCfg.color}`}>
+                      {locale === "zh" ? statusCfg.label : statusCfg.labelEn}
+                    </span>
+                  </div>
+                </div>
+                <p className="font-semibold text-gray-900 text-sm mb-1.5 line-clamp-2">{task.title}</p>
+                {task.description && (
+                  <p className="text-xs text-gray-500 line-clamp-2 mb-3">{task.description}</p>
+                )}
+                <div className="mb-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-gray-500">
+                      {locale === "zh" ? `階段 ${task.currentStage}/${task.totalStages}` : `Stage ${task.currentStage}/${task.totalStages}`}
+                    </span>
+                    <span className="text-xs text-gray-400">{Math.round(progress)}%</span>
+                  </div>
+                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-orange-500 to-rose-500 rounded-full transition-all"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="flex -space-x-2">
+                      {task.assignedAgents.slice(0, 3).map((agent) => (
+                        <div
+                          key={agent.id}
+                          className="w-6 h-6 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white text-[10px] font-bold ring-2 ring-white"
+                        >
+                          {agent.name?.charAt(0) || "?"}
+                        </div>
+                      ))}
+                    </div>
+                    <span className="text-xs text-gray-500">
+                      {primaryAgent?.name || "未分配"}
+                      {task.assignedAgents.length > 1 && ` +${task.assignedAgents.length - 1}`}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        ) : !realTasks || realTasks.length === 0 ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
               <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round">

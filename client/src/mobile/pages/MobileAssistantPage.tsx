@@ -10,6 +10,7 @@
 import { useState, useRef, useEffect } from "react";
 import MobileHeader from "../components/MobileHeader";
 import { trpc } from "@/lib/trpc";
+import { getDemoData } from "../demoData";
 
 // 推薦的 AI 員工
 interface AgentRecommendation {
@@ -40,16 +41,25 @@ interface Message {
 export default function MobileAssistantPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const demoPersonaId = localStorage.getItem("demoPersonaId");
+  const demoAssistant = demoPersonaId ? getDemoData(demoPersonaId) : null;
+
   // 今日 AI 工作摘要資料
-  const { data: completedTasks } = trpc.chiefOfStaff.tasks.useQuery({ status: "completed" });
-  const completedCount = completedTasks?.length ?? 0;
-  const timeSavedHours = completedCount * 2;
+  const { data: completedTasks } = trpc.chiefOfStaff.tasks.useQuery(
+    { status: "completed" },
+    { enabled: !demoPersonaId }
+  );
+  const completedCount = demoAssistant?.assistantContext.completedToday ?? (completedTasks?.length ?? 0);
+  const timeSavedHours = demoAssistant?.assistantContext.timeSavedHours ?? (completedCount * 2);
+
+  const defaultWelcome =
+    "您好，我是您的幕僚長。\n\n我可以協助您：\n• 組建最佳團隊\n• 派發任務給 AI 同事\n• 追蹤專案進度\n• 提供決策建議\n\n請問今天有什麼需要我協助的？";
 
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
       role: "assistant",
-      content: "您好，我是您的幕僚長。\n\n我可以協助您：\n• 組建最佳團隊\n• 派發任務給 AI 同事\n• 追蹤專案進度\n• 提供決策建議\n\n請問今天有什麼需要我協助的？",
+      content: demoAssistant?.assistantContext.welcomeMessage ?? defaultWelcome,
       timestamp: new Date(),
     },
   ]);
@@ -186,45 +196,40 @@ export default function MobileAssistantPage() {
     );
   };
 
-  // 快速操作按鈕 - Apple SF Symbols 風格（單色、克制）
-  const quickActions = [
-    { 
-      label: "組建團隊", 
-      prompt: "我需要組建一個團隊來處理行銷專案",
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3C3C43" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
-        </svg>
-      )
-    },
-    { 
-      label: "派發任務", 
-      prompt: "我要派發一個任務",
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3C3C43" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-        </svg>
-      )
-    },
-    { 
-      label: "今日待辦", 
-      prompt: "查看我今天的待辦事項",
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3C3C43" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /><path d="M9 16l2 2 4-4" />
-        </svg>
-      )
-    },
-    { 
-      label: "查看進度", 
-      prompt: "查看目前任務的進度",
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3C3C43" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M18 20V10M12 20V4M6 20v-6" />
-        </svg>
-      )
-    },
+  const defaultQuickActionDefs = [
+    { label: "組建團隊", prompt: "我需要組建一個團隊來處理行銷專案" },
+    { label: "派發任務", prompt: "我要派發一個任務" },
+    { label: "今日待辦", prompt: "查看我今天的待辦事項" },
+    { label: "查看進度", prompt: "查看目前任務的進度" },
   ];
+
+  const quickActionDefs = demoAssistant?.assistantContext.quickActions ?? defaultQuickActionDefs;
+
+  const defaultIcon = (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3C3C43" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" /><path d="M12 8v4l3 3" />
+    </svg>
+  );
+
+  // 快速操作按鈕 - Apple SF Symbols 風格（單色、克制）
+  const quickActions = quickActionDefs.map((qa, i) => ({
+    label: qa.label,
+    prompt: qa.prompt,
+    icon: [
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3C3C43" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" key="0">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>,
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3C3C43" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" key="1">
+        <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+      </svg>,
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3C3C43" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" key="2">
+        <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /><path d="M9 16l2 2 4-4" />
+      </svg>,
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3C3C43" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" key="3">
+        <path d="M18 20V10M12 20V4M6 20v-6" />
+      </svg>,
+    ][i] ?? defaultIcon,
+  }));
 
   return (
     <div className="flex flex-col h-full bg-white">

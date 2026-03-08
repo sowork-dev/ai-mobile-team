@@ -9,6 +9,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import MobileHeader from "../components/MobileHeader";
+import { getDemoData } from "../demoData";
 
 type ContactTab = "explore" | "my-team" | "invite";
 
@@ -113,7 +114,9 @@ function AgentCard({ agent, onChat, onAdd, onCardClick }: { agent: any; onChat: 
 
 export default function MobileContactsPage() {
   const [, navigate] = useLocation();
-  const [activeTab, setActiveTab] = useState<ContactTab>("explore");
+  const demoPersonaId = localStorage.getItem("demoPersonaId");
+  const demoTeamData = demoPersonaId ? getDemoData(demoPersonaId) : null;
+  const [activeTab, setActiveTab] = useState<ContactTab>(demoPersonaId ? "my-team" : "explore");
   const [search, setSearch] = useState("");
   const [selectedLayer, setSelectedLayer] = useState<string | undefined>(undefined);
 
@@ -247,7 +250,12 @@ export default function MobileContactsPage() {
       {activeTab === "my-team" && (
         <div className="flex-1 overflow-y-auto">
           <div className="p-4 space-y-2">
-            {MY_TEAM.map((member) => (
+            {(demoTeamData?.agentTeam || MY_TEAM).map((member) => {
+              const isDemoAgent = "status" in member;
+              const isOnline = isDemoAgent ? (member as any).status === "online" : (member as any).online;
+              const avatarContent = isDemoAgent ? (member as any).avatar : (member as any).avatar;
+              const avatarBg = isDemoAgent ? "from-gray-700 to-gray-900" : (member as any).avatarBg || "from-gray-700 to-gray-900";
+              return (
               <button
                 key={member.id}
                 onClick={() => navigate(`/chat/${member.id}`)}
@@ -255,12 +263,15 @@ export default function MobileContactsPage() {
               >
                 <div className="relative">
                   <div
-                    className={`w-11 h-11 rounded-full bg-gradient-to-br ${member.avatarBg} flex items-center justify-center text-white font-bold text-sm`}
+                    className={`w-11 h-11 rounded-full bg-gradient-to-br ${avatarBg} flex items-center justify-center text-white font-bold text-sm`}
                   >
-                    {member.avatar}
+                    {avatarContent}
                   </div>
-                  {member.online && (
+                  {isOnline && (
                     <div className="absolute bottom-0 right-0 w-3 h-3 bg-gray-700 rounded-full border-2 border-white" />
+                  )}
+                  {isDemoAgent && (member as any).status === "executing" && (
+                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#E8611A] rounded-full border-2 border-white animate-pulse" />
                   )}
                 </div>
                 <div className="flex-1 text-left">
@@ -269,12 +280,18 @@ export default function MobileContactsPage() {
                     <span className="text-[10px] bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded-full font-medium">AI</span>
                   </div>
                   <p className="text-xs text-gray-500">{member.title}</p>
+                  {isDemoAgent && (
+                    <p className="text-[10px] text-gray-400 mt-0.5">
+                      {(member as any).status === "executing" ? "⚡ 執行中" : "● 在線"}
+                    </p>
+                  )}
                 </div>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#D1D5DB" strokeWidth="2" strokeLinecap="round">
                   <path d="M6 4l4 4-4 4" />
                 </svg>
               </button>
-            ))}
+              );
+            })}
 
             {/* 建立群組按鈕 */}
             <button
