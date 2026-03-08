@@ -66,6 +66,15 @@ export default function MobileTasksPage() {
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
   const [roleFilter, setRoleFilter] = useState<UserRole>("all");
   
+  // 檢查是否使用演示資料
+  const useDemoData = localStorage.getItem("useDemoData") === "true";
+  
+  // 獲取演示任務
+  const { data: demoTasks } = trpc.demo.tasks.useQuery(
+    { filter },
+    { enabled: useDemoData }
+  );
+  
   // 獲取任務列表（從幕僚長 API）
   const { data: realTasks, isLoading: tasksLoading, refetch: refetchTasks } = trpc.chiefOfStaff.tasks.useQuery(
     { status: filter },
@@ -246,11 +255,11 @@ export default function MobileTasksPage() {
             <p className="text-gray-500 text-sm">載入中...</p>
           </div>
         ) : (
-          (realTasks || [])
+          ((useDemoData ? demoTasks : realTasks) || [])
             .filter((task: any) => {
               // 角色篩選
               if (roleFilter === "all") return true;
-              const taskRoles = TASK_ROLE_MAPPING[task.templateId] || ["all"];
+              const taskRoles = TASK_ROLE_MAPPING[task.templateId || task.department] || ["all"];
               return taskRoles.includes(roleFilter) || taskRoles.includes("all");
             })
             .map((task: any) => {

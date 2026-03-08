@@ -171,12 +171,30 @@ export default function MobileProfilePage() {
                 <>
                   <p className="text-white font-bold text-base mb-1">尚未設定企業資料</p>
                   <p className="text-gray-300 text-xs">完成企業設定，開始使用 AI 團隊</p>
-                  <button
-                    onClick={() => navigate("/company-settings")}
-                    className="mt-3 w-full py-2 bg-white text-gray-900 rounded-xl text-sm font-semibold active:scale-95 transition-transform"
-                  >
-                    立即設定
-                  </button>
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => navigate("/company-settings")}
+                      className="flex-1 py-2 bg-white text-gray-900 rounded-xl text-sm font-semibold active:scale-95 transition-transform"
+                    >
+                      立即設定
+                    </button>
+                    <button
+                      onClick={() => {
+                        // 使用演示資料
+                        localStorage.setItem("companySettings", JSON.stringify({
+                          companyName: "創智科技",
+                          industry: "B2B SaaS",
+                          companySize: "50-100人",
+                          isDemo: true,
+                        }));
+                        localStorage.setItem("useDemoData", "true");
+                        window.location.reload();
+                      }}
+                      className="flex-1 py-2 bg-orange-500 text-white rounded-xl text-sm font-semibold active:scale-95 transition-transform"
+                    >
+                      體驗演示
+                    </button>
+                  </div>
                 </>
               )}
             </div>
