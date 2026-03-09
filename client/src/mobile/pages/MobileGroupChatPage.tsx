@@ -9,6 +9,7 @@ import { trpc } from "@/lib/trpc";
 import { useI18n } from "@/i18n";
 import RegroupConversation from "../components/RegroupConversation";
 import MessageActions from "../components/MessageActions";
+import { getDemoData } from "../demoData";
 
 interface TaskAction {
   type: "download_report";
@@ -40,11 +41,35 @@ export default function MobileGroupChatPage() {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // 獲取群組資訊
-  const { data: group, isLoading: groupLoading } = trpc.company.getBrandGroup.useQuery(
+  // Demo fallback — 從 localStorage 讀取 persona，找對應的群組資料
+  const demoPersonaId = localStorage.getItem("demoPersonaId");
+  const demoGroupData = (() => {
+    if (!demoPersonaId || !params.groupId) return null;
+    const data = getDemoData(demoPersonaId);
+    if (!data) return null;
+    const demoGroup = data.brandGroups.find(g => g.id === params.groupId);
+    if (!demoGroup) return null;
+    // 轉成 getBrandGroup 的格式
+    return {
+      id: demoGroup.id,
+      brandName: demoGroup.brandName,
+      description: `${demoGroup.brandName} AI 協作群組`,
+      members: demoGroup.members.map((m, i) => ({
+        id: i + 1,
+        name: m.name,
+        role: i === 0 ? "secretary" : "operations",
+        avatar: null,
+        type: "ai" as const,
+      })),
+    };
+  })();
+
+  // 獲取群組資訊（優先 server，fallback demo）
+  const { data: serverGroup, isLoading: groupLoading } = trpc.company.getBrandGroup.useQuery(
     { groupId: params.groupId || "" },
-    { enabled: !!params.groupId }
+    { enabled: !!params.groupId && !demoGroupData }
   );
+  const group = demoGroupData || serverGroup;
 
   // 滾動到底部
   useEffect(() => {
