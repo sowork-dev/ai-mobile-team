@@ -135,6 +135,9 @@ export default function MobileTaskDetailPage() {
   const [themePickerIdx, setThemePickerIdx] = useState<number | null>(null);
   const [pendingFormat, setPendingFormat] = useState<ExportFormat | null>(null);
   const [downloadingIdx, setDownloadingIdx] = useState<number | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
 
   const demoPersonaId = localStorage.getItem("demoPersonaId");
   const demoRawTask = demoPersonaId
@@ -168,6 +171,25 @@ export default function MobileTaskDetailPage() {
       toast.error("下載失敗，請重試");
     } finally {
       setDownloadingIdx(null);
+    }
+  };
+
+  const handleShare = async () => {
+    // demo 模式直接生成假 URL
+    const url = "https://dev-mobileteam.sowork.ai/share/ABC123";
+    setShareUrl(url);
+    setShowShareModal(true);
+    setShareCopied(false);
+  };
+
+  const handleCopyShareUrl = async () => {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch {
+      toast.error("複製失敗");
     }
   };
 
@@ -393,6 +415,20 @@ export default function MobileTaskDetailPage() {
               </div>
             ))}
           </div>
+
+          {/* 分享給客戶按鈕 */}
+          <button
+            onClick={handleShare}
+            className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 active:bg-gray-50 transition-colors"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="3" r="1.5" />
+              <circle cx="12" cy="13" r="1.5" />
+              <circle cx="3" cy="8" r="1.5" />
+              <path d="M4.5 8.5l6 3M4.5 7.5l6-3" />
+            </svg>
+            分享給客戶
+          </button>
         </div>
 
         {/* 任務內容（Markdown 渲染） */}
@@ -417,6 +453,39 @@ export default function MobileTaskDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* 客戶分享連結 Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-6" onClick={() => setShowShareModal(false)}>
+          <div
+            className="bg-white w-full rounded-2xl p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900">客戶分享連結已生成</h3>
+              <button onClick={() => setShowShareModal(false)} className="w-7 h-7 flex items-center justify-center rounded-full active:bg-gray-100">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#6B7280" strokeWidth="2" strokeLinecap="round">
+                  <path d="M3 3l10 10M13 3L3 13" />
+                </svg>
+              </button>
+            </div>
+            <div className="bg-gray-50 rounded-xl px-3 py-2.5 mb-3 flex items-center gap-2">
+              <p className="flex-1 text-xs text-gray-600 font-mono truncate">{shareUrl}</p>
+            </div>
+            <button
+              onClick={handleCopyShareUrl}
+              className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors mb-3 ${
+                shareCopied
+                  ? "bg-green-500 text-white"
+                  : "bg-gray-900 text-white active:bg-gray-700"
+              }`}
+            >
+              {shareCopied ? "✓ 已複製！" : "複製連結"}
+            </button>
+            <p className="text-xs text-gray-400 text-center">客戶無需登入，點擊連結直接查看報告</p>
+          </div>
+        </div>
+      )}
 
       {/* 發布選單 Bottom Sheet */}
       {showPublish && (

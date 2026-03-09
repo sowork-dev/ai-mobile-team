@@ -15,6 +15,7 @@ import { useI18n } from "@/i18n";
 import { generatePositioningBookPPT, generatePositioningBookDOC } from "@/lib/positioningBookExporter";
 import { samplePositioningPlan } from "@/lib/samplePositioningPlan";
 import { generateXLS, generatePDF } from "@/lib/documentGenerator";
+import AdPerformanceCard from "../components/AdPerformanceCard";
 
 // 推薦的 AI 員工
 interface AgentRecommendation {
@@ -634,6 +635,11 @@ export default function MobileAssistantPage() {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Spark Agency 廣告儀表板 */}
+      {messages.length <= 1 && demoPersonaId === "single-market-agency" && (
+        <AdPerformanceCard />
       )}
 
       {/* 市場即時洞察 */}

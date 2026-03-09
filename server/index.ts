@@ -190,7 +190,7 @@ app.post("/api/export/pptx", async (req, res) => {
       res.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${filename}`);
       res.send(buffer);
     } else if (format === "xlsx") {
-      const buffer = await generateXLSX(title, content, companyName);
+      const buffer = await generateXLSX(title, content, companyName, userRole);
       const filename = encodeURIComponent(`${title}.xlsx`);
       res.setHeader(
         "Content-Type",
@@ -216,6 +216,42 @@ app.post("/api/export/pptx", async (req, res) => {
     console.error("Export error:", err);
     res.status(500).json({ error: "文件生成失敗", detail: (err as Error).message });
   }
+});
+
+// ── 客戶分享連結 ────────────────────────────────────────────────
+const shareTokens = new Map<string, { taskId: string; personaId: string; createdAt: string }>();
+
+function generateShareToken(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let token = "";
+  for (let i = 0; i < 6; i++) token += chars[Math.floor(Math.random() * chars.length)];
+  return token;
+}
+
+app.post("/api/share/create", (req, res) => {
+  const { taskId, personaId } = req.body || {};
+  if (!taskId || !personaId) return res.status(400).json({ error: "Missing taskId or personaId" });
+
+  const token = generateShareToken();
+  shareTokens.set(token, { taskId, personaId, createdAt: new Date().toISOString() });
+
+  const host = process.env.SHARE_HOST || "https://dev-mobileteam.sowork.ai";
+  res.json({ shareUrl: `${host}/share/${token}`, token });
+});
+
+app.get("/api/share/:token", (req, res) => {
+  const entry = shareTokens.get(req.params.token);
+  if (!entry) return res.status(404).json({ error: "連結不存在或已過期" });
+
+  res.json({
+    taskId: entry.taskId,
+    personaId: entry.personaId,
+    companyName: "Spark Agency",
+    createdAt: entry.createdAt,
+    title: "廣告成效報告",
+    agentTeam: ["Tom", "Sophie"],
+    outputs: ["品牌 B META + TikTok 廣告月報", "ROAS 分析", "預算建議"],
+  });
 });
 
 // ── 品牌模板上傳 ───────────────────────────────────────────────
