@@ -2,7 +2,7 @@
  * 任務頁面 — 任務模板系統 + 階段性檢查點
  * P0 功能：讓用戶真正完成任務並拿到交付物
  */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import MobileHeader from "../components/MobileHeader";
 import { useI18n } from "@/i18n";
@@ -60,9 +60,23 @@ const TASK_ROLE_MAPPING: Record<string, UserRole[]> = {
   "custom-task": ["all"],
 };
 
+function useTaskSyncBadge() {
+  const [syncLabel, setSyncLabel] = useState<string | null>(null);
+  useEffect(() => {
+    try {
+      const clickup = JSON.parse(localStorage.getItem("taskIntegration_clickup") || "null");
+      const asana = JSON.parse(localStorage.getItem("taskIntegration_asana") || "null");
+      if (clickup?.connected) setSyncLabel("ClickUp");
+      else if (asana?.connected) setSyncLabel("Asana");
+    } catch { /* ignore */ }
+  }, []);
+  return syncLabel;
+}
+
 export default function MobileTasksPage() {
   const [, navigate] = useLocation();
   const { locale, t } = useI18n();
+  const syncLabel = useTaskSyncBadge();
   const [showTemplates, setShowTemplates] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<TaskTemplate | null>(null);
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
@@ -473,6 +487,9 @@ export default function MobileTasksPage() {
                       {task.assignedAgents.length > 1 && ` +${task.assignedAgents.length - 1}`}
                     </span>
                   </div>
+                  {syncLabel && (
+                    <span className="text-[10px] font-medium text-indigo-500">✓ {syncLabel}</span>
+                  )}
                 </div>
               </div>
             );
@@ -576,9 +593,14 @@ export default function MobileTasksPage() {
                       {(task.assignedAgents?.length || 0) > 1 && ` +${task.assignedAgents.length - 1}`}
                     </span>
                   </div>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 18l6-6-6-6" />
-                  </svg>
+                  <div className="flex items-center gap-2">
+                    {syncLabel && (
+                      <span className="text-[10px] font-medium text-indigo-500">✓ {syncLabel}</span>
+                    )}
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 18l6-6-6-6" />
+                    </svg>
+                  </div>
                 </div>
               </button>
             );

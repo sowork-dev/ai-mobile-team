@@ -140,7 +140,7 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
     ],
     assistantContext: {
       welcomeMessage:
-        "您好，我是 GroupM Digital 的幕僚長。\n\n您的 AI 創意團隊今天持續運作中：\n• Alex 正在主導 Q4 Pitch 的策略框架（進行到第 2 階段）\n• Maya 完成了 P&G 8 個語言廣告文案，等待您審批\n• Ryan 剛完成競品監測，發現 Adidas 大量增加短影音投放\n• Lena 正在趕製 Unilever 全球提案初稿\n\n📅 Google Calendar 已連接，下週有 3 個會議待確認時間：Nike APAC 週例會（週一 10:00）、Unilever 提案簡報（週二 14:00）、Q4 Pitch 策略會議（週三 9:30）。\n\n📧 郵件彙報：您有 3 封未讀重要郵件，其中 Nike 客戶詢問提案時間需要回覆，我已準備好草稿。\n\n最需要您關注：Q4 Pitch 已到策略方向確認關卡，需要您拍板後才能繼續推進。",
+        "您好，我是 GroupM Digital 的幕僚長。\n\n您的 AI 創意團隊今天持續運作中：\n• Alex 正在主導 Q4 Pitch 的策略框架（進行到第 2 階段）\n• Maya 完成了 P&G 8 個語言廣告文案，等待您審批\n• Ryan 剛完成競品監測，發現 Adidas 大量增加短影音投放\n• Lena 正在趕製 Unilever 全球提案初稿\n\n✅ ClickUp 同步：Nike 品牌 24hr 社群響應策略已完成，Alex 的任務狀態已自動更新為「完成」，並觸發了下一個 Subtask 分配給 Ryan。\n\n📅 Google Calendar 已連接，下週有 3 個會議待確認時間：Nike APAC 週例會（週一 10:00）、Unilever 提案簡報（週二 14:00）、Q4 Pitch 策略會議（週三 9:30）。\n\n📧 郵件彙報：您有 3 封未讀重要郵件，其中 Nike 客戶詢問提案時間需要回覆，我已準備好草稿。\n\n最需要您關注：Q4 Pitch 已到策略方向確認關卡，需要您拍板後才能繼續推進。",
       quickActions: [
         { label: "Q4 Pitch 進度", prompt: "Q4 全球品牌活動 Pitch 目前進度如何？需要我做什麼？" },
         { label: "幫我約 Nike 開會", prompt: "幫我約 Nike 客戶 Annie、James、Leo 本週開線上會議" },
@@ -174,6 +174,11 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
           time: "1 小時前",
           role: "user",
           message: "P&G Q4 文案審批進度？",
+        },
+        {
+          time: "剛才",
+          role: "assistant",
+          message: "✅ ClickUp 同步完成：Nike 品牌 24hr 社群響應策略已標記為完成，Alex 在 ClickUp 的任務狀態已自動更新，下一步「競品分析跟進」已指派給 Ryan，截止日期 2026/03/12。您不需要手動更新任務系統。",
         },
       ],
     },

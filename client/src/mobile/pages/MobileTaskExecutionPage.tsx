@@ -791,6 +791,26 @@ export default function MobileTaskExecutionPage() {
           agentName={agentMapping?.primary?.name || "AI 員工"}
           onApprove={() => {
             setShowQualityGate(false);
+            // 檢查任務系統整合，顯示同步 toast
+            try {
+              const clickup = JSON.parse(localStorage.getItem("taskIntegration_clickup") || "null");
+              const asana = JSON.parse(localStorage.getItem("taskIntegration_asana") || "null");
+              const notion = JSON.parse(localStorage.getItem("taskIntegration_notion") || "null");
+              const monday = JSON.parse(localStorage.getItem("taskIntegration_monday") || "null");
+              const syncTarget = clickup?.connected ? "ClickUp"
+                : asana?.connected ? "Asana"
+                : notion?.connected ? "Notion"
+                : monday?.connected ? "Monday.com"
+                : null;
+              if (syncTarget) {
+                setTimeout(() => {
+                  toast.success(
+                    locale === "zh" ? `已同步到 ${syncTarget} ✓` : `Synced to ${syncTarget} ✓`,
+                    { duration: 2000 }
+                  );
+                }, 300);
+              }
+            } catch { /* ignore */ }
             setShowExportModal(true);
           }}
           onReject={(reason) => {

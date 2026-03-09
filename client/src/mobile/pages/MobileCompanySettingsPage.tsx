@@ -145,6 +145,169 @@ function TwilioSettingsSection({ locale }: { locale: string }) {
   );
 }
 
+// ── 任務系統整合 ────────────────────────────────────────────────
+
+const TASK_SYSTEMS = [
+  { id: "clickup", name: "ClickUp", emoji: "🟣", color: "#7B68EE" },
+  { id: "asana", name: "Asana", emoji: "🎯", color: "#F06A6A" },
+  { id: "notion", name: "Notion", emoji: "⬛", color: "#374151" },
+  { id: "monday", name: "Monday.com", emoji: "🟡", color: "#F6AE2D" },
+];
+
+function TaskIntegrationSection({ locale }: { locale: string }) {
+  const [connections, setConnections] = useState<Record<string, { connected: boolean; apiKey: string }>>({});
+  const [showModalFor, setShowModalFor] = useState<string | null>(null);
+  const [apiKeyInput, setApiKeyInput] = useState("");
+
+  useEffect(() => {
+    const loaded: Record<string, { connected: boolean; apiKey: string }> = {};
+    // Demo: Sarah (groupm-digital) 預設 ClickUp 已連接
+    const demoPersonaId = localStorage.getItem("demoPersonaId");
+    for (const sys of TASK_SYSTEMS) {
+      const key = `taskIntegration_${sys.id}`;
+      try {
+        const stored = JSON.parse(localStorage.getItem(key) || "null");
+        if (stored) {
+          loaded[sys.id] = stored;
+        } else if (sys.id === "clickup" && demoPersonaId === "groupm-digital") {
+          const defaultVal = { connected: true, apiKey: "***" };
+          loaded[sys.id] = defaultVal;
+          localStorage.setItem(key, JSON.stringify(defaultVal));
+        }
+      } catch { /* ignore */ }
+    }
+    setConnections(loaded);
+  }, []);
+
+  const handleConnect = (sysId: string) => {
+    const key = `taskIntegration_${sysId}`;
+    const val = { connected: true, apiKey: apiKeyInput || "***" };
+    localStorage.setItem(key, JSON.stringify(val));
+    setConnections(prev => ({ ...prev, [sysId]: val }));
+    setShowModalFor(null);
+    setApiKeyInput("");
+    toast.success(
+      locale === "zh"
+        ? `已連接 ${TASK_SYSTEMS.find(s => s.id === sysId)?.name}，同步規則：任務完成後自動推送`
+        : `Connected to ${TASK_SYSTEMS.find(s => s.id === sysId)?.name}. Tasks will auto-sync on completion.`
+    );
+  };
+
+  const handleDisconnect = (sysId: string) => {
+    localStorage.removeItem(`taskIntegration_${sysId}`);
+    setConnections(prev => {
+      const next = { ...prev };
+      delete next[sysId];
+      return next;
+    });
+  };
+
+  return (
+    <div className="bg-white mx-4 mt-4 rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="px-4 py-3 border-b border-gray-100">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 bg-indigo-600 rounded-md flex items-center justify-center flex-shrink-0">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+              <polyline points="9 16 11 18 15 14" />
+            </svg>
+          </div>
+          <h2 className="font-semibold text-gray-900">
+            {locale === "zh" ? "任務系統連接" : "Task Management Integration"}
+          </h2>
+        </div>
+        <p className="text-xs text-gray-500 mt-1">
+          {locale === "zh"
+            ? "連接後，AI 完成任務時將自動同步到您的任務系統"
+            : "After connecting, AI task completions will auto-sync to your task system"}
+        </p>
+      </div>
+
+      <div className="divide-y divide-gray-50">
+        {TASK_SYSTEMS.map(sys => {
+          const conn = connections[sys.id];
+          return (
+            <div key={sys.id} className="flex items-center justify-between px-4 py-3">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">{sys.emoji}</span>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{sys.name}</p>
+                  {conn?.connected && (
+                    <p className="text-xs text-green-600">
+                      {locale === "zh" ? "✓ 任務完成後自動推送" : "✓ Auto-sync on task completion"}
+                    </p>
+                  )}
+                </div>
+              </div>
+              {conn?.connected ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                    {locale === "zh" ? "已連接" : "Connected"}
+                  </span>
+                  <button
+                    onClick={() => handleDisconnect(sys.id)}
+                    className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    {locale === "zh" ? "斷開" : "Disconnect"}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => { setShowModalFor(sys.id); setApiKeyInput(""); }}
+                  className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg active:opacity-70 transition-opacity"
+                >
+                  {locale === "zh" ? "連接" : "Connect"}
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* API Key 輸入 Modal */}
+      {showModalFor && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40" onClick={() => setShowModalFor(null)}>
+          <div className="w-full max-w-md bg-white rounded-t-3xl p-6" onClick={e => e.stopPropagation()}>
+            <h3 className="text-base font-semibold text-gray-900 mb-1">
+              {locale === "zh"
+                ? `連接 ${TASK_SYSTEMS.find(s => s.id === showModalFor)?.name}`
+                : `Connect ${TASK_SYSTEMS.find(s => s.id === showModalFor)?.name}`}
+            </h3>
+            <p className="text-xs text-gray-500 mb-4">
+              {locale === "zh"
+                ? "請輸入您的 API Key，連接後任務完成時將自動同步"
+                : "Enter your API Key to enable automatic task sync"}
+            </p>
+            <input
+              type="text"
+              value={apiKeyInput}
+              onChange={e => setApiKeyInput(e.target.value)}
+              placeholder="API Key"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono mb-3"
+              autoFocus
+            />
+            <button
+              onClick={() => handleConnect(showModalFor)}
+              className="w-full py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl active:opacity-80 transition-opacity"
+            >
+              {locale === "zh" ? "確認連接" : "Connect"}
+            </button>
+            <button
+              onClick={() => setShowModalFor(null)}
+              className="w-full py-2.5 mt-2 text-sm text-gray-500"
+            >
+              {locale === "zh" ? "取消" : "Cancel"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── 品牌模板設定 ────────────────────────────────────────────────
 
 function BrandTemplateSection({ locale }: { locale: string }) {
@@ -1117,6 +1280,9 @@ export default function MobileCompanySettingsPage() {
 
         {/* 日曆整合 */}
         <CalendarIntegrationSection locale={locale} />
+
+        {/* 任務系統整合 */}
+        <TaskIntegrationSection locale={locale} />
 
         {/* 資料安全與隱私保護 */}
         <div className="bg-blue-50 mx-4 mt-4 rounded-2xl border border-blue-100 overflow-hidden">
