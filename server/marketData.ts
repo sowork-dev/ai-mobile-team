@@ -76,7 +76,7 @@ export async function getLatestTrends(): Promise<TrendingTopic[]> {
   if (cached) return cached;
   try {
     const rows = await query<TrendingTopic>(
-      "SELECT * FROM trending_topics ORDER BY created_at DESC LIMIT 10"
+      "SELECT id, platform, trend_name as title, description, engagement_rate, growth_rate, region, data_date as created_at FROM social_content_trends ORDER BY created_at DESC LIMIT 10"
     );
     setCache("trends", rows);
     return rows;
@@ -92,8 +92,7 @@ export async function getAdBenchmarks(market: "taiwan" | "china"): Promise<AdBen
   if (cached) return cached;
   try {
     const rows = await query<AdBenchmark>(
-      "SELECT * FROM ad_performance_benchmarks WHERE market = ? LIMIT 20",
-      [market]
+      "SELECT * FROM ad_performance_benchmarks ORDER BY created_at DESC LIMIT 20"
     );
     setCache(key, rows);
     return rows;
@@ -138,7 +137,7 @@ export async function getKOLRankings(): Promise<KOLRanking[]> {
   if (cached) return cached;
   try {
     const rows = await query<KOLRanking>(
-      "SELECT * FROM monthly_hot_structures ORDER BY rank ASC LIMIT 20"
+      "SELECT influencer_name, platform, market, avg_engagement_rate, category, period_month FROM monthly_hot_structures ORDER BY created_at DESC LIMIT 20"
     );
     setCache("kol", rows);
     return rows;
