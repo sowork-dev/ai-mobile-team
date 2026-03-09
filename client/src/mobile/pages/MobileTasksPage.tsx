@@ -125,6 +125,46 @@ export default function MobileTasksPage() {
     onSuccess: () => { refetchUnread(); refetchNotifications(); },
   });
 
+  // Demo 通知
+  const demoNotifications = demoPersonaId ? [
+    {
+      id: "demo-notif-1",
+      type: "approval_required" as const,
+      title: "Unilever 提案需要審批",
+      message: "Maya 完成了 Unilever 全球提案初稿，等待您確認",
+      taskId: "groupm-t2",
+      taskTitle: "Q4 全球品牌活動 Pitch 文件",
+      fromAI: { id: 1, name: "Maya" },
+      createdAt: new Date(Date.now() - 2.5 * 60 * 60 * 1000),
+      actionRequired: true,
+    },
+    {
+      id: "demo-notif-2",
+      type: "task_complete" as const,
+      title: "Nike 競品分析完成",
+      message: "Ryan 完成了 W42 競品監測，發現 Adidas 短影音投放增加 38%",
+      taskId: "groupm-t3",
+      taskTitle: "競品廣告監測週報 W42",
+      fromAI: { id: 2, name: "Ryan" },
+      createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
+      actionRequired: false,
+    },
+    {
+      id: "demo-notif-3",
+      type: "stage_complete" as const,
+      title: "Outlook Calendar 已連接",
+      message: "下週有 3 個會議需要確認時間",
+      taskId: "",
+      taskTitle: "",
+      createdAt: new Date(Date.now() - 30 * 60 * 1000),
+      actionRequired: false,
+    },
+  ] : [];
+  const notificationBadgeCount = demoPersonaId
+    ? demoNotifications.length
+    : (unreadData?.count ?? 0);
+  const allNotifications = [...demoNotifications, ...(notificationsData?.notifications ?? [])];
+
   // 獲取選中模板的 AI 員工配對
   const { data: agentMapping } = trpc.task.getAgentMapping.useQuery(
     { taskType: selectedTemplate?.id || "" },
@@ -231,9 +271,9 @@ export default function MobileTasksPage() {
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
             </svg>
-            {(unreadData?.count ?? 0) > 0 && (
+            {notificationBadgeCount > 0 && (
               <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center">
-                {unreadData!.count > 9 ? "9+" : unreadData!.count}
+                {notificationBadgeCount > 9 ? "9+" : notificationBadgeCount}
               </span>
             )}
           </button>
@@ -717,7 +757,7 @@ export default function MobileTasksPage() {
       {/* 通知中心 */}
       {showNotifications && (
         <NotificationCenter
-          notifications={notificationsData?.notifications ?? []}
+          notifications={allNotifications}
           onClose={() => setShowNotifications(false)}
           onNotificationClick={(notification) => {
             markReadMutation.mutate({ notificationId: notification.id });

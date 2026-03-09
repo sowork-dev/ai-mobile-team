@@ -7,6 +7,7 @@ import { useParams, useLocation } from "wouter";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { useI18n } from "@/i18n";
+import { getDemoData, type DemoTask } from "../demoData";
 
 type ExportFormat = "pptx" | "docx" | "xlsx" | "pdf";
 type PptTheme = "bcg" | "minimal" | "tech" | "warm";
@@ -94,6 +95,37 @@ const MOCK_TASK_DETAIL = {
   ],
 };
 
+function buildDemoTaskDetail(dt: DemoTask) {
+  const primaryAgent = dt.assignedAgents[0];
+  const titleText = dt.title;
+
+  const hasPitch = /[Pp]itch|提案|策略|計畫|GTM/.test(titleText);
+  const hasFinancial = /財務|ROI|年報|LP|Excel|Due Diligence|Benchmark/.test(titleText);
+
+  const deliverables: { type: string; title: string; status: string }[] = [];
+  if (hasPitch) deliverables.push({ type: "presentation", title: "簡報 PPT (.pptx)", status: "ready" });
+  deliverables.push({ type: "report", title: "Word 報告 (.docx)", status: "ready" });
+  if (hasFinancial) deliverables.push({ type: "spreadsheet", title: "Excel 資料 (.xlsx)", status: "ready" });
+  if (deliverables.length < 2) deliverables.push({ type: "presentation", title: "簡報 PPT (.pptx)", status: "ready" });
+
+  const agentNames = dt.assignedAgents.map((a) => a.name).join("、");
+  const d = new Date(dt.createdAt);
+  const createdAt = `${d.toLocaleDateString("zh-TW")} ${d.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })}`;
+
+  return {
+    id: dt.id,
+    title: dt.title,
+    type: "demo",
+    status: dt.status,
+    agentName: primaryAgent?.name ?? "AI",
+    agentAvatar: primaryAgent?.name?.charAt(0) ?? "A",
+    agentBg: "from-gray-700 to-gray-900",
+    createdAt,
+    content: `# ${dt.title}\n\n${dt.description ?? ""}\n\n## 執行團隊\n\n由 **${agentNames}** 共同完成，歷經 ${dt.totalStages} 個執行階段。\n\n## 交付成果\n\n- 已完成所有規劃階段（${dt.currentStage}/${dt.totalStages}）\n- 所有文件已產出，可從上方下載\n- 如有問題可透過對話框與 AI 團隊溝通`,
+    deliverables,
+  };
+}
+
 export default function MobileTaskDetailPage() {
   const { taskId } = useParams<{ taskId: string }>();
   const [, navigate] = useLocation();
@@ -103,7 +135,12 @@ export default function MobileTaskDetailPage() {
   const [themePickerIdx, setThemePickerIdx] = useState<number | null>(null);
   const [pendingFormat, setPendingFormat] = useState<ExportFormat | null>(null);
   const [downloadingIdx, setDownloadingIdx] = useState<number | null>(null);
-  const task = MOCK_TASK_DETAIL;
+
+  const demoPersonaId = localStorage.getItem("demoPersonaId");
+  const demoRawTask = demoPersonaId
+    ? getDemoData(demoPersonaId)?.tasks.find((t) => t.id === taskId)
+    : undefined;
+  const task = demoRawTask ? buildDemoTaskDetail(demoRawTask) : MOCK_TASK_DETAIL;
 
   const closeAllPickers = () => {
     setFormatPickerIdx(null);
