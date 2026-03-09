@@ -1410,6 +1410,23 @@ const schedulingRouter = router({
 });
 
 // Main App Router
+// Market Data Router
+import { getLatestTrends, getAdBenchmarks, getSocialBenchmarks } from "./marketData.js";
+
+const marketDataRouter = router({
+  trends: publicProcedure.query(async () => {
+    return getLatestTrends();
+  }),
+  benchmarks: publicProcedure
+    .input(z.object({ market: z.enum(["taiwan", "china"]).default("taiwan") }))
+    .query(async ({ input }) => {
+      return getAdBenchmarks(input.market);
+    }),
+  socialPlatforms: publicProcedure.query(async () => {
+    return getSocialBenchmarks();
+  }),
+});
+
 export const appRouter = router({
   auth: authRouter,
   talent: talentRouter,
@@ -1426,6 +1443,7 @@ export const appRouter = router({
   line: lineRouter,
   phone: phoneRouter,
   scheduling: schedulingRouter,
+  marketData: marketDataRouter,
 
   // Health check
   health: publicProcedure.query(() => ({

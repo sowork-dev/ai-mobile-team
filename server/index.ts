@@ -24,6 +24,7 @@ import {
   DEMO_UNREAD_EMAILS,
 } from "./calendarIntegration.js";
 import { getMicrosoftAuthUrl, handleMicrosoftCallback } from "./authMicrosoft.js";
+import { getLatestTrends, getAdBenchmarks, getSocialBenchmarks, getKOLRankings } from "./marketData.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -413,6 +414,29 @@ app.post("/api/email/send-reply", async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
+});
+
+// ── Market Data API ──────────────────────────────────────────────
+
+app.get("/api/market-data/trends", async (_req, res) => {
+  const data = await getLatestTrends();
+  res.json({ data });
+});
+
+app.get("/api/market-data/benchmarks", async (req, res) => {
+  const market = (req.query.market === "china" ? "china" : "taiwan") as "taiwan" | "china";
+  const data = await getAdBenchmarks(market);
+  res.json({ data });
+});
+
+app.get("/api/market-data/social", async (_req, res) => {
+  const data = await getSocialBenchmarks();
+  res.json({ data });
+});
+
+app.get("/api/market-data/kol", async (_req, res) => {
+  const data = await getKOLRankings();
+  res.json({ data });
 });
 
 // tRPC handler

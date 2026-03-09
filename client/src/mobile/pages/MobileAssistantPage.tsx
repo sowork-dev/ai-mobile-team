@@ -7,7 +7,7 @@
  * - 品牌色: #E8611A (橘色)
  * - 漸變: 橘色到粉色
  */
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import MobileHeader from "../components/MobileHeader";
 import { trpc } from "@/lib/trpc";
 import { getDemoData } from "../demoData";
@@ -56,6 +56,21 @@ export default function MobileAssistantPage() {
   );
   const completedCount = demoAssistant?.assistantContext.completedToday ?? (completedTasks?.length ?? 0);
   const timeSavedHours = demoAssistant?.assistantContext.timeSavedHours ?? (completedCount * 2);
+
+  // Market Insights state
+  const [marketTrends, setMarketTrends] = useState<any[]>([]);
+  const [trendsLoading, setTrendsLoading] = useState(true);
+
+  useEffect(() => {
+    const baseUrl = window.location.origin.includes("localhost") ? "http://localhost:3001" : "";
+    fetch(`${baseUrl}/api/market-data/trends`)
+      .then(r => r.json())
+      .then(json => {
+        setMarketTrends((json.data ?? []).slice(0, 3));
+        setTrendsLoading(false);
+      })
+      .catch(() => setTrendsLoading(false));
+  }, []);
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -617,6 +632,58 @@ export default function MobileAssistantPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* 市場即時洞察 */}
+      {messages.length <= 1 && (
+        <div className="flex-shrink-0 px-4 pb-4">
+          <p className="text-xs text-[#8E8E93] mb-3 tracking-wide">
+            {locale === "zh" ? "📊 市場即時洞察" : "📊 Market Insights"}
+          </p>
+          <div className="space-y-2">
+            {trendsLoading ? (
+              [0, 1, 2].map(i => (
+                <div key={i} className="bg-[#F2F2F7] rounded-xl px-4 py-3 animate-pulse">
+                  <div className="h-3 bg-gray-300 rounded w-3/4 mb-2" />
+                  <div className="h-2.5 bg-gray-200 rounded w-1/2" />
+                </div>
+              ))
+            ) : marketTrends.length > 0 ? (
+              marketTrends.map((trend, idx) => {
+                const topic = trend.topic ?? trend.title ?? `Trend ${idx + 1}`;
+                const summary = trend.summary ?? trend.description ?? "";
+                const platform = trend.platform ?? "";
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => handleSend(locale === "zh" ? `告訴我更多關於：${topic}` : `Tell me more about: ${topic}`)}
+                    className="w-full text-left bg-[#F2F2F7] rounded-xl px-4 py-3 active:bg-[#E5E5EA] transition-colors"
+                  >
+                    <div className="flex items-start gap-2">
+                      <span className="text-base">{["🔥", "📈", "💡"][idx]}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-[#1C1C1E] truncate">{topic}</p>
+                        {summary && (
+                          <p className="text-xs text-[#8E8E93] mt-0.5 line-clamp-1">{summary}</p>
+                        )}
+                        {platform && (
+                          <p className="text-[10px] text-[#8E8E93] mt-0.5">{platform}</p>
+                        )}
+                      </div>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-1">
+                        <polyline points="9 18 15 12 9 6"/>
+                      </svg>
+                    </div>
+                  </button>
+                );
+              })
+            ) : (
+              <p className="text-xs text-[#8E8E93] text-center py-2">
+                {locale === "zh" ? "暫無市場數據" : "No market data available"}
+              </p>
+            )}
           </div>
         </div>
       )}

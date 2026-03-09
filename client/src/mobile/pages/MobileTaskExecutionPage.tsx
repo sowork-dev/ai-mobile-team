@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { taskTemplates, TaskTemplate, TaskStage } from "../components/TaskTemplates";
 import AIOnboardingModal from "../components/AIOnboardingModal";
 import TaskStatusTracker, { TaskStatus } from "../components/TaskStatusTracker";
+import QualityGate from "../components/QualityGate";
 import { trpc } from "@/lib/trpc";
 import { generateDocument, generateAllFormats, GenerateOptions } from "@/lib/documentGenerator";
 
@@ -47,6 +48,7 @@ export default function MobileTaskExecutionPage() {
     }))
   );
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showQualityGate, setShowQualityGate] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [scanResults, setScanResults] = useState<ScanResult[]>([]);
@@ -188,14 +190,14 @@ export default function MobileTaskExecutionPage() {
       // 顯示階段總覽
       setShowStageOverview(true);
     } else {
-      // 最後一個階段，顯示導出選項
+      // 最後一個階段：先顯示 QualityGate，審查通過後再顯示導出選項
       setStageProgress(prev => {
         const updated = [...prev];
         updated[currentStage - 1] = { ...updated[currentStage - 1], completed: true };
         return updated;
       });
       setTaskStatus("completed");
-      setShowExportModal(true);
+      setShowQualityGate(true);
     }
   };
 
@@ -780,6 +782,28 @@ export default function MobileTaskExecutionPage() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Quality Gate */}
+      {showQualityGate && (
+        <QualityGate
+          taskTitle={locale === "zh" ? template.name : template.nameEn}
+          agentName={agentMapping?.primary?.name || "AI 員工"}
+          onApprove={() => {
+            setShowQualityGate(false);
+            setShowExportModal(true);
+          }}
+          onReject={(reason) => {
+            setShowQualityGate(false);
+            toast.error(
+              locale === "zh"
+                ? `任務已退回：${reason || "需要修改"}`
+                : `Task rejected: ${reason || "Changes required"}`
+            );
+            // Reset to last stage so user can redo
+            setTaskStatus("ai_processing");
+          }}
+        />
       )}
 
       {/* Export Modal */}
