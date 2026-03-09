@@ -481,8 +481,8 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
       },
       {
         id: "hillhouse-t3",
-        title: "LP 季度投資報告 Q3",
-        description: "整理 Q3 Portfolio 公司進展，撰寫 LP 投資人報告",
+        title: "LP 基金季報 + IRR 分析模型",
+        description: "整合 Q4 Portfolio 財務數據，生成 PE 級 Excel（IRR/TVPI/DPI/MOIC），按 vintage year 分頁，供 LP 參閱",
         status: "completed",
         currentStage: 4,
         totalStages: 4,
@@ -502,7 +502,7 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
     ],
     assistantContext: {
       welcomeMessage:
-        "您好，我是 Hillhouse Capital 的幕僚長。\n\nPlatform Team 的 AI 今天成效：\n• Vera 完成了 Q3 LP 報告（28頁），等待您確認後發送\n• Felix 完成 5 家 Portfolio 品牌健診，C公司需要優先處理品牌問題\n• Tara 正在趕製 B2B SaaS 投資標的 GTM 計畫\n\n📈 新功能：Q3 财务数据已自动以您的财务职位格式汇出为 Excel 表格（含多个分析 Sheet），可直接提供给 LP 参考。\n\n需要您決策：Q3 LP 報告已就緒，您確認後可立即發送給所有 LP，請優先審閱。",
+        "您好，我是 Hillhouse Capital 的幕僚長。\n\nPlatform Team 的 AI 今天成效：\n• Vera 完成了 Q4 LP 季報 + IRR 分析模型，Excel 已更新 IRR/TVPI/DPI/MOIC，按 vintage year 分頁（2018–2024）\n• Felix 完成 5 家 Portfolio 品牌健診，C公司需要優先處理品牌問題\n• Tara 正在趕製 B2B SaaS 投資標的 GTM 計畫\n\n📊 PE 級財務 Excel 已就緒：Portfolio Summary / Vintage Year Analysis / Cash Flow Waterfall 三張分頁，含 Benchmark 對比（Preqin Top Quartile），可直接下載發送給 LP。\n\n需要您決策：Q4 LP 報告已就緒，您確認後可立即發送給所有 LP，請優先審閱。",
       quickActions: [
         { label: "LP 報告審閱", prompt: "Q3 LP 報告有哪些重點需要我特別注意？" },
         { label: "下載財務 Excel", prompt: "把 Q3 Portfolio 財務數據匯出成 Excel 報表" },

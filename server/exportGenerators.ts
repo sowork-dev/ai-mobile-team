@@ -555,14 +555,276 @@ function parseContentToXLSX(title: string, content: string): XLSXRow[] {
   return sheets;
 }
 
+// ── PE 級財務 Excel（Hillhouse / 私募基金）────────────────────────
+
+function buildHillhousePESheets(workbook: ExcelJS.Workbook): void {
+  const NAVY_ARGB = "FF1B2B4B";
+  const NAVY2_ARGB = "FF2D4270";
+  const WHITE_ARGB = "FFFFFFFF";
+  const ALT_ARGB = "FFF5F7FA";
+  const LGRAY_ARGB = "FFEEEFF2";
+
+  const hFont = (sz = 10): Partial<ExcelJS.Font> => ({
+    name: "Calibri", size: sz, bold: true, color: { argb: WHITE_ARGB },
+  });
+  const bFont: Partial<ExcelJS.Font> = { name: "Calibri", size: 10, color: { argb: "FF1C1C1C" } };
+  const bBold: Partial<ExcelJS.Font> = { name: "Calibri", size: 10, bold: true, color: { argb: "FF1C1C1C" } };
+
+  const navyFill = (argb = NAVY_ARGB): ExcelJS.Fill => ({
+    type: "pattern", pattern: "solid", fgColor: { argb },
+  });
+  const altFill: ExcelJS.Fill = { type: "pattern", pattern: "solid", fgColor: { argb: ALT_ARGB } };
+  const lgFill: ExcelJS.Fill = { type: "pattern", pattern: "solid", fgColor: { argb: LGRAY_ARGB } };
+
+  const bdr: Partial<ExcelJS.Borders> = {
+    top:    { style: "thin", color: { argb: "FFE5E7EB" } },
+    bottom: { style: "thin", color: { argb: "FFE5E7EB" } },
+    left:   { style: "thin", color: { argb: "FFE5E7EB" } },
+    right:  { style: "thin", color: { argb: "FFE5E7EB" } },
+  };
+
+  // ── Sheet 1: Portfolio Summary ──────────────────────────────────
+  const ws1 = workbook.addWorksheet("Portfolio Summary");
+
+  // Title row
+  ws1.mergeCells("A1:L1");
+  const t1 = ws1.getCell("A1");
+  t1.value = "Hillhouse Capital — Portfolio Summary  |  As of Q4 2024";
+  t1.font = hFont(13);
+  t1.fill = navyFill();
+  t1.alignment = { horizontal: "center", vertical: "middle" };
+  ws1.getRow(1).height = 34;
+
+  // Header row
+  const portHeaders = [
+    "Portfolio Company", "Investment Date", "Vintage Year",
+    "Committed Capital\n(USD M)", "Invested Capital\n(USD M)",
+    "Realized Value\n(USD M)", "Unrealized NAV\n(USD M)", "Total Value\n(USD M)",
+    "IRR (%)", "MOIC (x)", "DPI (x)", "TVPI (x)",
+  ];
+  const hr1 = ws1.addRow(portHeaders);
+  hr1.height = 42;
+  hr1.eachCell((cell) => {
+    cell.font = hFont();
+    cell.fill = navyFill(NAVY2_ARGB);
+    cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+    cell.border = bdr;
+  });
+
+  // Portfolio data
+  const port = [
+    ["ByteDance Series C",        "Mar 2019", 2019,  150,  150,  310,   85, 395, 28.5, 2.63, 2.07, 2.63],
+    ["Meituan Pre-IPO",           "Nov 2018", 2018,  120,  120,  285,    0, 285, 24.8, 2.38, 2.38, 2.38],
+    ["Sea Limited Series D",      "Jun 2020", 2020,  200,  200,  180,  240, 420, 22.1, 2.10, 0.90, 2.10],
+    ["Grab Holdings Series H",    "Mar 2021", 2021,  180,  180,   60,  195, 255, 15.4, 1.42, 0.33, 1.42],
+    ["Xiaomi Pre-IPO",            "Jul 2018", 2018,  100,  100,  240,    0, 240, 31.2, 2.40, 2.40, 2.40],
+    ["Nongfu Spring Pre-IPO",     "Apr 2020", 2020,   80,   80,   45,   95, 140, 18.7, 1.75, 0.56, 1.75],
+    ["CATL Series C",             "Sep 2022", 2022,  250,  250,    0,  280, 280, 12.3, 1.12, 0.00, 1.12],
+  ];
+  port.forEach((row, idx) => {
+    const dr = ws1.addRow(row);
+    dr.height = 22;
+    dr.eachCell({ includeEmpty: true }, (cell, col) => {
+      cell.font = bFont;
+      cell.border = bdr;
+      if (idx % 2 === 1) cell.fill = altFill;
+      cell.alignment = {
+        horizontal: col <= 3 ? "left" : "right",
+        vertical: "middle",
+      };
+      if (col >= 4 && col <= 8 && typeof cell.value === "number") cell.numFmt = '#,##0.0';
+      if (col === 9 && typeof cell.value === "number") cell.numFmt = '0.0"%"';
+      if (col >= 10 && typeof cell.value === "number") cell.numFmt = '0.00"x"';
+    });
+  });
+
+  // Total row
+  const totRow = ws1.addRow(["Portfolio Total / Weighted Avg", "", "", 1080, 1080, 1120, 895, 2015, 22.4, 1.87, 1.04, 1.87]);
+  totRow.height = 26;
+  totRow.eachCell({ includeEmpty: true }, (cell, col) => {
+    cell.font = { ...hFont(), color: { argb: WHITE_ARGB } };
+    cell.fill = navyFill();
+    cell.border = bdr;
+    cell.alignment = { horizontal: col <= 3 ? "left" : "right", vertical: "middle" };
+    if (col >= 4 && col <= 8 && typeof cell.value === "number") cell.numFmt = '#,##0.0';
+    if (col === 9 && typeof cell.value === "number") cell.numFmt = '0.0"%"';
+    if (col >= 10 && typeof cell.value === "number") cell.numFmt = '0.00"x"';
+  });
+
+  ws1.columns = [
+    { width: 30 }, { width: 16 }, { width: 14 },
+    { width: 18 }, { width: 18 }, { width: 18 }, { width: 18 }, { width: 16 },
+    { width: 10 }, { width: 11 }, { width: 10 }, { width: 10 },
+  ];
+  ws1.views = [{ state: "frozen", xSplit: 0, ySplit: 2 }];
+
+  // ── Sheet 2: Vintage Year Analysis ─────────────────────────────
+  const ws2 = workbook.addWorksheet("Vintage Year Analysis");
+
+  ws2.mergeCells("A1:J1");
+  const t2 = ws2.getCell("A1");
+  t2.value = "Vintage Year Performance vs. Benchmark  |  Hillhouse Capital";
+  t2.font = hFont(13);
+  t2.fill = navyFill();
+  t2.alignment = { horizontal: "center", vertical: "middle" };
+  ws2.getRow(1).height = 34;
+
+  const vHeaders = [
+    "Vintage\nYear", "# Inv.", "Total Committed\n(USD M)",
+    "IRR (%)", "MOIC (x)", "DPI (x)", "TVPI (x)",
+    "S&P 500\nSame Period (%)", "Top Quartile\nPE Benchmark (%)", "Alpha vs.\nBenchmark",
+  ];
+  const hr2 = ws2.addRow(vHeaders);
+  hr2.height = 42;
+  hr2.eachCell((cell) => {
+    cell.font = hFont();
+    cell.fill = navyFill(NAVY2_ARGB);
+    cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+    cell.border = bdr;
+  });
+
+  const vintage = [
+    [2018, 2,  220,  27.8, 2.40, 2.40, 2.40,  12.4, 22.0, "+5.8%"],
+    [2019, 1,  150,  28.5, 2.63, 2.07, 2.63,  18.2, 24.0, "+4.5%"],
+    [2020, 2,  280,  20.8, 1.96, 0.80, 1.96,  26.8, 20.0, "+0.8%"],
+    [2021, 1,  180,  15.4, 1.42, 0.33, 1.42,  14.5, 18.0, "-2.6%"],
+    [2022, 1,  250,  12.3, 1.12, 0.00, 1.12,  -8.2, 16.0, "-3.7%"],
+    [2023, 0,    0, "N/A","N/A","N/A","N/A",  24.1, 18.5, "—"],
+    [2024, 0,    0, "N/A","N/A","N/A","N/A",  22.3, 19.0, "—"],
+  ];
+  vintage.forEach((row, idx) => {
+    const dr = ws2.addRow(row);
+    dr.height = 22;
+    dr.eachCell({ includeEmpty: true }, (cell, col) => {
+      cell.font = bFont;
+      cell.border = bdr;
+      if (idx % 2 === 1) cell.fill = altFill;
+      cell.alignment = { horizontal: col <= 2 ? "center" : "right", vertical: "middle" };
+      if (typeof cell.value === "number") {
+        if (col === 3) cell.numFmt = '#,##0.0';
+        else if (col === 4) cell.numFmt = '0.0"%"';
+        else if (col >= 5 && col <= 7) cell.numFmt = '0.00"x"';
+        else if (col === 8 || col === 9) cell.numFmt = '0.0"%"';
+      }
+    });
+  });
+
+  ws2.columns = [
+    { width: 12 }, { width: 8 }, { width: 20 },
+    { width: 10 }, { width: 11 }, { width: 10 }, { width: 10 },
+    { width: 20 }, { width: 24 }, { width: 16 },
+  ];
+  ws2.views = [{ state: "frozen", xSplit: 0, ySplit: 2 }];
+
+  // ── Sheet 3: Cash Flow Waterfall ────────────────────────────────
+  const ws3 = workbook.addWorksheet("Cash Flow Waterfall");
+
+  ws3.mergeCells("A1:F1");
+  const t3 = ws3.getCell("A1");
+  t3.value = "Annual Cash Flow Waterfall  |  Hillhouse Capital Fund I";
+  t3.font = hFont(13);
+  t3.fill = navyFill();
+  t3.alignment = { horizontal: "center", vertical: "middle" };
+  ws3.getRow(1).height = 34;
+
+  const cfHeaders = [
+    "Year", "Capital Called\n(USD M)", "Distributions\n(USD M)",
+    "Net Cash Flow\n(USD M)", "Cumulative\n(USD M)", "Notes",
+  ];
+  const hr3 = ws3.addRow(cfHeaders);
+  hr3.height = 42;
+  hr3.eachCell((cell) => {
+    cell.font = hFont();
+    cell.fill = navyFill(NAVY2_ARGB);
+    cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+    cell.border = bdr;
+  });
+
+  const cf = [
+    [2019, -380,   0,  -380, -380, "Initial deployment — ByteDance & Meituan vintage"],
+    [2020, -280,  85,  -195, -575, "Sea Limited, Nongfu Spring entry"],
+    [2021, -180, 160,   -20, -595, "Grab entry; Xiaomi partial exit"],
+    [2022, -250, 310,    60, -535, "CATL entry; ByteDance partial realization"],
+    [2023,    0, 285,   285, -250, "Meituan full exit — DPI 0.5x milestone reached"],
+    [2024,    0, 200,   200,  -50, "Ongoing distributions — DPI 1.0x target on track"],
+  ];
+  cf.forEach((row, idx) => {
+    const dr = ws3.addRow(row);
+    dr.height = 22;
+    dr.eachCell({ includeEmpty: true }, (cell, col) => {
+      cell.border = bdr;
+      if (idx % 2 === 1) cell.fill = altFill;
+      if (col === 1) {
+        cell.font = bBold;
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+      } else if (col <= 5) {
+        cell.font = bFont;
+        cell.alignment = { horizontal: "right", vertical: "middle" };
+        if (typeof cell.value === "number") {
+          cell.numFmt = '#,##0.0;[Red](#,##0.0)';
+        }
+      } else {
+        cell.font = { ...bFont, color: { argb: "FF555555" } };
+        cell.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
+      }
+    });
+  });
+
+  // DPI Milestone section
+  ws3.addRow([]);
+  const mlTitle = ws3.addRow(["DPI Milestones", "", "", "", "", ""]);
+  mlTitle.getCell(1).font = { name: "Calibri", size: 11, bold: true, color: { argb: NAVY_ARGB } };
+  mlTitle.height = 22;
+
+  const milestones = [
+    ["0.5x DPI", "✅ Achieved", "Q4 2023",         "", "", "Meituan full exit triggered milestone"],
+    ["1.0x DPI", "🔄 On Track", "Q2 2025 (proj.)", "", "", "Pending Sea Limited + remaining distributions"],
+    ["1.5x DPI", "📅 Target",   "Q4 2027 (proj.)", "", "", "Subject to CATL / Grab monetization events"],
+  ];
+  milestones.forEach((row, idx) => {
+    const dr = ws3.addRow(row);
+    dr.height = 22;
+    dr.eachCell({ includeEmpty: true }, (cell) => {
+      cell.font = bFont;
+      cell.border = bdr;
+      if (idx % 2 === 0) cell.fill = lgFill;
+      cell.alignment = { horizontal: "left", vertical: "middle" };
+    });
+  });
+
+  ws3.columns = [
+    { width: 12 }, { width: 22 }, { width: 22 }, { width: 22 }, { width: 22 }, { width: 44 },
+  ];
+  ws3.views = [{ state: "frozen", xSplit: 0, ySplit: 2 }];
+}
+
+function isHillhousePEContext(title: string, companyName: string, userRole?: string): boolean {
+  const t = (title + companyName + (userRole ?? "")).toLowerCase();
+  return (
+    t.includes("hillhouse") ||
+    t.includes("私募") ||
+    (t.includes("irr") && t.includes("tvpi")) ||
+    (t.includes("lp") && t.includes("季報")) ||
+    (userRole === "投資總監" || userRole === "財務")
+  );
+}
+
 export async function generateXLSX(
   title: string,
   content: string,
-  companyName: string
+  companyName: string,
+  userRole?: string
 ): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = companyName;
   workbook.created = new Date();
+
+  // PE 模式：Hillhouse / 私募基金 → 生成 3-sheet PE 級 Excel
+  if (isHillhousePEContext(title, companyName, userRole)) {
+    buildHillhousePESheets(workbook);
+    const arrayBuffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(arrayBuffer);
+  }
 
   const headerFill: ExcelJS.Fill = {
     type: "pattern",

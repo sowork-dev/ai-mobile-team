@@ -14,7 +14,7 @@ import { getDemoData } from "../demoData";
 import { useI18n } from "@/i18n";
 import { generatePositioningBookPPT, generatePositioningBookDOC } from "@/lib/positioningBookExporter";
 import { samplePositioningPlan } from "@/lib/samplePositioningPlan";
-import { generateXLS, generatePDF } from "@/lib/documentGenerator";
+import { generateXLS, generatePDF, generateHillhousePEXls } from "@/lib/documentGenerator";
 import AdPerformanceCard from "../components/AdPerformanceCard";
 
 // 推薦的 AI 員工
@@ -247,23 +247,28 @@ export default function MobileAssistantPage() {
           author: "幕僚長 AI",
         });
       } else if (downloadType === "excel") {
-        await generateXLS({
-          title: `${companyName || "Demo"} 財務數據報表`,
-          content: "財務數據",
-          author: "幕僚長 AI",
-          date: new Date(),
-          tableData: {
-            headers: ["項目", "Q1", "Q2", "Q3", "Q4", "全年合計"],
-            rows: [
-              ["營業收入", "12.3M", "14.8M", "16.2M", "19.5M", "62.8M"],
-              ["毛利率", "42%", "45%", "44%", "48%", "45%"],
-              ["EBITDA", "3.2M", "4.1M", "4.6M", "5.8M", "17.7M"],
-              ["ROI", "18%", "22%", "24%", "29%", "23%"],
-              ["客戶數", "48", "56", "61", "72", "72"],
-              ["NPS", "67", "71", "74", "78", "78"],
-            ],
-          },
-        });
+        if (demoPersonaId === "hillhouse-capital") {
+          // PE 級財務 Excel：IRR/TVPI/DPI/MOIC by vintage year
+          await generateHillhousePEXls();
+        } else {
+          await generateXLS({
+            title: `${companyName || "Demo"} 財務數據報表`,
+            content: "財務數據",
+            author: "幕僚長 AI",
+            date: new Date(),
+            tableData: {
+              headers: ["項目", "Q1", "Q2", "Q3", "Q4", "全年合計"],
+              rows: [
+                ["營業收入", "12.3M", "14.8M", "16.2M", "19.5M", "62.8M"],
+                ["毛利率", "42%", "45%", "44%", "48%", "45%"],
+                ["EBITDA", "3.2M", "4.1M", "4.6M", "5.8M", "17.7M"],
+                ["ROI", "18%", "22%", "24%", "29%", "23%"],
+                ["客戶數", "48", "56", "61", "72", "72"],
+                ["NPS", "67", "71", "74", "78", "78"],
+              ],
+            },
+          });
+        }
       } else if (downloadType === "pdf") {
         await generatePDF({
           title: `${companyName || "Demo"} 分析報告`,
@@ -690,6 +695,55 @@ export default function MobileAssistantPage() {
                 {locale === "zh" ? "暫無市場數據" : "No market data available"}
               </p>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* 私募基金市場動態 — Hillhouse 專屬 */}
+      {messages.length <= 1 && demoPersonaId === "hillhouse-capital" && (
+        <div className="flex-shrink-0 px-4 pb-4">
+          <p className="text-xs text-[#8E8E93] mb-3 tracking-wide">
+            💼 私募基金市場動態
+          </p>
+          <div className="space-y-2">
+            {[
+              {
+                icon: "📊",
+                topic: "亞洲 PE IRR 維持 18.2%",
+                summary: "亞洲 PE 2024 Q4 平均 IRR 維持 18.2%，科技板塊溢價明顯",
+                source: "Source: Preqin 2024 Q4 Report",
+              },
+              {
+                icon: "💧",
+                topic: "DPI > 1.0x 基金比例上升至 34%",
+                summary: "LP 對 Liquidity 期望提升，流動性壓力推動更積極退出決策",
+                source: "Source: Preqin 2024 Q4 Report",
+              },
+              {
+                icon: "🎯",
+                topic: "2024 Vintage 入場估值回調 25–30%",
+                summary: "建倉窗口開啟，頭部 GP 已加快新基金部署節奏",
+                source: "Source: Preqin 2024 Q4 Report",
+              },
+            ].map((item, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleSend(`告訴我更多：${item.topic}`)}
+                className="w-full text-left bg-[#F0F4FF] rounded-xl px-4 py-3 active:bg-[#E5EAFF] transition-colors"
+              >
+                <div className="flex items-start gap-2">
+                  <span className="text-base">{item.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-[#1C1C1E] truncate">{item.topic}</p>
+                    <p className="text-xs text-[#8E8E93] mt-0.5 line-clamp-1">{item.summary}</p>
+                    <p className="text-[10px] text-[#A0A0A8] mt-0.5">{item.source}</p>
+                  </div>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-1">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </div>
+              </button>
+            ))}
           </div>
         </div>
       )}
