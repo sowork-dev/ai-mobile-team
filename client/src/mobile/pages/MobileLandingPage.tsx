@@ -70,7 +70,7 @@ export default function MobileLandingPage() {
         </div>
 
         {/* 功能亮點 */}
-        <div className="grid grid-cols-3 gap-4 mb-10 w-full max-w-sm">
+        <div className="grid grid-cols-2 gap-3 mb-10 w-full max-w-sm">
           <div className="bg-white/5 rounded-xl p-3 text-center">
             <div className="text-2xl mb-1">🧠</div>
             <p className="text-white/80 text-xs">AI 幕僚長</p>
@@ -82,6 +82,10 @@ export default function MobileLandingPage() {
           <div className="bg-white/5 rounded-xl p-3 text-center">
             <div className="text-2xl mb-1">📄</div>
             <p className="text-white/80 text-xs">一鍵交付</p>
+          </div>
+          <div className="bg-white/5 rounded-xl p-3 text-center">
+            <div className="text-2xl mb-1">🗂️</div>
+            <p className="text-white/80 text-xs">對話主題分類</p>
           </div>
         </div>
 

@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from "react";
 import { useLocation, useParams } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useI18n } from "@/i18n";
+import RegroupConversation from "../components/RegroupConversation";
 
 interface TaskAction {
   type: "download_report";
@@ -33,6 +34,7 @@ export default function MobileGroupChatPage() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showRegroup, setShowRegroup] = useState(false);
   const [taskMode, setTaskMode] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -251,6 +253,20 @@ export default function MobileGroupChatPage() {
             </p>
           </div>
 
+          {/* 一鍵分類按鈕 */}
+          <button
+            onClick={() => setShowRegroup(true)}
+            className="flex items-center gap-1 px-2.5 py-1.5 bg-[#F2F2F7] rounded-lg active:scale-95 transition-transform"
+            title={locale === "zh" ? "按主題分類對話" : "Classify by topic"}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#007AFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 6h16M4 12h10M4 18h7"/>
+              <circle cx="20" cy="16" r="3"/>
+              <path d="M22 22l-2-2"/>
+            </svg>
+            <span className="text-[#007AFF] text-xs font-medium">{locale === "zh" ? "分類" : "Sort"}</span>
+          </button>
+
           {/* 成員頭像堆疊 */}
           <div className="flex -space-x-2">
             {(group.members || []).slice(0, 3).map((member: any) => (
@@ -408,6 +424,14 @@ export default function MobileGroupChatPage() {
           </button>
         </div>
       </div>
+
+      {/* 按主題分類對話彈窗 */}
+      {showRegroup && (
+        <RegroupConversation
+          chatId={params.groupId || "default"}
+          onClose={() => setShowRegroup(false)}
+        />
+      )}
     </div>
   );
 }
