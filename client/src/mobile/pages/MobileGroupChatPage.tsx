@@ -8,6 +8,7 @@ import { useLocation, useParams } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useI18n } from "@/i18n";
 import RegroupConversation from "../components/RegroupConversation";
+import MessageActions from "../components/MessageActions";
 
 interface TaskAction {
   type: "download_report";
@@ -140,6 +141,25 @@ export default function MobileGroupChatPage() {
   };
 
   // 處理下載報告（模擬）
+  const handleMessageAction = (actionId: string, messageContent: string) => {
+    // 把動作轉成一條使用者訊息，觸發 AI 執行
+    const actionLabels: Record<string, string> = {
+      "create-task": `請根據以下內容建立任務：${messageContent.slice(0, 100)}`,
+      "add-calendar": `請把以下事項加入行事曆：${messageContent.slice(0, 100)}`,
+      "set-reminder": `請設定提醒：${messageContent.slice(0, 100)}`,
+      "generate-contract": `請根據以下內容生成合約草稿：${messageContent.slice(0, 100)}`,
+      "generate-report": `請根據以下內容生成報表：${messageContent.slice(0, 100)}`,
+      "create-presentation": `請根據以下內容建立簡報大綱：${messageContent.slice(0, 100)}`,
+      "schedule-meeting": `請安排以下會議：${messageContent.slice(0, 100)}`,
+      "pdf-report": `請將以下內容整理成 PDF 報告：${messageContent.slice(0, 100)}`,
+      "spreadsheet": `請將以下資料整理成試算表：${messageContent.slice(0, 100)}`,
+      "markdown": `請將以下內容整理成摘要筆記：${messageContent.slice(0, 100)}`,
+    };
+    const text = actionLabels[actionId] || `執行操作：${actionId}`;
+    setInput(text);
+    setTimeout(() => handleSend(false), 100);
+  };
+
   const handleDownloadReport = async (msgId: string, taskTitle: string) => {
     setDownloadingId(msgId);
     await new Promise((resolve) => setTimeout(resolve, 800));
@@ -345,6 +365,16 @@ export default function MobileGroupChatPage() {
                     </>
                   )}
                 </button>
+              )}
+
+              {/* 快捷功能 — AI 訊息旁 */}
+              {msg.role === "assistant" && (
+                <MessageActions
+                  agentRole={msg.agentId ? String(msg.agentId) : "default"}
+                  messageId={msg.id}
+                  messageContent={msg.content}
+                  onAction={handleMessageAction}
+                />
               )}
 
               {/* 時間 */}
