@@ -26,9 +26,9 @@ const STATUS_LABELS: Record<ContentStatus, string> = {
 };
 
 const STATUS_COLORS: Record<ContentStatus, string> = {
-  draft: "bg-white/10 text-white/50",
-  review: "bg-amber-500/20 text-amber-300",
-  published: "bg-green-500/20 text-green-400",
+  draft: "bg-gray-100 text-gray-500 border border-gray-200",
+  review: "bg-orange-50 text-orange-600 border border-orange-200",
+  published: "bg-green-50 text-green-700 border border-green-200",
 };
 
 const STORAGE_KEY = "contentCalendarItems";
@@ -293,40 +293,40 @@ export default function MobileContentCalendarPage({ onBack }: { onBack?: () => v
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-4">
+      <div className="flex items-center gap-3 bg-white border-b border-gray-100 px-4 py-3">
         <button
           onClick={onBack ?? (() => history.back())}
-          className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-white"
+          className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600"
         >
           ←
         </button>
         <div className="flex-1">
-          <h1 className="text-white font-bold text-lg leading-tight">傳播行事曆</h1>
-          <p className="text-white/40 text-xs">{items.length} 個內容計畫</p>
+          <h1 className="text-gray-900 font-bold text-lg leading-tight">傳播行事曆</h1>
+          <p className="text-gray-500 text-xs">{items.length} 個內容計畫</p>
         </div>
         <button
           onClick={() => setShowAdd(true)}
-          className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 text-xl font-bold"
+          className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 text-xl font-bold"
         >
           +
         </button>
       </div>
 
       {/* 統計概覽 */}
-      <div className="px-4 mb-4 grid grid-cols-3 gap-2">
-        <div className="bg-white/8 rounded-xl p-3 text-center">
-          <p className="text-2xl font-bold text-amber-400">{counts.draft}</p>
-          <p className="text-white/50 text-xs mt-0.5">草稿</p>
+      <div className="px-4 mt-4 mb-4 grid grid-cols-3 gap-2">
+        <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-3 text-center">
+          <p className="text-2xl font-bold text-gray-800">{counts.draft}</p>
+          <p className="text-gray-500 text-xs mt-0.5">草稿</p>
         </div>
-        <div className="bg-white/8 rounded-xl p-3 text-center">
-          <p className="text-2xl font-bold text-amber-300">{counts.review}</p>
-          <p className="text-white/50 text-xs mt-0.5">審核中</p>
+        <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-3 text-center">
+          <p className="text-2xl font-bold text-orange-500">{counts.review}</p>
+          <p className="text-gray-500 text-xs mt-0.5">審核中</p>
         </div>
-        <div className="bg-white/8 rounded-xl p-3 text-center">
-          <p className="text-2xl font-bold text-green-400">{counts.published}</p>
-          <p className="text-white/50 text-xs mt-0.5">已發布</p>
+        <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-3 text-center">
+          <p className="text-2xl font-bold text-green-600">{counts.published}</p>
+          <p className="text-gray-500 text-xs mt-0.5">已發布</p>
         </div>
       </div>
 
@@ -339,8 +339,8 @@ export default function MobileContentCalendarPage({ onBack }: { onBack?: () => v
               onClick={() => setFilterStatus(s)}
               className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                 filterStatus === s
-                  ? "bg-amber-500 text-white"
-                  : "bg-white/8 border border-white/15 text-white/50"
+                  ? "bg-gray-900 text-white"
+                  : "bg-white border border-gray-200 text-gray-500"
               }`}
             >
               {s === "all" ? `全部 (${counts.all})` : `${STATUS_LABELS[s]} (${counts[s]})`}
@@ -350,13 +350,13 @@ export default function MobileContentCalendarPage({ onBack }: { onBack?: () => v
       </div>
 
       {/* 內容列表 */}
-      <div className="flex-1 overflow-y-auto px-4 pb-8 space-y-5">
+      <div className="flex-1 overflow-y-auto px-4 pb-24 space-y-5">
         {sortedMonths.length === 0 && (
           <div className="text-center py-16">
-            <p className="text-white/30 text-sm">尚無內容計畫</p>
+            <p className="text-gray-400 text-sm">尚無內容計畫</p>
             <button
               onClick={() => setShowAdd(true)}
-              className="mt-4 px-6 py-2.5 bg-amber-500/20 border border-amber-500/30 rounded-xl text-amber-400 text-sm"
+              className="mt-4 px-6 py-2.5 bg-gray-900 text-white rounded-xl text-sm"
             >
               新增第一個計畫
             </button>
@@ -369,30 +369,29 @@ export default function MobileContentCalendarPage({ onBack }: { onBack?: () => v
 
           return (
             <div key={month}>
-              <h3 className="text-white/40 text-xs font-medium uppercase tracking-wide mb-2">{monthLabel}</h3>
+              <h3 className="text-gray-400 text-xs font-medium uppercase tracking-wide mb-2">{monthLabel}</h3>
               <div className="space-y-2">
                 {grouped[month]
                   .sort((a, b) => a.publishDate.localeCompare(b.publishDate))
                   .map(item => {
                     const date = new Date(item.publishDate + "T12:00:00");
-                    const dateStr = date.toLocaleDateString("zh-TW", { month: "short", day: "numeric" });
                     const weekday = date.toLocaleDateString("zh-TW", { weekday: "short" });
 
                     return (
                       <div
                         key={item.id}
-                        className="bg-white/6 border border-white/10 rounded-2xl p-4 flex gap-3"
+                        className="bg-white border border-gray-100 shadow-sm rounded-2xl p-4 flex gap-3"
                       >
                         {/* 日期 */}
                         <div className="flex-shrink-0 w-12 text-center">
-                          <p className="text-amber-400 text-lg font-bold leading-tight">{date.getDate()}</p>
-                          <p className="text-white/40 text-xs">{weekday}</p>
+                          <p className="text-gray-900 font-bold text-lg leading-tight">{date.getDate()}</p>
+                          <p className="text-gray-400 text-xs">{weekday}</p>
                         </div>
 
                         {/* 內容 */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
-                            <p className="text-white font-medium text-sm leading-tight">{item.title}</p>
+                            <p className="text-gray-900 font-medium text-sm leading-tight">{item.title}</p>
                             <button
                               onClick={() => handleStatusCycle(item)}
                               className={`flex-shrink-0 text-xs px-2 py-0.5 rounded-full ${STATUS_COLORS[item.status]}`}
@@ -401,9 +400,9 @@ export default function MobileContentCalendarPage({ onBack }: { onBack?: () => v
                             </button>
                           </div>
                           <div className="flex items-center gap-2 mt-1.5">
-                            <span className="text-white/40 text-xs">📱 {item.platform}</span>
-                            <span className="text-white/20 text-xs">·</span>
-                            <span className="text-white/40 text-xs">🤖 {item.assignedAgent.split(" (")[0]}</span>
+                            <span className="text-gray-500 text-xs">📱 {item.platform}</span>
+                            <span className="text-gray-300 text-xs">·</span>
+                            <span className="text-gray-500 text-xs">🤖 {item.assignedAgent.split(" (")[0]}</span>
                           </div>
                         </div>
 
@@ -411,13 +410,13 @@ export default function MobileContentCalendarPage({ onBack }: { onBack?: () => v
                         <div className="flex-shrink-0 flex flex-col gap-1.5">
                           <button
                             onClick={() => setEditItem(item)}
-                            className="w-7 h-7 rounded-lg bg-white/10 text-white/50 flex items-center justify-center text-xs"
+                            className="w-7 h-7 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center text-xs"
                           >
                             ✎
                           </button>
                           <button
                             onClick={() => setDeleteItem(item)}
-                            className="w-7 h-7 rounded-lg bg-red-500/15 text-red-400 flex items-center justify-center text-xs"
+                            className="w-7 h-7 rounded-lg bg-red-50 text-red-500 flex items-center justify-center text-xs"
                           >
                             ✕
                           </button>

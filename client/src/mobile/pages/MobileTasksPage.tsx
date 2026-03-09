@@ -277,20 +277,30 @@ export default function MobileTasksPage() {
       <MobileHeader
         title={t("tasks.title")}
         rightAction={
-          <button
-            onClick={() => { setShowNotifications(true); refetchNotifications(); }}
-            className="relative w-9 h-9 flex items-center justify-center active:bg-gray-100 rounded-full transition-colors"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111827" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-            </svg>
-            {notificationBadgeCount > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center">
-                {notificationBadgeCount > 9 ? "9+" : notificationBadgeCount}
-              </span>
-            )}
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => navigate('/calendar')}
+              className="relative w-9 h-9 flex items-center justify-center active:bg-gray-100 rounded-full transition-colors"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01"/>
+              </svg>
+            </button>
+            <button
+              onClick={() => { setShowNotifications(true); refetchNotifications(); }}
+              className="relative w-9 h-9 flex items-center justify-center active:bg-gray-100 rounded-full transition-colors"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111827" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+              {notificationBadgeCount > 0 && (
+                <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center">
+                  {notificationBadgeCount > 9 ? "9+" : notificationBadgeCount}
+                </span>
+              )}
+            </button>
+          </div>
         }
       />
 
