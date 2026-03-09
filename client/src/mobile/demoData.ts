@@ -655,6 +655,176 @@ const DEMO_DATA_MAP: Record<string, DemoData> = {
       ],
     },
   },
+
+  "huawei-global-ops": {
+    agentTeam: [
+      { id: "felix", name: "Felix", title: "全球營運協調 AI", avatar: "🌐", status: "online" },
+      { id: "nora", name: "Nora", title: "政策合規分析師 AI", avatar: "⚖️", status: "executing" },
+      { id: "leo", name: "Leo", title: "多市場數據分析 AI", avatar: "📊", status: "online" },
+      { id: "diana", name: "Diana", title: "跨部門溝通協調 AI", avatar: "🤝", status: "executing" },
+    ],
+    brandGroups: [
+      {
+        id: "huawei-apac",
+        title: "APAC 區域協調群",
+        members: [{ name: "Felix" }, { name: "Leo" }],
+      },
+      {
+        id: "huawei-compliance",
+        title: "合規審批流程群",
+        members: [{ name: "Nora" }, { name: "Felix" }],
+      },
+      {
+        id: "huawei-product",
+        title: "新品上市跨市場協調",
+        members: [{ name: "Leo" }, { name: "Diana" }],
+      },
+    ],
+    tasks: [
+      {
+        id: "huawei-t1",
+        title: "APAC 12國季度同步報告",
+        status: "executing" as const,
+        assignedAgents: [{ id: "felix", name: "Felix" }, { id: "leo", name: "Leo" }],
+      },
+      {
+        id: "huawei-t2",
+        title: "德國 / 法國市場合規文件更新",
+        status: "waiting_approval" as const,
+        assignedAgents: [{ id: "nora", name: "Nora" }],
+      },
+      {
+        id: "huawei-t3",
+        title: "Mate 60 亞太行銷素材統一包",
+        status: "completed" as const,
+        assignedAgents: [{ id: "diana", name: "Diana" }, { id: "leo", name: "Leo" }],
+      },
+      {
+        id: "huawei-t4",
+        title: "台灣市場競品監測週報",
+        status: "executing" as const,
+        assignedAgents: [{ id: "leo", name: "Leo" }],
+      },
+    ],
+    assistantContext: {
+      userName: "David Zhang",
+      companyName: "Huawei Global Ops",
+      welcomeMessage: "David，早安。今天有 3 件跨市場事項需要確認：\n\n1. 德國合規文件 Nora 已完成初審，等待您批准\n2. APAC 同步報告涵蓋 12 國，Felix 正在整合\n3. 台灣媒體有詢問 Mate 60 上市行程，需要您確認回應口徑",
+      recentActivity: "APAC 報告整合中",
+    },
+    recentConversations: [
+      {
+        time: "剛才",
+        role: "assistant",
+        message: "Felix 已彙整 APAC 12 國本季 KPI：整體達成率 87%，其中台灣 92%、日本 85%、東南亞 78%。東南亞需要重點關注，我已標記三個市場的落後原因供您審閱。",
+      },
+      {
+        time: "32 分鐘前",
+        role: "user",
+        message: "德國合規問題進度？",
+      },
+      {
+        time: "32 分鐘前",
+        role: "assistant",
+        message: "Nora 完成 GDPR 合規更新：共 4 份文件，主要修改隱私條款第 3.2 和 5.1 條。法務已初簽，等待 Global Head 最終批准。預計 3 月 15 日前完成，不影響產品上市時程。",
+      },
+      {
+        time: "1 小時前",
+        role: "user",
+        message: "台灣媒體詢問如何回應",
+      },
+      {
+        time: "1 小時前",
+        role: "assistant",
+        message: "已準備 3 個版本的媒體回應口徑：(1) 官方聲明版、(2) 技術亮點版、(3) 市場策略版。建議選用技術亮點版，強調 5.5G 創新，迴避政策敏感話題。是否需要翻譯成日文和韓文版本？",
+      },
+    ],
+  },
+
+  "single-market-agency": {
+    agentTeam: [
+      { id: "emma", name: "Emma", title: "客戶服務協調 AI", avatar: "💼", status: "online" },
+      { id: "jack", name: "Jack", title: "創意內容製作 AI", avatar: "🎨", status: "executing" },
+      { id: "sophie", name: "Sophie", title: "數位廣告投放 AI", avatar: "📱", status: "online" },
+      { id: "tom", name: "Tom", title: "數據分析報告 AI", avatar: "📈", status: "online" },
+    ],
+    brandGroups: [
+      {
+        id: "agency-brand-a",
+        title: "品牌 A — 台灣飲料市場",
+        members: [{ name: "Emma" }, { name: "Jack" }],
+      },
+      {
+        id: "agency-brand-b",
+        title: "品牌 B — 美妝保養",
+        members: [{ name: "Sophie" }, { name: "Tom" }],
+      },
+      {
+        id: "agency-brand-c",
+        title: "品牌 C — 電商促銷",
+        members: [{ name: "Jack" }, { name: "Sophie" }],
+      },
+    ],
+    tasks: [
+      {
+        id: "agency-t1",
+        title: "品牌 A 雙十一 KV 創意提案",
+        status: "executing" as const,
+        assignedAgents: [{ id: "jack", name: "Jack" }, { id: "emma", name: "Emma" }],
+      },
+      {
+        id: "agency-t2",
+        title: "品牌 B META + TikTok 廣告月報",
+        status: "waiting_approval" as const,
+        assignedAgents: [{ id: "tom", name: "Tom" }, { id: "sophie", name: "Sophie" }],
+      },
+      {
+        id: "agency-t3",
+        title: "品牌 C 電商優化建議報告",
+        status: "completed" as const,
+        assignedAgents: [{ id: "tom", name: "Tom" }],
+      },
+      {
+        id: "agency-t4",
+        title: "3 家品牌 Q4 提案簡報",
+        status: "pending" as const,
+        assignedAgents: [{ id: "emma", name: "Emma" }, { id: "jack", name: "Jack" }],
+      },
+    ],
+    assistantContext: {
+      userName: "Vivian Chen",
+      companyName: "Spark Agency",
+      welcomeMessage: "Vivian，今天有 2 件客戶等待回覆：品牌 B 詢問本月廣告成效報告進度，品牌 A 需要雙十一 KV 初稿確認。Tom 已完成品牌 B 報告，需要你快速過目後發出。",
+      recentActivity: "品牌 A KV 製作中",
+    },
+    recentConversations: [
+      {
+        time: "剛才",
+        role: "assistant",
+        message: "Tom 完成品牌 B 10月廣告報告：整體 ROAS 3.2x，其中 META 2.8x / TikTok 4.1x。TikTok 表現超出預期 +28%，建議下月將預算從 META 轉移 20% 到 TikTok。需要我幫您準備客戶說明版本嗎？",
+      },
+      {
+        time: "45 分鐘前",
+        role: "user",
+        message: "品牌 A KV 進度？",
+      },
+      {
+        time: "45 分鐘前",
+        role: "assistant",
+        message: "Jack 已完成 3 個 KV 方向草稿：(1) 溫暖家庭風、(2) 年輕活力風、(3) 節慶限定風。建議選(2)，最符合品牌 A 今年的年輕化策略。需要我安排與客戶的線上確認會議嗎？",
+      },
+      {
+        time: "2 小時前",
+        role: "user",
+        message: "品牌 C 電商的優化報告呢",
+      },
+      {
+        time: "2 小時前",
+        role: "assistant",
+        message: "品牌 C 電商優化報告已完成，Tom 發現主要問題在結帳流程第 3 步棄單率 67%。建議：加入進度條、減少必填欄位、加入信任徽章。預估改善後轉換率可提升 15-25%。",
+      },
+    ],
+  },
 };
 
 export function getDemoData(personaId: string): DemoData | null {

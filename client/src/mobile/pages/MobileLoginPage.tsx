@@ -43,6 +43,20 @@ const DEMO_PERSONAS = [
     industry: "科技",
     size: "500 人",
   },
+  {
+    id: "huawei-global-ops",
+    icon: "🌐",
+    company: "Huawei Global Ops",
+    industry: "科技 · 跨國營運",
+    size: "5,000 人",
+  },
+  {
+    id: "single-market-agency",
+    icon: "🎯",
+    company: "Spark Agency",
+    industry: "行銷代理商",
+    size: "25 人",
+  },
 ];
 
 interface MobileLoginPageProps {
