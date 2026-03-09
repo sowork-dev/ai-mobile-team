@@ -7,10 +7,20 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import MobileHeader from "../components/MobileHeader";
 import { useI18n } from "@/i18n";
+import { getDemoData } from "../demoData";
 
 export default function MobileProfilePage() {
   const [, navigate] = useLocation();
   const { data: user } = trpc.auth.me.useQuery();
+  // Demo mode persona info
+  const demoPersonaId = typeof window !== "undefined" ? localStorage.getItem("demoPersonaId") : null;
+  const demoData = demoPersonaId ? getDemoData(demoPersonaId) : null;
+  const demoUser = demoData ? {
+    name: demoData.assistantContext.userName || "Demo 用戶",
+    email: demoData.assistantContext.companyName ? demoData.assistantContext.companyName + " · Demo" : "demo@sowork.ai",
+    companyName: demoData.assistantContext.companyName,
+  } : null;
+  const displayUser = demoUser || user;
   const logoutMutation = trpc.auth.logout.useMutation();
   const { locale, toggleLocale, t } = useI18n();
 
@@ -132,11 +142,11 @@ export default function MobileProfilePage() {
         <div className="bg-white px-5 py-6 border-b border-gray-100">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center text-white font-bold text-2xl shadow-md">
-              {(user as any)?.name?.[0] || "U"}
+              {(displayUser as any)?.name?.[0] || "D"}
             </div>
             <div className="flex-1">
-              <p className="font-bold text-gray-900 text-lg">{(user as any)?.name || "用戶"}</p>
-              <p className="text-sm text-gray-500">{(user as any)?.email || ""}</p>
+              <p className="font-bold text-gray-900 text-lg">{(displayUser as any)?.name || "Demo 用戶"}</p>
+              <p className="text-sm text-gray-500">{(displayUser as any)?.email || ""}</p>
               <div className="flex items-center gap-1.5 mt-1.5">
                 <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full font-medium">
                   免費方案

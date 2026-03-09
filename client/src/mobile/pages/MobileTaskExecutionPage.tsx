@@ -8,6 +8,7 @@ import { useI18n } from "@/i18n";
 import { toast } from "sonner";
 import { taskTemplates, TaskTemplate, TaskStage } from "../components/TaskTemplates";
 import AIOnboardingModal from "../components/AIOnboardingModal";
+import TaskStatusTracker, { TaskStatus } from "../components/TaskStatusTracker";
 import { trpc } from "@/lib/trpc";
 import { generateDocument, generateAllFormats, GenerateOptions } from "@/lib/documentGenerator";
 
@@ -459,6 +460,23 @@ export default function MobileTaskExecutionPage() {
                 </div>
               </div>
             </div>
+
+            {/* 任務進度追蹤 */}
+            <TaskStatusTracker
+              stages={template.stages.map((stage, i) => ({
+                id: stage.id,
+                name: locale === "zh" ? stage.name : stage.nameEn,
+                status: (stageProgress[i]?.completed
+                  ? "completed"
+                  : i + 1 === currentStage
+                    ? (taskStatus === "ai_processing" ? "ai_processing" : taskStatus === "human_required" ? "waiting_approval" : "pending")
+                    : i + 1 < currentStage ? "completed" : "pending") as TaskStatus,
+                assignTo: stage.assignTo as "ai" | "human" | "both",
+                aiAgent: agentMapping?.primary ? { id: 1, name: agentMapping.primary.name || "AI" } : undefined,
+                humanApprover: agentMapping?.humanApprover,
+              }))}
+              currentStageIndex={currentStage - 1}
+            />
 
             {/* AI 掃描結果 */}
             <div className="bg-white rounded-2xl p-4 border border-gray-100">

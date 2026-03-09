@@ -11,6 +11,7 @@ export const locales = {
       chat: "聊天",
       assistant: "幕僚長",
       tasks: "任務",
+      calendar: "行事曆",
       profile: "我的",
     },
 
@@ -225,6 +226,7 @@ export const locales = {
       chat: "Chat",
       assistant: "Assistant",
       tasks: "Tasks",
+      calendar: "Calendar",
       profile: "Profile",
     },
 

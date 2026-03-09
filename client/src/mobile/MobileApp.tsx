@@ -30,6 +30,7 @@ import MobileSecurityPage from "./pages/MobileSecurityPage";
 // Mobile Components
 import MobileTabBar from "./components/MobileTabBar";
 import MobileLoginPage from "./pages/MobileLoginPage";
+import MobileGroupsPage from "./pages/MobileGroupsPage";
 
 export type MobileTab = "contacts" | "chat" | "tasks" | "groups" | "profile";
 
@@ -47,7 +48,6 @@ export default function MobileApp() {
     location.startsWith("/onboarding") ||
     location === "/task/new" ||
     location === "/company-settings" ||
-    location === "/calendar" ||
     location === "/security";
 
   if (loading) {
@@ -96,6 +96,7 @@ export default function MobileApp() {
           <Route path="/tasks" component={MobileTasksPage} />
           <Route path="/task/new" component={MobileTaskExecutionPage} />
           <Route path="/task/:taskId" component={MobileTaskDetailPage} />
+          <Route path="/groups" component={MobileGroupsPage} />
           <Route path="/group/:groupId" component={MobileGroupDetailPage} />
           <Route path="/profile" component={MobileProfilePage} />
           <Route path="/company-settings" component={MobileCompanySettingsPage} />
