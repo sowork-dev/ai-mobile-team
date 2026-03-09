@@ -279,14 +279,6 @@ export default function MobileTasksPage() {
         rightAction={
           <div className="flex items-center gap-1">
             <button
-              onClick={() => navigate('/calendar')}
-              className="relative w-9 h-9 flex items-center justify-center active:bg-gray-100 rounded-full transition-colors"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01"/>
-              </svg>
-            </button>
-            <button
               onClick={() => { setShowNotifications(true); refetchNotifications(); }}
               className="relative w-9 h-9 flex items-center justify-center active:bg-gray-100 rounded-full transition-colors"
             >
