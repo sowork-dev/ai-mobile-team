@@ -27,8 +27,8 @@ const STATUS_LABELS: Record<ContentStatus, string> = {
 
 const STATUS_COLORS: Record<ContentStatus, string> = {
   draft: "bg-gray-100 text-gray-500 border border-gray-200",
-  review: "bg-orange-50 text-orange-600 border border-orange-200",
-  published: "bg-green-50 text-green-700 border border-green-200",
+  review: "bg-gray-100 text-gray-600 border border-gray-200",
+  published: "bg-gray-900 text-white border border-gray-900",
 };
 
 const STORAGE_KEY = "contentCalendarItems";
@@ -321,11 +321,11 @@ export default function MobileContentCalendarPage({ onBack }: { onBack?: () => v
           <p className="text-gray-500 text-xs mt-0.5">草稿</p>
         </div>
         <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-3 text-center">
-          <p className="text-2xl font-bold text-orange-500">{counts.review}</p>
+          <p className="text-2xl font-bold text-gray-800">{counts.review}</p>
           <p className="text-gray-500 text-xs mt-0.5">審核中</p>
         </div>
         <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-3 text-center">
-          <p className="text-2xl font-bold text-green-600">{counts.published}</p>
+          <p className="text-2xl font-bold text-gray-900">{counts.published}</p>
           <p className="text-gray-500 text-xs mt-0.5">已發布</p>
         </div>
       </div>

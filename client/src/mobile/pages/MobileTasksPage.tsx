@@ -321,7 +321,7 @@ export default function MobileTasksPage() {
                 onClick={() => setRoleFilter(role)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
                   roleFilter === role
-                    ? "bg-blue-600 text-white"
+                    ? "bg-gray-900 text-white"
                     : "bg-gray-100 text-gray-600"
                 }`}
               >
@@ -400,7 +400,7 @@ export default function MobileTasksPage() {
                       <button
                         onClick={() => approveMutation.mutate({ approvalId: approval.id })}
                         disabled={approveMutation.isPending}
-                        className="flex-1 py-2 bg-green-500 text-white text-xs font-semibold rounded-lg active:opacity-80"
+                        className="flex-1 py-2 bg-gray-800 text-white text-xs font-semibold rounded-lg active:opacity-80"
                       >
                         {locale === "zh" ? "✓ 通過" : "✓ Approve"}
                       </button>
@@ -440,7 +440,7 @@ export default function MobileTasksPage() {
               >
                 <div className="flex items-center justify-between mb-2.5">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-rose-500 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
                       </svg>
@@ -467,7 +467,7 @@ export default function MobileTasksPage() {
                   </div>
                   <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-orange-500 to-rose-500 rounded-full transition-all"
+                      className="h-full bg-gray-700 rounded-full transition-all"
                       style={{ width: `${progress}%` }}
                     />
                   </div>
@@ -536,7 +536,7 @@ export default function MobileTasksPage() {
                 {/* 頂部：狀態 */}
                 <div className="flex items-center justify-between mb-2.5">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-rose-500 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
                       </svg>
@@ -569,7 +569,7 @@ export default function MobileTasksPage() {
                   </div>
                   <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-to-r from-orange-500 to-rose-500 rounded-full transition-all"
+                      className="h-full bg-gray-700 rounded-full transition-all"
                       style={{ width: `${progress}%` }}
                     />
                   </div>
@@ -597,7 +597,7 @@ export default function MobileTasksPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     {syncLabel && (
-                      <span className="text-[10px] font-medium text-indigo-500">✓ {syncLabel}</span>
+                      <span className="text-[10px] font-medium text-gray-500">✓ {syncLabel}</span>
                     )}
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M9 18l6-6-6-6" />

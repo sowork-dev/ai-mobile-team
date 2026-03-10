@@ -296,9 +296,9 @@ export default function MobileDemoPage() {
                   <p className="text-white text-sm font-medium">{task.title}</p>
                   <span className={`text-xs px-2 py-0.5 rounded-full ${
                     task.status === "completed"
-                      ? "bg-green-500/20 text-green-400"
+                      ? "bg-white/10 text-white/70"
                       : task.status === "in_progress"
-                      ? "bg-blue-500/20 text-blue-400"
+                      ? "bg-white/10 text-white/70"
                       : "bg-white/10 text-white/50"
                   }`}>
                     {task.status === "completed" ? "✅ 完成" : task.status === "in_progress" ? "🔄 進行中" : "待啟動"}

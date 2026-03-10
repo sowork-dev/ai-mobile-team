@@ -80,8 +80,8 @@ export default function MobileProfilePage() {
           label: "知識庫",
           desc: "連接 OneDrive 公司文件",
           action: () => navigate("/company-settings"),
-          color: "text-blue-600",
-          bg: "bg-blue-50",
+          color: "text-gray-700",
+          bg: "bg-gray-50",
         },
       ],
     },
@@ -206,7 +206,7 @@ export default function MobileProfilePage() {
                         localStorage.setItem("useDemoData", "true");
                         window.location.reload();
                       }}
-                      className="flex-1 py-2 bg-orange-500 text-white rounded-xl text-sm font-semibold active:scale-95 transition-transform"
+                      className="flex-1 py-2 bg-gray-800 text-white rounded-xl text-sm font-semibold active:scale-95 transition-transform"
                     >
                       體驗演示
                     </button>

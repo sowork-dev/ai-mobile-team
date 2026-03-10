@@ -22,8 +22,8 @@ const PLATFORMS: PlatformData[] = [
     roasChange: "+12%",
     roasUp: true,
     spend: "NT$42,000",
-    bgColor: "bg-blue-50",
-    textColor: "text-blue-600",
+    bgColor: "bg-gray-100",
+    textColor: "text-gray-700",
   },
   {
     emoji: "🎵",
@@ -32,8 +32,8 @@ const PLATFORMS: PlatformData[] = [
     roasChange: "+28%",
     roasUp: true,
     spend: "NT$28,000",
-    bgColor: "bg-pink-50",
-    textColor: "text-pink-600",
+    bgColor: "bg-gray-100",
+    textColor: "text-gray-700",
   },
   {
     emoji: "🔴",
@@ -42,8 +42,8 @@ const PLATFORMS: PlatformData[] = [
     roasChange: "−5%",
     roasUp: false,
     spend: "NT$35,000",
-    bgColor: "bg-red-50",
-    textColor: "text-red-600",
+    bgColor: "bg-gray-100",
+    textColor: "text-gray-700",
   },
 ];
 
@@ -62,13 +62,13 @@ export default function AdPerformanceCard() {
               <p className="text-xs font-semibold text-gray-500 mb-0.5">{p.name}</p>
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-bold text-gray-900">{p.roas}</span>
-                <span className={`text-xs font-semibold ${p.roasUp ? "text-green-600" : "text-red-500"}`}>
+                <span className={`text-xs font-semibold ${p.roasUp ? "text-gray-900" : "text-gray-400"}`}>
                   {p.roasUp ? "↑" : "↓"} {p.roasChange}
                 </span>
               </div>
               <p className="text-xs text-gray-400 mt-0.5">ROAS · 本月花費 {p.spend}</p>
             </div>
-            <div className={`w-1 h-12 rounded-full ${p.bgColor.replace("50", "300")}`} />
+            <div className="w-1 h-12 rounded-full bg-gray-300" />
           </div>
         ))}
       </div>

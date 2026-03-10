@@ -158,7 +158,7 @@ function PhoneContactsSection({ locale }: { locale: string }) {
           {locale === "zh" ? "電話聯絡人" : "Phone Contacts"}
         </p>
         {isEnabled?.enabled && (
-          <span className="ml-auto text-[10px] bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-medium">
+          <span className="ml-auto text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">
             Twilio
           </span>
         )}
@@ -222,9 +222,9 @@ function PhoneContactsSection({ locale }: { locale: string }) {
               <button
                 onClick={() => handleCall(contact)}
                 disabled={initiateCall.isPending}
-                className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center active:bg-green-100"
+                className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center active:bg-gray-200"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.77a16 16 0 0 0 6 6l.86-.86a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16z" />
                 </svg>
               </button>

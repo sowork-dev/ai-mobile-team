@@ -476,7 +476,7 @@ export default function MobileTaskDetailPage() {
               onClick={handleCopyShareUrl}
               className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors mb-3 ${
                 shareCopied
-                  ? "bg-green-500 text-white"
+                  ? "bg-gray-700 text-white"
                   : "bg-gray-900 text-white active:bg-gray-700"
               }`}
             >

@@ -542,13 +542,13 @@ export default function MobileAssistantPage() {
             </button>
             <button
               onClick={() => window.location.href = "/app/company-settings"}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 rounded-lg active:bg-blue-100 transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-100 rounded-lg active:bg-gray-200 transition-colors"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 19.5A2.5 2.5 0 0 1 1.5 17V4.5A2.5 2.5 0 0 1 4 2h8.5L17 6.5V17a2.5 2.5 0 0 1-2.5 2.5H4z" transform="scale(1.2) translate(-1,-1)" />
                 <path d="M12 2v5h5" transform="scale(1.2) translate(-1,-1)" />
               </svg>
-              <span className="text-xs text-blue-600 font-medium">{t("assistant.knowledgeBase")}</span>
+              <span className="text-xs text-gray-600 font-medium">{t("assistant.knowledgeBase")}</span>
             </button>
             <div className="flex items-center gap-1">
               <div className="w-1.5 h-1.5 rounded-full bg-[#34C759]" />
@@ -739,7 +739,7 @@ export default function MobileAssistantPage() {
               <button
                 key={idx}
                 onClick={() => handleSend(`告訴我更多：${item.topic}`)}
-                className="w-full text-left bg-[#F0F4FF] rounded-xl px-4 py-3 active:bg-[#E5EAFF] transition-colors"
+                className="w-full text-left bg-[#F2F2F7] rounded-xl px-4 py-3 active:bg-[#E5E5EA] transition-colors"
               >
                 <div className="flex items-start gap-2">
                   <span className="text-base">{item.icon}</span>

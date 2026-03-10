@@ -162,7 +162,7 @@ export default function MobileLandingPage() {
                   setShowLogin(false);
                   navigate("/demo");
                 }}
-                className="w-full py-4 bg-orange-50 text-orange-600 rounded-xl font-medium"
+                className="w-full py-4 bg-gray-100 text-gray-700 rounded-xl font-medium"
               >
                 先體驗看看
               </button>

@@ -80,7 +80,7 @@ function TwilioSettingsSection({ locale }: { locale: string }) {
             {locale === "zh" ? "Twilio 電話整合" : "Twilio Phone Integration"}
           </h2>
           {isConfigured && (
-            <span className="ml-auto text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full font-medium">
+            <span className="ml-auto text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full font-medium">
               {locale === "zh" ? "已設定" : "Configured"}
             </span>
           )}
@@ -128,7 +128,7 @@ function TwilioSettingsSection({ locale }: { locale: string }) {
         <button
           onClick={handleSave}
           className={`w-full py-2.5 rounded-xl text-sm font-semibold active:scale-95 transition-transform ${
-            saved ? "bg-green-600 text-white" : "bg-gray-900 text-white"
+            saved ? "bg-gray-700 text-white" : "bg-gray-900 text-white"
           }`}
         >
           {saved
@@ -206,7 +206,7 @@ function TaskIntegrationSection({ locale }: { locale: string }) {
     <div className="bg-white mx-4 mt-4 rounded-2xl border border-gray-100 overflow-hidden">
       <div className="px-4 py-3 border-b border-gray-100">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 bg-indigo-600 rounded-md flex items-center justify-center flex-shrink-0">
+          <div className="w-6 h-6 bg-gray-800 rounded-md flex items-center justify-center flex-shrink-0">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
               <line x1="16" y1="2" x2="16" y2="6" />
@@ -236,7 +236,7 @@ function TaskIntegrationSection({ locale }: { locale: string }) {
                 <div>
                   <p className="text-sm font-medium text-gray-900">{sys.name}</p>
                   {conn?.connected && (
-                    <p className="text-xs text-green-600">
+                    <p className="text-xs text-gray-600">
                       {locale === "zh" ? "✓ 任務完成後自動推送" : "✓ Auto-sync on task completion"}
                     </p>
                   )}
@@ -244,7 +244,7 @@ function TaskIntegrationSection({ locale }: { locale: string }) {
               </div>
               {conn?.connected ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                  <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full">
                     {locale === "zh" ? "已連接" : "Connected"}
                   </span>
                   <button
@@ -257,7 +257,7 @@ function TaskIntegrationSection({ locale }: { locale: string }) {
               ) : (
                 <button
                   onClick={() => { setShowModalFor(sys.id); setApiKeyInput(""); }}
-                  className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg active:opacity-70 transition-opacity"
+                  className="text-xs font-semibold text-gray-700 bg-gray-100 px-3 py-1.5 rounded-lg active:opacity-70 transition-opacity"
                 >
                   {locale === "zh" ? "連接" : "Connect"}
                 </button>
@@ -286,12 +286,12 @@ function TaskIntegrationSection({ locale }: { locale: string }) {
               value={apiKeyInput}
               onChange={e => setApiKeyInput(e.target.value)}
               placeholder="API Key"
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono mb-3"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 font-mono mb-3"
               autoFocus
             />
             <button
               onClick={() => handleConnect(showModalFor)}
-              className="w-full py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl active:opacity-80 transition-opacity"
+              className="w-full py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-xl active:opacity-80 transition-opacity"
             >
               {locale === "zh" ? "確認連接" : "Connect"}
             </button>
@@ -369,7 +369,7 @@ function BrandTemplateSection({ locale }: { locale: string }) {
     <div className="bg-white mx-4 mt-4 rounded-2xl border border-gray-100 overflow-hidden">
       <div className="px-4 py-3 border-b border-gray-100">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 bg-purple-600 rounded-md flex items-center justify-center flex-shrink-0">
+          <div className="w-6 h-6 bg-gray-800 rounded-md flex items-center justify-center flex-shrink-0">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" />
             </svg>
@@ -378,7 +378,7 @@ function BrandTemplateSection({ locale }: { locale: string }) {
             {locale === "zh" ? "品牌模板設定" : "Brand Template"}
           </h2>
           {templateStatus?.exists && (
-            <span className="ml-auto text-xs text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+            <span className="ml-auto text-xs text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
               <span
                 className="w-2 h-2 rounded-full"
                 style={{ backgroundColor: templateStatus.primaryColor ? `#${templateStatus.primaryColor}` : "#7C3AED" }}
@@ -397,16 +397,16 @@ function BrandTemplateSection({ locale }: { locale: string }) {
       <div className="p-4 space-y-3">
         {templateStatus?.exists ? (
           <>
-            <div className="flex items-center gap-3 bg-purple-50 rounded-xl p-3">
+            <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
               <div
                 className="w-10 h-10 rounded-lg flex-shrink-0 border border-white shadow-sm"
                 style={{ backgroundColor: templateStatus.primaryColor ? `#${templateStatus.primaryColor}` : "#7C3AED" }}
               />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-purple-900">
+                <p className="text-sm font-medium text-gray-900">
                   {locale === "zh" ? "品牌主色" : "Brand Primary Color"}
                 </p>
-                <p className="text-xs text-purple-600 font-mono">
+                <p className="text-xs text-gray-600 font-mono">
                   #{templateStatus.primaryColor ?? "——"}
                 </p>
               </div>
@@ -415,7 +415,7 @@ function BrandTemplateSection({ locale }: { locale: string }) {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="flex-1 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-xl disabled:opacity-50 active:scale-95 transition-transform"
+                className="flex-1 py-2.5 bg-gray-800 text-white text-sm font-medium rounded-xl disabled:opacity-50 active:scale-95 transition-transform"
               >
                 {uploading
                   ? (locale === "zh" ? "分析中..." : "Analyzing...")
@@ -433,7 +433,7 @@ function BrandTemplateSection({ locale }: { locale: string }) {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="w-full py-3.5 border-2 border-dashed border-purple-300 rounded-xl text-sm text-purple-600 font-medium hover:border-purple-400 disabled:opacity-50 active:scale-95 transition-transform flex items-center justify-center gap-2"
+            className="w-full py-3.5 border-2 border-dashed border-gray-300 rounded-xl text-sm text-gray-600 font-medium hover:border-gray-400 disabled:opacity-50 active:scale-95 transition-transform flex items-center justify-center gap-2"
           >
             {uploading ? (
               <>
@@ -1069,7 +1069,7 @@ export default function MobileCompanySettingsPage() {
               )}
             </div>
             {formData.brands.length > 0 && (
-              <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+              <p className="text-xs text-gray-600 mt-1 flex items-center gap-1">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M20 6L9 17l-5-5" />
                 </svg>
@@ -1157,7 +1157,7 @@ export default function MobileCompanySettingsPage() {
                 {locale === "zh" ? "OneDrive 知識庫" : "OneDrive Knowledge Base"}
               </h2>
               {isOnedriveConnected && (
-                <span className="ml-auto text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full font-medium">
+                <span className="ml-auto text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full font-medium">
                   {locale === "zh" ? "已連接" : "Connected"}
                 </span>
               )}
@@ -1171,17 +1171,17 @@ export default function MobileCompanySettingsPage() {
             {isOnedriveConnected ? (
               <>
                 {/* 已連接狀態 */}
-                <div className="flex items-center gap-3 bg-blue-50 rounded-xl p-3">
-                  <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
+                  <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M20 6L9 17l-5-5" />
                     </svg>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-blue-900">
+                    <p className="text-sm font-medium text-gray-900">
                       {onedriveStatus.data?.userName || (locale === "zh" ? "Microsoft 帳號" : "Microsoft Account")}
                     </p>
-                    <p className="text-xs text-blue-600 truncate">
+                    <p className="text-xs text-gray-600 truncate">
                       {onedriveStatus.data?.userEmail || (locale === "zh" ? "已連接" : "Connected")}
                     </p>
                   </div>
@@ -1213,7 +1213,7 @@ export default function MobileCompanySettingsPage() {
                   <button
                     onClick={handleScanKnowledge}
                     disabled={onedriveScanKnowledge.isPending}
-                    className="flex-1 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl disabled:opacity-50 active:scale-95 transition-transform flex items-center justify-center gap-1.5"
+                    className="flex-1 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-xl disabled:opacity-50 active:scale-95 transition-transform flex items-center justify-center gap-1.5"
                   >
                     {onedriveScanKnowledge.isPending ? (
                       <>
@@ -1285,15 +1285,15 @@ export default function MobileCompanySettingsPage() {
         <TaskIntegrationSection locale={locale} />
 
         {/* 資料安全與隱私保護 */}
-        <div className="bg-blue-50 mx-4 mt-4 rounded-2xl border border-blue-100 overflow-hidden">
-          <div className="px-4 py-3 border-b border-blue-100">
+        <div className="bg-gray-50 mx-4 mt-4 rounded-2xl border border-gray-200 overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-200">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center flex-shrink-0">
+              <div className="w-6 h-6 bg-gray-800 rounded-md flex items-center justify-center flex-shrink-0">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                 </svg>
               </div>
-              <h2 className="font-semibold text-blue-900">
+              <h2 className="font-semibold text-gray-900">
                 {locale === "zh" ? "資料安全與隱私保護" : "Data Security & Privacy"}
               </h2>
             </div>
@@ -1314,14 +1314,14 @@ export default function MobileCompanySettingsPage() {
                 : "ISO 27001 compliant (certification in progress)",
             ].map((text, i) => (
               <div key={i} className="flex items-start gap-2.5">
-                <svg className="flex-shrink-0 mt-0.5" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="flex-shrink-0 mt-0.5" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
-                <p className="text-sm text-blue-800">{text}</p>
+                <p className="text-sm text-gray-800">{text}</p>
               </div>
             ))}
-            <div className="mt-3 pt-3 border-t border-blue-200">
-              <p className="text-xs text-blue-600">
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <p className="text-xs text-gray-600">
                 {locale === "zh"
                   ? "如需企業合規報告，請聯繫 "
                   : "For enterprise compliance reports, contact "}
@@ -1329,7 +1329,7 @@ export default function MobileCompanySettingsPage() {
               </p>
               <button
                 onClick={() => { window.location.href = "/app/security"; }}
-                className="mt-2 flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-900 transition-colors"
+                className="mt-2 flex items-center gap-1 text-xs font-semibold text-gray-700 hover:text-gray-900 transition-colors"
               >
                 {locale === "zh" ? "查看完整安全白皮書" : "View Full Security Whitepaper"}
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -1370,7 +1370,7 @@ export default function MobileCompanySettingsPage() {
           disabled={isSaving || saveSuccess}
           className={`w-full py-3.5 rounded-xl font-semibold active:scale-[0.98] transition-all disabled:opacity-70 ${
             saveSuccess 
-              ? "bg-green-600 text-white" 
+              ? "bg-gray-700 text-white"
               : "bg-gray-900 text-white"
           }`}
         >
